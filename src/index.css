@@ -1,0 +1,167 @@
+:root {
+  --texto: #1c1c1c;
+  --texto-secundario: #6b6b6b;
+  --fondo: #f5f5f4;
+  --superficie: #ffffff;
+  --borde: #e0e0dd;
+  --acento: #c8302a;
+  --acento-hover: #a8261f;
+  --exito: #1d9e75;
+  --advertencia: #ba7517;
+  --peligro: #a32d2d;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  padding: 8px 14px;
+}
+
+button:hover {
+  border-color: var(--acento);
+}
+
+button[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--acento);
+}
+
+/* ---------- Login ---------- */
+.pantalla-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tarjeta-login {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 32px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tarjeta-login h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.tarjeta-login .subtitulo {
+  margin: 0 0 16px;
+  color: var(--texto-secundario);
+  font-size: 14px;
+}
+
+.tarjeta-login label {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin-top: 8px;
+}
+
+.tarjeta-login button {
+  margin-top: 20px;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.tarjeta-login button:hover {
+  background: var(--acento-hover);
+}
+
+.mensaje-error {
+  color: var(--peligro);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+/* ---------- App general ---------- */
+.encabezado {
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.marca {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.usuario-actual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.contenido {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.pestanas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.pestanas button {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 4px;
+  margin-right: 20px;
+  color: var(--texto-secundario);
+}
+
+.pestanas button.activa {
+  color: var(--acento);
+  border-bottom-color: var(--acento);
+  font-weight: 500;
+}
