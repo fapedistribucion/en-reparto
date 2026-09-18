@@ -212,6 +212,35 @@ textarea:focus {
   margin: 2px 0 0;
 }
 
+.campo-factura-segmentado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.literal-factura {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 16px;
+  color: var(--texto-secundario);
+}
+
+.casilla-factura {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.casilla-factura-corta {
+  width: 44px;
+  flex: none;
+}
+
+.casilla-factura-larga {
+  width: 100px;
+  flex: none;
+}
+
 .bloque-formulario button {
   margin-top: 12px;
   background: var(--acento);
@@ -263,4 +292,136 @@ textarea:focus {
   border-top: 1px solid var(--borde);
   font-size: 13px;
   color: var(--texto-secundario);
+}
+
+.seccion-reclamo {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde);
+  max-width: 560px;
+}
+
+.etiqueta-seccion {
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+
+.bloque-observaciones .fila-observacion {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bloque-evidencia-tipo {
+  margin-bottom: 20px;
+}
+
+.etiqueta-evidencia {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin: 0 0 8px;
+}
+
+.miniaturas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.miniatura {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--borde);
+}
+
+.miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.miniatura button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  line-height: 1;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+}
+
+.miniatura-agregar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--texto-secundario);
+  border: 1px dashed var(--borde);
+  cursor: pointer;
+  background: var(--fondo);
+}
+
+.boton-enviar {
+  margin-top: 24px;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+  padding: 10px 24px;
+}
+
+.boton-enviar:hover {
+  background: var(--acento-hover);
+}
+
+/* ---------- Modal de ticket creado ---------- */
+.fondo-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-ticket {
+  background: var(--superficie);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 340px;
+  text-align: center;
+}
+
+.modal-ticket-titulo {
+  margin: 0 0 8px;
+  color: var(--texto-secundario);
+  font-size: 13px;
+}
+
+.modal-ticket-codigo {
+  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.modal-ticket-ayuda {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.modal-ticket button {
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+  width: 100%;
 }
