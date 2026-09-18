@@ -189,7 +189,6 @@ textarea:focus {
 .contenido-lateral {
   flex: 1;
   padding: 24px;
-  max-width: 960px;
 }
 
 /* ---------- Formulario de nuevo reclamo ---------- */
