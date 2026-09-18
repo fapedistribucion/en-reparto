@@ -6,6 +6,7 @@ import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
 import SelectorCategoria from "./componentes/SelectorCategoria";
 import FormularioObservaciones from "./componentes/FormularioObservaciones";
 import SubidaEvidencia from "./componentes/SubidaEvidencia";
+import VerificacionFacturaIA from "./componentes/VerificacionFacturaIA";
 import ModalTicketCreado from "../compartido/ModalTicketCreado";
 
 const NUMERO_CONTACTO = "920799198";
@@ -32,6 +33,8 @@ export default function NuevoReclamo() {
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
   const [ticketCreado, setTicketCreado] = useState(null);
+  const [facturaVerificadaIA, setFacturaVerificadaIA] = useState(false);
+  const [intentosAgotadosIA, setIntentosAgotadosIA] = useState(false);
 
   const numeroCompleto = construirNumeroFactura(parte1 + parte2);
   const refParte2 = useRef(null);
@@ -90,9 +93,16 @@ export default function NuevoReclamo() {
     setReclamo(ESTADO_INICIAL_RECLAMO);
     setErrorEnvio("");
     setTicketCreado(null);
+    setFacturaVerificadaIA(false);
+    setIntentosAgotadosIA(false);
   }
 
   function actualizarArchivosPorTipo(tipo, archivos) {
+    if (tipo === "foto_factura") {
+      // Cualquier cambio en la foto de factura invalida una verificación previa
+      setFacturaVerificadaIA(false);
+      setIntentosAgotadosIA(false);
+    }
     setReclamo((prev) => ({
       ...prev,
       archivosPorTipo: { ...prev.archivosPorTipo, [tipo]: archivos },
@@ -113,6 +123,11 @@ export default function NuevoReclamo() {
     );
     if (tiposFaltantes.length > 0) {
       setErrorEnvio("Falta subir: " + tiposFaltantes.map(etiquetaEvidencia).join(", "));
+      return;
+    }
+
+    if (!facturaVerificadaIA && !intentosAgotadosIA) {
+      setErrorEnvio("Verifica la foto de la factura con IA antes de generar el ticket.");
       return;
     }
 
@@ -137,6 +152,7 @@ export default function NuevoReclamo() {
         subcategoria: reclamo.subcategoriaSeleccionada.subcategoria,
         detalle_servicio: reclamo.detalleServicio,
         creado_por: usuarioId,
+        factura_verificada_ia: facturaVerificadaIA,
       })
       .select()
       .single();
@@ -250,13 +266,13 @@ export default function NuevoReclamo() {
           {reclamo.subcategoriaSeleccionada && (
             <>
               <div className="seccion-reclamo bloque-formulario">
-                <label htmlFor="detalle">Detalle de servicio</label>
+                <label htmlFor="detalle">Observación (opcional)</label>
                 <textarea
                   id="detalle"
-                  rows={4}
+                  rows={3}
                   value={reclamo.detalleServicio}
                   onChange={(e) => setReclamo((prev) => ({ ...prev, detalleServicio: e.target.value }))}
-                  placeholder={`Transporte: ${empresaTransporte}\nCliente: ${facturaEncontrada.cliente}\nPedido: ${facturaEncontrada.pedido_entrega}\nMotivo: ...`}
+                  placeholder="¿Algo más que quieras indicar sobre este reclamo?"
                 />
               </div>
 
@@ -270,12 +286,27 @@ export default function NuevoReclamo() {
               <div className="seccion-reclamo">
                 <p className="etiqueta-seccion">Evidencia requerida</p>
                 {reclamo.subcategoriaSeleccionada.evidencias_requeridas.map((tipo) => (
-                  <SubidaEvidencia
-                    key={tipo}
-                    tipo={tipo}
-                    archivos={reclamo.archivosPorTipo[tipo] ?? []}
-                    onCambiar={(archivos) => actualizarArchivosPorTipo(tipo, archivos)}
-                  />
+                  <div key={tipo}>
+                    <SubidaEvidencia
+                      tipo={tipo}
+                      archivos={reclamo.archivosPorTipo[tipo] ?? []}
+                      onCambiar={(archivos) => actualizarArchivosPorTipo(tipo, archivos)}
+                    />
+                    {tipo === "foto_factura" && (
+                      <VerificacionFacturaIA
+                        archivo={
+                          reclamo.archivosPorTipo.foto_factura?.[
+                            reclamo.archivosPorTipo.foto_factura.length - 1
+                          ]
+                        }
+                        numeroFactura={facturaEncontrada.factura}
+                        onResultado={({ verificado, intentosAgotados }) => {
+                          setFacturaVerificadaIA(verificado);
+                          setIntentosAgotadosIA(intentosAgotados);
+                        }}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
 
