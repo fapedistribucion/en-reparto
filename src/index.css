@@ -138,30 +138,56 @@ textarea:focus {
 }
 
 .contenido {
+  min-height: calc(100vh - 57px);
+}
+
+.contenedor-simple {
   padding: 24px;
   max-width: 960px;
   margin: 0 auto;
 }
 
-.pestanas {
+.layout-lateral {
   display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--borde);
+  min-height: calc(100vh - 57px);
 }
 
-.pestanas button {
+.barra-lateral {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+  padding: 16px 0;
+}
+
+.barra-lateral nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.barra-lateral button {
   border: none;
-  border-bottom: 2px solid transparent;
   border-radius: 0;
+  border-left: 3px solid transparent;
   background: transparent;
-  padding: 10px 4px;
-  margin-right: 20px;
+  text-align: left;
+  padding: 10px 20px;
   color: var(--texto-secundario);
 }
 
-.pestanas button.activa {
+.barra-lateral button:hover {
+  background: var(--fondo);
+}
+
+.barra-lateral button.activo {
   color: var(--acento);
-  border-bottom-color: var(--acento);
   font-weight: 500;
+  background: var(--fondo);
+  border-left-color: var(--acento);
+}
+
+.contenido-lateral {
+  flex: 1;
+  padding: 24px;
+  max-width: 960px;
 }

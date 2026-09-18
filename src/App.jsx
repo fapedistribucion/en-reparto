@@ -25,7 +25,11 @@ export default function App() {
         {rol === "transportista" && <PanelTransportista />}
         {rol === "sac" && <PanelSAC />}
         {rol === "li" && <PanelLI />}
-        {!rol && <p>Tu cuenta no tiene un rol asignado. Contacta al administrador.</p>}
+        {!rol && (
+          <div className="contenedor-simple">
+            <p>Tu cuenta no tiene un rol asignado. Contacta al administrador.</p>
+          </div>
+        )}
       </main>
     </div>
   );
