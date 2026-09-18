@@ -147,6 +147,35 @@ textarea:focus {
   margin: 0 auto;
 }
 
+.panel-rol {
+  padding: 24px;
+}
+
+.accion-rol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.accion-rol label {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.accion-rol button {
+  margin-top: 6px;
+  align-self: flex-start;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.boton-peligro {
+  background: var(--peligro) !important;
+  border-color: var(--peligro) !important;
+}
+
 .layout-lateral {
   display: flex;
   min-height: calc(100vh - 57px);
@@ -188,6 +217,7 @@ textarea:focus {
 
 .contenido-lateral {
   flex: 1;
+  min-width: 0;
   padding: 24px;
 }
 
@@ -654,7 +684,8 @@ textarea:focus {
   margin-top: 14px;
   padding-top: 14px;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .boton-cerrar-panel {
