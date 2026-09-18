@@ -12,6 +12,7 @@ function formatearEtiqueta(valor) {
 export default function SelectorCategoria({ onSeleccion }) {
   const [config, setConfig] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
   const [categoria, setCategoria] = useState("");
   const [subcategoria, setSubcategoria] = useState("");
 
@@ -20,7 +21,11 @@ export default function SelectorCategoria({ onSeleccion }) {
       .from("config_subcategorias")
       .select("subcategoria, categoria, evidencias_requeridas")
       .eq("activo", true)
-      .then(({ data }) => {
+      .then(({ data, error: errorConsulta }) => {
+        if (errorConsulta) {
+          console.error("Error cargando config_subcategorias:", errorConsulta);
+          setError(errorConsulta.message);
+        }
         setConfig(data ?? []);
         setCargando(false);
       });
@@ -40,6 +45,14 @@ export default function SelectorCategoria({ onSeleccion }) {
   }
 
   if (cargando) return <p>Cargando categorías...</p>;
+
+  if (error) {
+    return <p className="mensaje-error">No se pudieron cargar las categorías: {error}</p>;
+  }
+
+  if (config.length === 0) {
+    return <p className="mensaje-error">No hay subcategorías configuradas todavía en config_subcategorias.</p>;
+  }
 
   return (
     <div className="bloque-formulario">
