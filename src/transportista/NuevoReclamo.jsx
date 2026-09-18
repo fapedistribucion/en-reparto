@@ -2,11 +2,11 @@ import { useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth/useAuth";
 import { construirNumeroFactura } from "../utils/construirNumeroFactura";
+import { convertirABase64 } from "../utils/convertirABase64";
 import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
 import SelectorCategoria from "./componentes/SelectorCategoria";
 import FormularioObservaciones from "./componentes/FormularioObservaciones";
 import SubidaEvidencia from "./componentes/SubidaEvidencia";
-import VerificacionFacturaIA from "./componentes/VerificacionFacturaIA";
 import ModalTicketCreado from "../compartido/ModalTicketCreado";
 
 const NUMERO_CONTACTO = "920799198";
@@ -33,8 +33,6 @@ export default function NuevoReclamo() {
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
   const [ticketCreado, setTicketCreado] = useState(null);
-  const [facturaVerificadaIA, setFacturaVerificadaIA] = useState(false);
-  const [intentosAgotadosIA, setIntentosAgotadosIA] = useState(false);
 
   const numeroCompleto = construirNumeroFactura(parte1 + parte2);
   const refParte2 = useRef(null);
@@ -93,16 +91,9 @@ export default function NuevoReclamo() {
     setReclamo(ESTADO_INICIAL_RECLAMO);
     setErrorEnvio("");
     setTicketCreado(null);
-    setFacturaVerificadaIA(false);
-    setIntentosAgotadosIA(false);
   }
 
   function actualizarArchivosPorTipo(tipo, archivos) {
-    if (tipo === "foto_factura") {
-      // Cualquier cambio en la foto de factura invalida una verificación previa
-      setFacturaVerificadaIA(false);
-      setIntentosAgotadosIA(false);
-    }
     setReclamo((prev) => ({
       ...prev,
       archivosPorTipo: { ...prev.archivosPorTipo, [tipo]: archivos },
@@ -126,12 +117,29 @@ export default function NuevoReclamo() {
       return;
     }
 
-    if (!facturaVerificadaIA && !intentosAgotadosIA) {
-      setErrorEnvio("Verifica la foto de la factura con IA antes de generar el ticket.");
-      return;
-    }
-
     setEnviando(true);
+
+    // Verificación automática con IA -- nunca bloquea el envío, solo queda
+    // registrada en el ticket para que SAC/LI tengan visibilidad de si
+    // la foto de la factura coincidió con lo digitado o no.
+    let facturaVerificadaIA = null;
+    const archivosFactura = reclamo.archivosPorTipo.foto_factura ?? [];
+    const archivoFactura = archivosFactura[archivosFactura.length - 1];
+
+    if (archivoFactura) {
+      try {
+        const imagenBase64 = await convertirABase64(archivoFactura);
+        const respuestaIA = await fetch("/api/validar-factura", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imagenBase64, numeroFactura: facturaEncontrada.factura }),
+        });
+        const resultadoIA = await respuestaIA.json();
+        facturaVerificadaIA = respuestaIA.ok ? Boolean(resultadoIA.coincide) : false;
+      } catch {
+        facturaVerificadaIA = false;
+      }
+    }
 
     const { data: sesion } = await supabase.auth.getUser();
     const usuarioId = sesion.user.id;
@@ -286,34 +294,19 @@ export default function NuevoReclamo() {
               <div className="seccion-reclamo">
                 <p className="etiqueta-seccion">Evidencia requerida</p>
                 {reclamo.subcategoriaSeleccionada.evidencias_requeridas.map((tipo) => (
-                  <div key={tipo}>
-                    <SubidaEvidencia
-                      tipo={tipo}
-                      archivos={reclamo.archivosPorTipo[tipo] ?? []}
-                      onCambiar={(archivos) => actualizarArchivosPorTipo(tipo, archivos)}
-                    />
-                    {tipo === "foto_factura" && (
-                      <VerificacionFacturaIA
-                        archivo={
-                          reclamo.archivosPorTipo.foto_factura?.[
-                            reclamo.archivosPorTipo.foto_factura.length - 1
-                          ]
-                        }
-                        numeroFactura={facturaEncontrada.factura}
-                        onResultado={({ verificado, intentosAgotados }) => {
-                          setFacturaVerificadaIA(verificado);
-                          setIntentosAgotadosIA(intentosAgotados);
-                        }}
-                      />
-                    )}
-                  </div>
+                  <SubidaEvidencia
+                    key={tipo}
+                    tipo={tipo}
+                    archivos={reclamo.archivosPorTipo[tipo] ?? []}
+                    onCambiar={(archivos) => actualizarArchivosPorTipo(tipo, archivos)}
+                  />
                 ))}
               </div>
 
               {errorEnvio && <p className="mensaje-error">{errorEnvio}</p>}
 
               <button type="button" onClick={crearTicket} disabled={enviando} className="boton-enviar">
-                {enviando ? "Generando ticket..." : "Generar ticket"}
+                {enviando ? "Verificando y generando ticket..." : "Generar ticket"}
               </button>
             </>
           )}

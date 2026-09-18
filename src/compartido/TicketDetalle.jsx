@@ -79,7 +79,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
 
         {ticket.detalle_servicio && (
           <div className="panel-detalle-seccion">
-            <p className="panel-detalle-titulo-seccion">Detalle de servicio</p>
+            <p className="panel-detalle-titulo-seccion">Observación</p>
             <p className="panel-detalle-texto-libre">{ticket.detalle_servicio}</p>
           </div>
         )}
@@ -144,6 +144,14 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
               <tr>
                 <td>Nota de crédito</td>
                 <td>{ticket.nota_credito ?? "Pendiente"}</td>
+              </tr>
+              <tr>
+                <td>Verificación IA (factura)</td>
+                <td>
+                  {ticket.factura_verificada_ia === true && "Coincide"}
+                  {ticket.factura_verificada_ia === false && "No coincide"}
+                  {ticket.factura_verificada_ia === null && "No verificado"}
+                </td>
               </tr>
               {ticket.categoria === "NO_LOGISTICO" && (
                 <tr>

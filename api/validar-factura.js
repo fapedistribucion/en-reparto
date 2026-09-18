@@ -35,11 +35,12 @@ export default async function handler(req, res) {
     const resultado = await respuesta.json();
     const textoDetectado = resultado?.responses?.[0]?.fullTextAnnotation?.text ?? "";
 
-    // Comparación tolerante: solo dígitos, ignorando guiones, espacios,
-    // saltos de línea y cualquier ruido que meta el OCR.
-    const soloDigitosFactura = numeroFactura.replace(/\D/g, "");
+    // Comparación tolerante: solo los últimos 6 dígitos (el número de
+    // comprobante en sí, sin el código de serie), ignorando guiones,
+    // espacios y cualquier ruido que meta el OCR.
+    const soloDigitosFactura = numeroFactura.replace(/\D/g, "").slice(-6);
     const soloDigitosTexto = textoDetectado.replace(/\D/g, "");
-    const coincide = soloDigitosFactura.length > 0 && soloDigitosTexto.includes(soloDigitosFactura);
+    const coincide = soloDigitosFactura.length === 6 && soloDigitosTexto.includes(soloDigitosFactura);
 
     return res.status(200).json({ coincide, textoDetectado });
   } catch (error) {
