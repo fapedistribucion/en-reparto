@@ -1,44 +1,24 @@
-import { useState } from "react";
-
-// Franja superior de ancho completo: hamburguesa + logo "EnReparto" juntos, con la
-// hamburguesa a la izquierda. Debajo, el cuerpo se divide en sidebar (nav) + contenido.
-export default function LayoutLateral({ items, activo, onCambiar, children }) {
-  const [abierta, setAbierta] = useState(true);
-
+// La hamburguesa y el logo "EnReparto" viven en el encabezado global (App.jsx),
+// a la misma altura que el círculo de usuario. Este componente solo dibuja el
+// sidebar (nav) y el contenido; `abierta` es controlada desde afuera.
+export default function LayoutLateral({ items, activo, onCambiar, abierta = true, children }) {
   return (
     <div className={`layout-lateral ${abierta ? "" : "barra-cerrada"}`}>
-      <div className="franja-superior">
-        <button
-          type="button"
-          className="boton-toggle-barra"
-          onClick={() => setAbierta((valor) => !valor)}
-          aria-label={abierta ? "Ocultar menú" : "Mostrar menú"}
-          title={abierta ? "Ocultar menú" : "Mostrar menú"}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-        <span className="marca-lateral">EnReparto</span>
-      </div>
+      <aside className="barra-lateral">
+        <nav>
+          {items.map((item) => (
+            <button
+              key={item.clave}
+              className={activo === item.clave ? "activo" : ""}
+              onClick={() => onCambiar(item.clave)}
+            >
+              {item.etiqueta}
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-      <div className="layout-lateral-cuerpo">
-        <aside className="barra-lateral">
-          <nav>
-            {items.map((item) => (
-              <button
-                key={item.clave}
-                className={activo === item.clave ? "activo" : ""}
-                onClick={() => onCambiar(item.clave)}
-              >
-                {item.etiqueta}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="contenido-lateral">{children}</div>
-      </div>
+      <div className="contenido-lateral">{children}</div>
     </div>
   );
 }

@@ -39,7 +39,7 @@ function coincideFecha(fechaIso, desde, hasta) {
   return true;
 }
 
-export default function PanelSAC() {
+export default function PanelSAC({ sidebarAbierta }) {
   const { tickets, cargando: cargandoTickets, error: errorCarga, recargar } = useTickets();
   const { observaciones, cargando: cargandoObs, recargar: recargarObs } = useObservaciones();
 
@@ -198,14 +198,14 @@ export default function PanelSAC() {
 
   if (cargandoTickets || cargandoObs) {
     return (
-      <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana}>
+      <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
         <p>Cargando tickets...</p>
       </LayoutLateral>
     );
   }
 
   return (
-    <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana}>
+    <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
       <h2>{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
       {errorCarga && <p className="mensaje-error">No se pudieron cargar los tickets: {errorCarga}</p>}
 
