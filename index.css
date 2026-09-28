@@ -1,0 +1,956 @@
+:root {
+  --texto: #1c1c1c;
+  --texto-secundario: #6b6b6b;
+  --fondo: #f5f5f4;
+  --superficie: #ffffff;
+  --borde: #e0e0dd;
+  --acento: #c8302a;
+  --acento-hover: #a8261f;
+  --exito: #1d9e75;
+  --advertencia: #ba7517;
+  --peligro: #a32d2d;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  padding: 8px 14px;
+}
+
+button:hover {
+  border-color: var(--acento);
+}
+
+button[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--acento);
+}
+
+/* ---------- Login ---------- */
+.pantalla-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tarjeta-login {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 32px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tarjeta-login h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.tarjeta-login .subtitulo {
+  margin: 0 0 16px;
+  color: var(--texto-secundario);
+  font-size: 14px;
+}
+
+.tarjeta-login label {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin-top: 8px;
+}
+
+.tarjeta-login button {
+  margin-top: 20px;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.tarjeta-login button:hover {
+  background: var(--acento-hover);
+}
+
+.mensaje-error {
+  color: var(--peligro);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+/* ---------- App general ---------- */
+.encabezado {
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.marca {
+  font-weight: 500;
+  color: var(--acento);
+}
+
+.usuario-actual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.contenido {
+  min-height: calc(100vh - 57px);
+}
+
+.contenedor-simple {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.panel-rol {
+  padding: 24px;
+}
+
+.accion-rol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.accion-rol label {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.accion-rol button {
+  margin-top: 6px;
+  align-self: flex-start;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.boton-peligro {
+  background: var(--peligro) !important;
+  border-color: var(--peligro) !important;
+}
+
+.layout-lateral {
+  display: flex;
+  min-height: calc(100vh - 57px);
+}
+
+.barra-lateral {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+  padding: 16px 0;
+}
+
+.barra-lateral nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.barra-lateral button {
+  border: none;
+  border-radius: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  text-align: left;
+  padding: 10px 20px;
+  color: var(--texto-secundario);
+}
+
+.barra-lateral button:hover {
+  background: var(--fondo);
+}
+
+.barra-lateral button.activo {
+  color: var(--acento);
+  font-weight: 500;
+  background: var(--fondo);
+  border-left-color: var(--acento);
+}
+
+.contenido-lateral {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+}
+
+/* ---------- Formulario de nuevo reclamo ---------- */
+.bloque-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 360px;
+}
+
+.bloque-formulario label {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin-top: 4px;
+}
+
+.ayuda-campo {
+  font-size: 12px;
+  color: var(--texto-secundario);
+  margin: 2px 0 0;
+}
+
+.campo-factura-segmentado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.literal-factura {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 16px;
+  color: var(--texto-secundario);
+}
+
+.casilla-factura {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.casilla-factura-corta {
+  width: 44px;
+  flex: none;
+}
+
+.casilla-factura-larga {
+  width: 100px;
+  flex: none;
+}
+
+.bloque-formulario button {
+  margin-top: 12px;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+  align-self: flex-start;
+}
+
+.bloque-formulario button:hover {
+  background: var(--acento-hover);
+}
+
+.tarjeta-info {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 560px;
+}
+
+.tarjeta-info-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tarjeta-info-titulo {
+  margin: 0;
+  font-weight: 500;
+  color: var(--exito);
+}
+
+.tarjeta-info-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  font-size: 13px;
+}
+
+.tarjeta-info-datos span {
+  color: var(--texto-secundario);
+  display: block;
+}
+
+.siguiente-paso {
+  margin: 16px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--borde);
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.seccion-reclamo {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde);
+  max-width: 560px;
+}
+
+.etiqueta-seccion {
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+
+.bloque-observaciones .fila-observacion {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bloque-evidencia-tipo {
+  margin-bottom: 20px;
+}
+
+.etiqueta-evidencia {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin: 0 0 8px;
+}
+
+.miniaturas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.miniatura {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--borde);
+}
+
+.miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.miniatura button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  line-height: 1;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+}
+
+.miniatura-agregar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--texto-secundario);
+  border: 1px dashed var(--borde);
+  cursor: pointer;
+  background: var(--fondo);
+}
+
+.boton-enviar {
+  margin-top: 24px;
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+  padding: 10px 24px;
+}
+
+.boton-enviar:hover {
+  background: var(--acento-hover);
+}
+
+.bloque-verificacion-ia {
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.verificacion-ok {
+  color: var(--exito);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.verificacion-pendiente {
+  color: var(--advertencia);
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+/* ---------- Modal de ticket creado ---------- */
+.fondo-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-ticket {
+  background: var(--superficie);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 340px;
+  text-align: center;
+}
+
+.modal-ticket-titulo {
+  margin: 0 0 8px;
+  color: var(--texto-secundario);
+  font-size: 13px;
+}
+
+.modal-ticket-codigo {
+  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.modal-ticket-ayuda {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.modal-ticket button {
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+  width: 100%;
+}
+
+/* ---------- Tabla de tickets ---------- */
+.contenedor-tabla {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.tabla-tickets {
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+  min-width: 100%;
+}
+
+.tabla-tickets thead tr {
+  background: var(--fondo);
+}
+
+.tabla-tickets th {
+  text-align: left;
+  color: var(--texto-secundario);
+  font-weight: 500;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla-tickets td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla-tickets tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-tickets tbody tr:hover {
+  background: var(--fondo);
+}
+
+.tabla-tickets td:last-child {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.badge-estado {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-estado-en_ruta {
+  background: #eee;
+  color: var(--texto-secundario);
+}
+
+.badge-estado-en_li {
+  background: #fdf0dc;
+  color: var(--advertencia);
+}
+
+.badge-estado-solucionado {
+  background: #e1f5ee;
+  color: var(--exito);
+}
+
+.badge-estado-anulado {
+  background: #f8e3e1;
+  color: var(--peligro);
+}
+
+/* ---------- Panel de detalle ---------- */
+.panel-detalle {
+  background: var(--superficie);
+  border-radius: 12px;
+  padding: 24px 28px;
+  max-width: 620px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.panel-detalle-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.panel-detalle-codigo {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.panel-detalle-fecha {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin: 4px 0 0;
+}
+
+.panel-detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  font-size: 13px;
+  border-top: 1px solid var(--borde);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.panel-detalle-grid span {
+  color: var(--texto-secundario);
+  display: block;
+}
+
+.panel-detalle-seccion {
+  border-top: 1px solid var(--borde);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.panel-detalle-titulo-seccion {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin: 0 0 8px;
+}
+
+.panel-detalle-texto-libre {
+  font-size: 14px;
+  white-space: pre-wrap;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.tabla-observaciones,
+.tabla-trazabilidad {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.tabla-observaciones th {
+  text-align: left;
+  color: var(--texto-secundario);
+  font-weight: 400;
+  padding: 4px 0;
+}
+
+.tabla-observaciones td {
+  padding: 6px 0;
+  border-top: 1px solid var(--borde);
+}
+
+.tabla-trazabilidad td {
+  padding: 4px 0;
+}
+
+.tabla-trazabilidad td:first-child {
+  color: var(--texto-secundario);
+}
+
+.tabla-trazabilidad td:last-child {
+  text-align: right;
+}
+
+.galeria-adjuntos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.miniatura-adjunto {
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 0;
+  background: var(--fondo);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.miniatura-adjunto img {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+}
+
+.miniatura-adjunto-etiqueta {
+  font-size: 10px;
+  color: var(--texto-secundario);
+  padding: 4px;
+  text-align: center;
+}
+
+.miniatura-adjunto-error {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--texto-secundario);
+}
+
+.panel-detalle-acciones {
+  border-top: 1px solid var(--borde);
+  margin-top: 14px;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.boton-cerrar-panel {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.fondo-modal-foto {
+  z-index: 60;
+}
+
+.foto-ampliada {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+}
+
+/* ---------- Formulario: alcance, productos y buscador ---------- */
+.opciones-alcance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.opcion-alcance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--superficie);
+}
+
+.opcion-alcance span {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.opcion-alcance.activa {
+  border-color: var(--acento);
+  background: #fdf1f0;
+}
+
+.aviso-info {
+  margin: 0;
+  padding: 12px 16px;
+  background: #fdf1f0;
+  border: 1px solid #f1c9c6;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.dato-menor {
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-producto {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tarjeta-producto .bloque-formulario {
+  max-width: none;
+}
+
+.tarjeta-producto-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tarjeta-producto-encabezado .etiqueta-seccion {
+  margin: 0;
+}
+
+.fila-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.fila-dos label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.buscador-producto {
+  position: relative;
+}
+
+.lista-productos {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.lista-productos button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  text-align: left;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: transparent;
+}
+
+.lista-productos button:hover {
+  background: var(--fondo);
+}
+
+.lista-productos .sin-resultados {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.producto-elegido {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--fondo);
+  border-radius: 8px;
+}
+
+.producto-elegido > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .fila-dos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Detalle: observaciones ---------- */
+.obs-card {
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.obs-card-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.obs-card-linea {
+  margin: 0;
+  font-size: 13px;
+}
+
+.badge-pendiente,
+.badge-validacion-ok {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-pendiente {
+  background: #fdf0dc;
+  color: var(--advertencia);
+}
+
+.badge-validacion-ok {
+  background: #e1f5ee;
+  color: var(--exito);
+}
+
+.accion-observacion {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--borde);
+}
+
+.modal-ticket-aviso {
+  margin: 0 0 20px;
+  padding: 10px 12px;
+  background: #fdf0dc;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--advertencia);
+}
+
+/* ---------- Barra lateral: botón para mostrar/ocultar ---------- */
+.layout-lateral {
+  position: relative;
+}
+
+.boton-toggle-barra {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+}
+
+.boton-toggle-barra:hover {
+  border-color: var(--acento);
+}
+
+.boton-toggle-barra span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: var(--texto);
+  border-radius: 1px;
+}
+
+.barra-lateral {
+  overflow: hidden;
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+
+.barra-lateral nav {
+  padding-top: 40px;
+}
+
+.layout-lateral.barra-cerrada .barra-lateral {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right: none;
+}
