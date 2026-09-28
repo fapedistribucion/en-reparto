@@ -1,6 +1,8 @@
 import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estadosTicket";
 
-export default function TablaTickets({ tickets, onVerDetalle }) {
+// `mostrarTransporte`: agrega la columna de empresa de transporte (SAC/LI la necesitan; el propio
+// transportista no, ya que en su vista todos los tickets son de su misma empresa).
+export default function TablaTickets({ tickets, onVerDetalle, mostrarTransporte = false }) {
   if (tickets.length === 0) {
     return <p>No hay tickets para mostrar.</p>;
   }
@@ -17,6 +19,7 @@ export default function TablaTickets({ tickets, onVerDetalle }) {
             <th>Pedido</th>
             <th>Alcance</th>
             <th>Cliente</th>
+            {mostrarTransporte && <th>Transporte</th>}
             <th>Llegada a LI</th>
             <th>Nota de crédito</th>
             <th>Por validar</th>
@@ -37,6 +40,7 @@ export default function TablaTickets({ tickets, onVerDetalle }) {
               <td>{t.pedido_entrega}</td>
               <td>{textoAlcance(t)}</td>
               <td>{t.cliente}</td>
+              {mostrarTransporte && <td>{t.empresa_transporte}</td>}
               <td>{formatearFecha(t.fecha_entrega_li)}</td>
               <td>{t.nota_credito ?? "—"}</td>
               <td>

@@ -999,3 +999,205 @@ textarea:focus {
 .filtro-select select {
   width: auto;
 }
+
+.filtro-validacion {
+  margin-bottom: 12px;
+}
+
+/* ---------- Barra de herramientas (exportar / quitar filtros / refrescar / filtrar) ---------- */
+.barra-herramientas {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  color: var(--texto-secundario);
+}
+
+.boton-icono span {
+  font-size: 13px;
+}
+
+.boton-icono:hover {
+  color: var(--acento);
+  border-color: var(--acento);
+}
+
+.boton-filtrar {
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.boton-filtrar:hover {
+  background: var(--acento-hover);
+  color: #fff;
+}
+
+.boton-primario {
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.boton-primario:hover {
+  background: var(--acento-hover);
+}
+
+/* ---------- Panel de filtros deslizable ---------- */
+.fondo-drawer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 70;
+}
+
+.panel-filtros {
+  background: var(--superficie);
+  width: 100%;
+  max-width: 340px;
+  height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  animation: entrada-drawer 0.18s ease;
+}
+
+@keyframes entrada-drawer {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.panel-filtros-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.panel-filtros-encabezado h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.panel-filtros-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.campo-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.fila-rango-fecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fila-rango-fecha input {
+  min-width: 0;
+}
+
+.panel-filtros-acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde);
+}
+
+.panel-filtros-acciones button {
+  flex: 1;
+}
+
+/* ---------- Dashboard ---------- */
+.tablero {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tarjetas-stat {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.tarjeta-stat {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tarjeta-stat-numero {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.tarjeta-stat-etiqueta {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-stat-total .tarjeta-stat-numero {
+  color: var(--acento);
+}
+
+.tarjeta-stat-alerta {
+  border-color: var(--advertencia);
+}
+
+.tarjeta-stat-alerta .tarjeta-stat-numero {
+  color: var(--advertencia);
+}
+
+.tarjeta-stat-exito .tarjeta-stat-numero {
+  color: var(--exito);
+}
+
+.tarjeta-motivos {
+  max-width: 420px;
+}
+
+.tabla-motivos {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.tabla-motivos td {
+  padding: 6px 0;
+  border-top: 1px solid var(--borde);
+}
+
+.tabla-motivos td:last-child {
+  text-align: right;
+  font-weight: 500;
+}

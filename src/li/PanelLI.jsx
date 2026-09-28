@@ -2,27 +2,75 @@ import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
+import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
+import BarraHerramientas from "../compartido/BarraHerramientas";
+import PanelFiltros from "../compartido/PanelFiltros";
+import DashboardTickets from "../compartido/DashboardTickets";
 import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
+import { etiquetaMotivo } from "../utils/etiquetasMotivo";
+import { exportarCsv } from "../utils/exportarCsv";
+
+const PESTANAS = [
+  { clave: "factura", etiqueta: "Seguimiento a nivel factura" },
+  { clave: "sku", etiqueta: "Seguimiento a nivel SKU" },
+  { clave: "dashboard", etiqueta: "Dashboard" },
+];
+
+const FILTROS_VACIOS = { ticket: "", factura: "", transporte: "", estado: "", desde: "", hasta: "" };
+
+function coincideTexto(valor, filtro) {
+  if (!filtro) return true;
+  return String(valor ?? "")
+    .toLowerCase()
+    .includes(filtro.trim().toLowerCase());
+}
+
+function coincideFecha(fechaIso, desde, hasta) {
+  if (!desde && !hasta) return true;
+  if (!fechaIso) return false;
+  const fecha = new Date(fechaIso);
+  if (desde && fecha < new Date(`${desde}T00:00:00`)) return false;
+  if (hasta && fecha > new Date(`${hasta}T23:59:59`)) return false;
+  return true;
+}
 
 export default function PanelLI() {
   const { tickets, cargando: cargandoTickets, error: errorCarga, recargar } = useTickets();
-  const { observaciones, cargando: cargandoObs } = useObservaciones();
+  const { observaciones, cargando: cargandoObs, recargar: recargarObs } = useObservaciones();
+
+  const [pestana, setPestana] = useState("factura");
   const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [notaCredito, setNotaCredito] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
-  const [vista, setVista] = useState("ticket");
-  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtros, setFiltros] = useState(FILTROS_VACIOS);
+  const [borrador, setBorrador] = useState(FILTROS_VACIOS);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
 
+  const opcionesTransporte = useMemo(
+    () => [...new Set(tickets.map((t) => t.empresa_transporte).filter(Boolean))].sort(),
+    [tickets]
+  );
+
+  const filtrosActivos = Object.values(filtros).some((v) => v);
+
   const ticketsFiltrados = useMemo(
-    () => (filtroEstado ? tickets.filter((t) => t.estado === filtroEstado) : tickets),
-    [tickets, filtroEstado]
+    () =>
+      tickets.filter(
+        (t) =>
+          coincideTexto(t.codigo_ticket, filtros.ticket) &&
+          coincideTexto(t.factura, filtros.factura) &&
+          (!filtros.transporte || t.empresa_transporte === filtros.transporte) &&
+          (!filtros.estado || t.estado === filtros.estado) &&
+          coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
+      ),
+    [tickets, filtros]
   );
 
   const observacionesConTicket = useMemo(
@@ -31,14 +79,74 @@ export default function PanelLI() {
   );
 
   const observacionesFiltradas = useMemo(
-    () => (filtroEstado ? observacionesConTicket.filter((o) => o.ticket?.estado === filtroEstado) : observacionesConTicket),
-    [observacionesConTicket, filtroEstado]
+    () =>
+      observacionesConTicket.filter(
+        (o) =>
+          coincideTexto(o.ticket?.codigo_ticket, filtros.ticket) &&
+          coincideTexto(o.ticket?.factura, filtros.factura) &&
+          (!filtros.transporte || o.ticket?.empresa_transporte === filtros.transporte) &&
+          (!filtros.estado || o.ticket?.estado === filtros.estado) &&
+          coincideFecha(o.ticket?.fecha_creacion, filtros.desde, filtros.hasta)
+      ),
+    [observacionesConTicket, filtros]
   );
 
   function abrirDetalle(ticket) {
     setSeleccionadoId(ticket.id);
     setNotaCredito("");
     setError("");
+  }
+
+  function abrirPanelFiltros() {
+    setBorrador(filtros);
+    setFiltrosAbiertos(true);
+  }
+
+  function aplicarFiltros() {
+    setFiltros(borrador);
+    setFiltrosAbiertos(false);
+  }
+
+  function limpiarFiltros() {
+    setFiltros(FILTROS_VACIOS);
+    setBorrador(FILTROS_VACIOS);
+    setFiltrosAbiertos(false);
+  }
+
+  function refrescarTodo() {
+    recargar();
+    recargarObs();
+  }
+
+  function exportarVistaActual() {
+    if (pestana === "sku") {
+      exportarCsv("en-reparto-por-sku", [
+        { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
+        { titulo: "Estado", obtener: (o) => ETIQUETAS_ESTADO[o.ticket?.estado] ?? o.ticket?.estado },
+        { titulo: "Factura", obtener: (o) => o.ticket?.factura },
+        { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
+        { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
+        { titulo: "Posición", clave: "posicion" },
+        { titulo: "Código producto", clave: "codigo_producto" },
+        { titulo: "Producto", clave: "nombre_producto" },
+        { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
+        { titulo: "Bulto", clave: "numero_bulto" },
+        { titulo: "Cant. observada", clave: "cantidad_observada" },
+        { titulo: "Cant. facturada", clave: "cantidad_facturada" },
+      ], observacionesFiltradas);
+    } else {
+      exportarCsv("en-reparto-por-ticket", [
+        { titulo: "Fecha creación", clave: "fecha_creacion" },
+        { titulo: "N° Ticket", clave: "codigo_ticket" },
+        { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
+        { titulo: "Factura", clave: "factura" },
+        { titulo: "Pedido", clave: "pedido_entrega" },
+        { titulo: "Cliente", clave: "cliente" },
+        { titulo: "Transporte", clave: "empresa_transporte" },
+        { titulo: "Llegada a LI", clave: "fecha_entrega_li" },
+        { titulo: "Nota de crédito", clave: "nota_credito" },
+      ], ticketsFiltrados);
+    }
   }
 
   async function marcarLlegada() {
@@ -102,41 +210,46 @@ export default function PanelLI() {
     await recargar();
   }
 
-  if (cargandoTickets || cargandoObs) return <p className="panel-rol">Cargando tickets...</p>;
+  if (cargandoTickets || cargandoObs) {
+    return (
+      <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana}>
+        <p>Cargando tickets...</p>
+      </LayoutLateral>
+    );
+  }
 
   return (
-    <div className="panel-rol">
-      <h2>Panel Logística Inversa</h2>
+    <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana}>
+      <h2>{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
       {errorCarga && <p className="mensaje-error">No se pudieron cargar los tickets: {errorCarga}</p>}
 
-      <div className="barra-filtros">
-        <div className="selector-vista">
-          <button type="button" className={vista === "ticket" ? "activo" : ""} onClick={() => setVista("ticket")}>
-            Por ticket
-          </button>
-          <button type="button" className={vista === "bulto" ? "activo" : ""} onClick={() => setVista("bulto")}>
-            Por bulto
-          </button>
-        </div>
+      <BarraHerramientas
+        onExportar={pestana !== "dashboard" ? exportarVistaActual : undefined}
+        onQuitarFiltros={limpiarFiltros}
+        onRefrescar={refrescarTodo}
+        onAbrirFiltros={abrirPanelFiltros}
+        filtrosActivos={filtrosActivos}
+      />
 
-        <label className="filtro-select">
-          Estado
-          <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-            <option value="">Todos</option>
-            {Object.entries(ETIQUETAS_ESTADO).map(([clave, etiqueta]) => (
-              <option key={clave} value={clave}>
-                {etiqueta}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      {vista === "ticket" ? (
-        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} />
-      ) : (
-        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} />
+      {pestana === "factura" && (
+        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} mostrarTransporte />
       )}
+      {pestana === "sku" && (
+        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} mostrarTransporte />
+      )}
+      {pestana === "dashboard" && (
+        <DashboardTickets tickets={ticketsFiltrados} observaciones={observacionesFiltradas} rol="LI" />
+      )}
+
+      <PanelFiltros
+        abierto={filtrosAbiertos}
+        onCerrar={() => setFiltrosAbiertos(false)}
+        valores={borrador}
+        onCambiar={setBorrador}
+        opcionesTransporte={opcionesTransporte}
+        onBuscar={aplicarFiltros}
+        onLimpiar={limpiarFiltros}
+      />
 
       {seleccionado && (
         <TicketDetalle
@@ -173,6 +286,6 @@ export default function PanelLI() {
           }
         />
       )}
-    </div>
+    </LayoutLateral>
   );
 }

@@ -3,7 +3,8 @@ import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 // Vista a nivel producto/bulto: una fila por observación, con los datos
 // del ticket al que pertenece (se espera `observacion.ticket` ya combinado).
-export default function TablaObservaciones({ observaciones, onVerTicket }) {
+// `mostrarTransporte`: igual que en TablaTickets, oculto para el propio transportista.
+export default function TablaObservaciones({ observaciones, onVerTicket, mostrarTransporte = false }) {
   if (observaciones.length === 0) {
     return <p>No hay bultos/productos para mostrar.</p>;
   }
@@ -18,6 +19,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket }) {
             <th>Estado</th>
             <th>Factura</th>
             <th>Cliente</th>
+            {mostrarTransporte && <th>Transporte</th>}
             <th>Posición</th>
             <th>Producto</th>
             <th>Motivo</th>
@@ -44,6 +46,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket }) {
                 </td>
                 <td>{t?.factura ?? "—"}</td>
                 <td>{t?.cliente ?? "—"}</td>
+                {mostrarTransporte && <td>{t?.empresa_transporte ?? "—"}</td>}
                 <td>{o.posicion ?? "—"}</td>
                 <td>
                   {o.codigo_producto ? (
