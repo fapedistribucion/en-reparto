@@ -279,7 +279,6 @@ export default function PanelSAC({ sidebarAbierta }) {
                   type="text"
                   value={motivoAnulacion}
                   onChange={(e) => setMotivoAnulacion(e.target.value)}
-                  placeholder="Ej: información errónea al crear el ticket"
                 />
                 {error && <p className="mensaje-error">{error}</p>}
                 <button type="button" onClick={anularTicket} disabled={guardando} className="boton-peligro">

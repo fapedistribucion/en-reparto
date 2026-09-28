@@ -2,10 +2,10 @@ import { etiquetaMotivo } from "./etiquetasMotivo";
 import { etiquetaAlcance } from "./alcance";
 
 export const ETIQUETAS_ESTADO = {
-  EN_RUTA: "En ruta",
-  EN_LI: "En LI",
-  SOLUCIONADO: "Solucionado",
-  ANULADO: "Anulado",
+  EN_RUTA: "EN RUTA",
+  EN_LI: "EN LI",
+  SOLUCIONADO: "SOLUCIONADO",
+  ANULADO: "ANULADO",
 };
 
 // Siempre DD/MM/AAAA (con hora opcional), sin depender del formato "corto" del

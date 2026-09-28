@@ -1,4 +1,4 @@
-import { formatearFecha, fechaOPendiente } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, formatearFecha, fechaOPendiente } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 const ETIQUETAS_CATEGORIA = {
@@ -29,6 +29,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>N° Ticket</th>
             <th>Fecha viaje</th>
             {mostrarTransporte && <th>Transporte</th>}
+            <th>Estado</th>
             <th>Factura</th>
             <th>Cliente</th>
             <th>Cód. Producto</th>
@@ -52,6 +53,15 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{t?.codigo_ticket ?? "—"}</td>
                 <td>{formatearFecha(t?.fecha_viaje)}</td>
                 {mostrarTransporte && <td>{t?.empresa_transporte ?? "—"}</td>}
+                <td>
+                  {t?.estado ? (
+                    <span className={`badge-estado badge-estado-${t.estado.toLowerCase()}`}>
+                      {ETIQUETAS_ESTADO[t.estado] ?? t.estado}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td>{t?.factura ?? "—"}</td>
                 <td>{t?.cliente ?? "—"}</td>
                 <td>{o.codigo_producto ?? "—"}</td>

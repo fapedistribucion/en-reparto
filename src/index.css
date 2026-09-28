@@ -717,10 +717,6 @@ textarea:focus {
   display: block;
 }
 
-.panel-detalle-grid-full {
-  grid-column: 1 / -1;
-}
-
 .panel-detalle-seccion {
   border-top: 1px solid var(--borde);
   margin-top: 14px;

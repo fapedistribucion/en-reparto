@@ -116,9 +116,13 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
 
         {modoEnfocado && !cargando && observacionEnfocada && (
           <div className="panel-detalle-grid">
-            <div className="panel-detalle-grid-full">
+            <div>
               <span>Factura</span>
               <strong>{ticket.factura}</strong>
+            </div>
+            <div>
+              <span>Cliente</span>
+              <strong>{ticket.cliente}</strong>
             </div>
             <div>
               <span>Motivo</span>
