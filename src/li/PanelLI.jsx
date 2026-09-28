@@ -43,8 +43,10 @@ export default function PanelLI() {
 
   const [pestana, setPestana] = useState("factura");
   const [seleccionadoId, setSeleccionadoId] = useState(null);
+  const [observacionFocoId, setObservacionFocoId] = useState(null);
   const [notaCredito, setNotaCredito] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [procesandoLlegadaId, setProcesandoLlegadaId] = useState(null);
   const [error, setError] = useState("");
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
@@ -91,8 +93,9 @@ export default function PanelLI() {
     [observacionesConTicket, filtros]
   );
 
-  function abrirDetalle(ticket) {
+  function abrirDetalle(ticket, observacionId = null) {
     setSeleccionadoId(ticket.id);
+    setObservacionFocoId(observacionId);
     setNotaCredito("");
     setError("");
   }
@@ -149,11 +152,14 @@ export default function PanelLI() {
     }
   }
 
-  async function marcarLlegada() {
-    if (!window.confirm(`¿Confirmar que el ticket ${seleccionado.codigo_ticket} llegó a Logística Inversa?`)) {
+  // `ticket`: se llama tanto desde el botón dentro del detalle (con `seleccionado`)
+  // como desde el botón externo en la tabla (sin abrir el detalle).
+  async function marcarLlegada(ticket) {
+    if (!window.confirm(`¿Confirmar que el ticket ${ticket.codigo_ticket} llegó a Logística Inversa?`)) {
       return;
     }
 
+    setProcesandoLlegadaId(ticket.id);
     setGuardando(true);
     setError("");
     const { data: sesion } = await supabase.auth.getUser();
@@ -164,9 +170,10 @@ export default function PanelLI() {
         usuario_llegada_li: sesion.user.id,
         fecha_entrega_li: new Date().toISOString(),
       })
-      .eq("id", seleccionado.id);
+      .eq("id", ticket.id);
 
     setGuardando(false);
+    setProcesandoLlegadaId(null);
 
     if (errorUpdate) {
       setError("No se pudo registrar la llegada: " + errorUpdate.message);
@@ -232,10 +239,32 @@ export default function PanelLI() {
       />
 
       {pestana === "factura" && (
-        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} mostrarTransporte />
+        <TablaTickets
+          tickets={ticketsFiltrados}
+          onVerDetalle={abrirDetalle}
+          mostrarTransporte
+          accionExtra={(t) =>
+            t.estado === "EN_RUTA" ? (
+              <button type="button" onClick={() => marcarLlegada(t)} disabled={procesandoLlegadaId === t.id}>
+                Marcar llegada a LI
+              </button>
+            ) : null
+          }
+        />
       )}
       {pestana === "sku" && (
-        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} mostrarTransporte />
+        <TablaObservaciones
+          observaciones={observacionesFiltradas}
+          onVerTicket={abrirDetalle}
+          mostrarTransporte
+          accionExtra={(t) =>
+            t.estado === "EN_RUTA" ? (
+              <button type="button" onClick={() => marcarLlegada(t)} disabled={procesandoLlegadaId === t.id}>
+                Marcar llegada a LI
+              </button>
+            ) : null
+          }
+        />
       )}
       {pestana === "dashboard" && (
         <DashboardTickets tickets={ticketsFiltrados} observaciones={observacionesFiltradas} rol="LI" />
@@ -254,14 +283,18 @@ export default function PanelLI() {
       {seleccionado && (
         <TicketDetalle
           ticket={seleccionado}
-          onCerrar={() => setSeleccionadoId(null)}
+          soloObservacionId={observacionFocoId}
+          onCerrar={() => {
+            setSeleccionadoId(null);
+            setObservacionFocoId(null);
+          }}
           acciones={
             seleccionado.estado === "EN_RUTA" || seleccionado.estado === "EN_LI" ? (
               <>
                 {error && <p className="mensaje-error">{error}</p>}
 
                 {seleccionado.estado === "EN_RUTA" && (
-                  <button type="button" onClick={marcarLlegada} disabled={guardando}>
+                  <button type="button" onClick={() => marcarLlegada(seleccionado)} disabled={guardando}>
                     Marcar llegada a LI
                   </button>
                 )}

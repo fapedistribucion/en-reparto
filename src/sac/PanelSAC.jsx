@@ -44,6 +44,7 @@ export default function PanelSAC() {
 
   const [pestana, setPestana] = useState("factura");
   const [seleccionadoId, setSeleccionadoId] = useState(null);
+  const [observacionFocoId, setObservacionFocoId] = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -51,7 +52,6 @@ export default function PanelSAC() {
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
-  const [filtroValidacion, setFiltroValidacion] = useState("");
 
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
 
@@ -80,25 +80,22 @@ export default function PanelSAC() {
     [observaciones, tickets]
   );
 
-  const observacionesFiltradas = useMemo(() => {
-    let lista = observacionesConTicket.filter(
-      (o) =>
-        coincideTexto(o.ticket?.codigo_ticket, filtros.ticket) &&
-        coincideTexto(o.ticket?.factura, filtros.factura) &&
-        (!filtros.transporte || o.ticket?.empresa_transporte === filtros.transporte) &&
-        (!filtros.estado || o.ticket?.estado === filtros.estado) &&
-        coincideFecha(o.ticket?.fecha_creacion, filtros.desde, filtros.hasta)
-    );
-    if (filtroValidacion === "pendiente") {
-      lista = lista.filter((o) => o.categoria === "NO_LOGISTICO" && o.validado !== "VALIDADO");
-    } else if (filtroValidacion === "validado") {
-      lista = lista.filter((o) => o.categoria === "NO_LOGISTICO" && o.validado === "VALIDADO");
-    }
-    return lista;
-  }, [observacionesConTicket, filtros, filtroValidacion]);
+  const observacionesFiltradas = useMemo(
+    () =>
+      observacionesConTicket.filter(
+        (o) =>
+          coincideTexto(o.ticket?.codigo_ticket, filtros.ticket) &&
+          coincideTexto(o.ticket?.factura, filtros.factura) &&
+          (!filtros.transporte || o.ticket?.empresa_transporte === filtros.transporte) &&
+          (!filtros.estado || o.ticket?.estado === filtros.estado) &&
+          coincideFecha(o.ticket?.fecha_creacion, filtros.desde, filtros.hasta)
+      ),
+    [observacionesConTicket, filtros]
+  );
 
-  function abrirDetalle(ticket) {
+  function abrirDetalle(ticket, observacionId = null) {
     setSeleccionadoId(ticket.id);
+    setObservacionFocoId(observacionId);
     setMotivoAnulacion("");
     setError("");
   }
@@ -208,17 +205,6 @@ export default function PanelSAC() {
         filtrosActivos={filtrosActivos}
       />
 
-      {pestana === "sku" && (
-        <label className="filtro-select filtro-validacion">
-          Validación
-          <select value={filtroValidacion} onChange={(e) => setFiltroValidacion(e.target.value)}>
-            <option value="">Todas</option>
-            <option value="pendiente">Pendientes de validar</option>
-            <option value="validado">Validadas</option>
-          </select>
-        </label>
-      )}
-
       {pestana === "factura" && (
         <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} mostrarTransporte />
       )}
@@ -242,7 +228,11 @@ export default function PanelSAC() {
       {seleccionado && (
         <TicketDetalle
           ticket={seleccionado}
-          onCerrar={() => setSeleccionadoId(null)}
+          soloObservacionId={observacionFocoId}
+          onCerrar={() => {
+            setSeleccionadoId(null);
+            setObservacionFocoId(null);
+          }}
           renderAccionObservacion={(obs, recargarDetalle) => (
             <ValidarObservacion
               observacion={obs}

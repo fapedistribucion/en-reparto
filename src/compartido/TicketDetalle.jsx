@@ -31,12 +31,15 @@ function Galeria({ fotos, onAmpliar }) {
 
 // `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...).
 // `renderAccionObservacion(obs, recargar)`: controles bajo cada observación (validación de SAC).
-export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion }) {
+// `soloObservacionId`: si se abrió desde la vista por SKU, muestra solo esa observación
+// (y su evidencia) en vez de todas las del ticket. El usuario puede expandir a "ver todas".
+export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion, soloObservacionId }) {
   const [observaciones, setObservaciones] = useState([]);
   const [adjuntos, setAdjuntos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [version, setVersion] = useState(0);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
+  const [verTodas, setVerTodas] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -71,6 +74,10 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
 
   const recargar = () => setVersion((v) => v + 1);
   const fotosFactura = adjuntos.filter((a) => a.observacion_id === null);
+  const filtrando = Boolean(soloObservacionId) && !verTodas;
+  const observacionesMostradas = filtrando
+    ? observaciones.filter((o) => o.id === soloObservacionId)
+    : observaciones;
 
   return (
     <div className="fondo-modal" onClick={onCerrar}>
@@ -100,7 +107,15 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
           <>
             <div className="panel-detalle-seccion">
               <p className="panel-detalle-titulo-seccion">Observaciones</p>
-              {observaciones.map((o) => {
+              {filtrando && (
+                <p className="dato-menor aviso-filtro-observacion">
+                  Mostrando solo esta posición.{" "}
+                  <button type="button" className="boton-enlace" onClick={() => setVerTodas(true)}>
+                    Ver todas las observaciones del ticket
+                  </button>
+                </p>
+              )}
+              {observacionesMostradas.map((o) => {
                 const esNoLogistico = o.categoria === "NO_LOGISTICO";
                 return (
                   <div className="obs-card" key={o.id}>

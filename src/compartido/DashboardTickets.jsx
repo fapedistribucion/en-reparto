@@ -26,6 +26,8 @@ export default function DashboardTickets({ tickets, observaciones, rol }) {
     return [...conteo.entries()].sort((a, b) => b[1] - a[1]);
   }, [observaciones]);
 
+  const maximoMotivo = porMotivo.length > 0 ? porMotivo[0][1] : 0;
+
   return (
     <div className="tablero">
       <div className="tarjetas-stat">
@@ -67,16 +69,21 @@ export default function DashboardTickets({ tickets, observaciones, rol }) {
         {porMotivo.length === 0 ? (
           <p className="dato-menor">Sin datos todavía.</p>
         ) : (
-          <table className="tabla-motivos">
-            <tbody>
-              {porMotivo.map(([motivo, cantidad]) => (
-                <tr key={motivo}>
-                  <td>{etiquetaMotivo(motivo)}</td>
-                  <td>{cantidad}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grafico-barras" role="img" aria-label="Cantidad de reclamos por motivo">
+            {porMotivo.map(([motivo, cantidad]) => (
+              <div className="fila-barra" key={motivo}>
+                <span className="fila-barra-etiqueta">{etiquetaMotivo(motivo)}</span>
+                <div className="fila-barra-pista">
+                  <div
+                    className="fila-barra-relleno"
+                    style={{ width: `${maximoMotivo ? (cantidad / maximoMotivo) * 100 : 0}%` }}
+                    title={`${etiquetaMotivo(motivo)}: ${cantidad}`}
+                  />
+                </div>
+                <span className="fila-barra-valor">{cantidad}</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -2,7 +2,9 @@ import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estados
 
 // `mostrarTransporte`: agrega la columna de empresa de transporte (SAC/LI la necesitan; el propio
 // transportista no, ya que en su vista todos los tickets son de su misma empresa).
-export default function TablaTickets({ tickets, onVerDetalle, mostrarTransporte = false }) {
+// `accionExtra(ticket)`: botón adicional por fila (ej. "Marcar llegada a LI"), sin tener que abrir el detalle.
+// Devuelve null/undefined para esa fila si no aplica.
+export default function TablaTickets({ tickets, onVerDetalle, mostrarTransporte = false, accionExtra }) {
   if (tickets.length === 0) {
     return <p>No hay tickets para mostrar.</p>;
   }
@@ -51,9 +53,12 @@ export default function TablaTickets({ tickets, onVerDetalle, mostrarTransporte 
                 )}
               </td>
               <td>
-                <button type="button" onClick={() => onVerDetalle(t)}>
-                  Ver detalle
-                </button>
+                <div className="acciones-fila">
+                  {accionExtra?.(t)}
+                  <button type="button" onClick={() => onVerDetalle(t)}>
+                    Ver detalle
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

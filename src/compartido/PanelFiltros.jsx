@@ -1,5 +1,6 @@
 import { IconoCerrar } from "./iconos";
 import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
+import CalendarioRango from "./CalendarioRango";
 
 // Panel deslizable (derecha) con los filtros. Controlado desde el panel que lo usa:
 // `valores` = { ticket, factura, transporte, estado, desde, hasta }
@@ -23,22 +24,12 @@ export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, op
         <div className="panel-filtros-cuerpo">
           <label className="campo-filtro">
             N° Ticket
-            <input
-              type="text"
-              value={valores.ticket}
-              onChange={(e) => cambiar("ticket", e.target.value)}
-              placeholder="Ej: ER-000123"
-            />
+            <input type="text" value={valores.ticket} onChange={(e) => cambiar("ticket", e.target.value)} />
           </label>
 
           <label className="campo-filtro">
             N° Factura
-            <input
-              type="text"
-              value={valores.factura}
-              onChange={(e) => cambiar("factura", e.target.value)}
-              placeholder="Ej: 01-0FF..."
-            />
+            <input type="text" value={valores.factura} onChange={(e) => cambiar("factura", e.target.value)} />
           </label>
 
           <label className="campo-filtro">
@@ -54,7 +45,7 @@ export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, op
           </label>
 
           <label className="campo-filtro">
-            Estado general
+            Estado
             <select value={valores.estado} onChange={(e) => cambiar("estado", e.target.value)}>
               <option value="">Todos</option>
               {Object.entries(ETIQUETAS_ESTADO).map(([clave, etiqueta]) => (
@@ -67,21 +58,12 @@ export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, op
 
           <div className="campo-filtro">
             <span>Rango de fecha</span>
-            <div className="fila-rango-fecha">
-              <input
-                type="date"
-                value={valores.desde}
-                onChange={(e) => cambiar("desde", e.target.value)}
-                aria-label="Desde"
-              />
-              <span className="dato-menor">hasta</span>
-              <input
-                type="date"
-                value={valores.hasta}
-                onChange={(e) => cambiar("hasta", e.target.value)}
-                aria-label="Hasta"
-              />
-            </div>
+            <CalendarioRango
+              desde={valores.desde}
+              hasta={valores.hasta}
+              onCambiarRango={({ desde, hasta }) => onCambiar({ ...valores, desde, hasta })}
+              maxDias={31}
+            />
           </div>
         </div>
 

@@ -1183,7 +1183,7 @@ textarea:focus {
 }
 
 .tarjeta-motivos {
-  max-width: 420px;
+  max-width: 560px;
 }
 
 .tabla-motivos {
@@ -1200,4 +1200,150 @@ textarea:focus {
 .tabla-motivos td:last-child {
   text-align: right;
   font-weight: 500;
+}
+
+/* ---------- Dashboard: gráfica de barras (reclamos por motivo) ---------- */
+.grafico-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fila-barra {
+  display: grid;
+  grid-template-columns: 150px 1fr 30px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.fila-barra-etiqueta {
+  color: var(--texto-secundario);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fila-barra-pista {
+  background: var(--fondo);
+  border-radius: 4px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.fila-barra-relleno {
+  height: 100%;
+  min-width: 4px;
+  background: var(--acento);
+  border-radius: 4px;
+}
+
+.fila-barra-valor {
+  text-align: right;
+  font-weight: 500;
+}
+
+/* ---------- Calendario de rango de fechas ---------- */
+.calendario-rango {
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--superficie);
+}
+
+.calendario-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.calendario-nav {
+  border: none;
+  background: transparent;
+  padding: 2px 8px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--texto-secundario);
+}
+
+.calendario-nav:hover {
+  color: var(--acento);
+  border-color: transparent;
+}
+
+.calendario-grilla {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendario-dias-semana {
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--texto-secundario);
+  text-align: center;
+}
+
+.calendario-dia {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  font-size: 12px;
+  color: var(--texto);
+}
+
+.calendario-dia:hover {
+  border-color: transparent;
+  background: var(--fondo);
+}
+
+.calendario-dia.en-rango {
+  background: #fdf1f0;
+  border-radius: 0;
+}
+
+.calendario-dia.extremo-rango {
+  background: var(--acento);
+  color: #fff;
+  font-weight: 500;
+}
+
+.calendario-rango-texto {
+  margin-top: 10px;
+  padding: 8px;
+  background: var(--fondo);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
+
+/* ---------- Acciones por fila (tabla) y aviso de detalle filtrado ---------- */
+.acciones-fila {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.boton-enlace {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--acento);
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.boton-enlace:hover {
+  border-color: transparent;
+  color: var(--acento-hover);
+}
+
+.aviso-filtro-observacion {
+  margin: 0 0 10px;
 }

@@ -4,7 +4,9 @@ import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 // Vista a nivel producto/bulto: una fila por observación, con los datos
 // del ticket al que pertenece (se espera `observacion.ticket` ya combinado).
 // `mostrarTransporte`: igual que en TablaTickets, oculto para el propio transportista.
-export default function TablaObservaciones({ observaciones, onVerTicket, mostrarTransporte = false }) {
+// `onVerTicket(ticket, observacionId)`: abre el detalle enfocado solo en esta observación.
+// `accionExtra(ticket)`: botón adicional por fila (ej. "Marcar llegada a LI").
+export default function TablaObservaciones({ observaciones, onVerTicket, mostrarTransporte = false, accionExtra }) {
   if (observaciones.length === 0) {
     return <p>No hay bultos/productos para mostrar.</p>;
   }
@@ -71,9 +73,12 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                   )}
                 </td>
                 <td>
-                  <button type="button" onClick={() => t && onVerTicket(t)} disabled={!t}>
-                    Ver ticket
-                  </button>
+                  <div className="acciones-fila">
+                    {t && accionExtra?.(t)}
+                    <button type="button" onClick={() => t && onVerTicket(t, o.id)} disabled={!t}>
+                      Ver ticket
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
