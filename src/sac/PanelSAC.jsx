@@ -1,18 +1,49 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
+import { useObservaciones } from "../compartido/useObservaciones";
 import TablaTickets from "../compartido/TablaTickets";
+import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
 import ValidarObservacion from "./ValidarObservacion";
+import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
 
 export default function PanelSAC() {
-  const { tickets, cargando, error: errorCarga, recargar } = useTickets();
+  const { tickets, cargando: cargandoTickets, error: errorCarga, recargar } = useTickets();
+  const { observaciones, cargando: cargandoObs, recargar: recargarObs } = useObservaciones();
   const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
+  const [vista, setVista] = useState("ticket");
+  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroValidacion, setFiltroValidacion] = useState("");
+
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
+
+  const ticketsFiltrados = useMemo(
+    () => (filtroEstado ? tickets.filter((t) => t.estado === filtroEstado) : tickets),
+    [tickets, filtroEstado]
+  );
+
+  // Cada observación se combina con su ticket ya cargado (mismo registro que usa la tabla por ticket,
+  // con motivos/n_observaciones incluidos), en vez de volver a traerlo del servidor.
+  const observacionesConTicket = useMemo(
+    () => observaciones.map((o) => ({ ...o, ticket: tickets.find((t) => t.id === o.ticket_id) })),
+    [observaciones, tickets]
+  );
+
+  const observacionesFiltradas = useMemo(() => {
+    let lista = observacionesConTicket;
+    if (filtroEstado) lista = lista.filter((o) => o.ticket?.estado === filtroEstado);
+    if (filtroValidacion === "pendiente") {
+      lista = lista.filter((o) => o.categoria === "NO_LOGISTICO" && o.validado !== "VALIDADO");
+    } else if (filtroValidacion === "validado") {
+      lista = lista.filter((o) => o.categoria === "NO_LOGISTICO" && o.validado === "VALIDADO");
+    }
+    return lista;
+  }, [observacionesConTicket, filtroEstado, filtroValidacion]);
 
   function abrirDetalle(ticket) {
     setSeleccionadoId(ticket.id);
@@ -51,13 +82,52 @@ export default function PanelSAC() {
     await recargar();
   }
 
-  if (cargando) return <p className="panel-rol">Cargando tickets...</p>;
+  if (cargandoTickets || cargandoObs) return <p className="panel-rol">Cargando tickets...</p>;
 
   return (
     <div className="panel-rol">
       <h2>Panel SAC</h2>
       {errorCarga && <p className="mensaje-error">No se pudieron cargar los tickets: {errorCarga}</p>}
-      <TablaTickets tickets={tickets} onVerDetalle={abrirDetalle} />
+
+      <div className="barra-filtros">
+        <div className="selector-vista">
+          <button type="button" className={vista === "ticket" ? "activo" : ""} onClick={() => setVista("ticket")}>
+            Por ticket
+          </button>
+          <button type="button" className={vista === "bulto" ? "activo" : ""} onClick={() => setVista("bulto")}>
+            Por bulto
+          </button>
+        </div>
+
+        <label className="filtro-select">
+          Estado
+          <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+            <option value="">Todos</option>
+            {Object.entries(ETIQUETAS_ESTADO).map(([clave, etiqueta]) => (
+              <option key={clave} value={clave}>
+                {etiqueta}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {vista === "bulto" && (
+          <label className="filtro-select">
+            Validación
+            <select value={filtroValidacion} onChange={(e) => setFiltroValidacion(e.target.value)}>
+              <option value="">Todas</option>
+              <option value="pendiente">Pendientes de validar</option>
+              <option value="validado">Validadas</option>
+            </select>
+          </label>
+        )}
+      </div>
+
+      {vista === "ticket" ? (
+        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} />
+      ) : (
+        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} />
+      )}
 
       {seleccionado && (
         <TicketDetalle
@@ -69,6 +139,7 @@ export default function PanelSAC() {
               onHecho={() => {
                 recargarDetalle();
                 recargar();
+                recargarObs();
               }}
             />
           )}

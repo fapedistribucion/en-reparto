@@ -954,3 +954,48 @@ textarea:focus {
   padding-right: 0;
   border-right: none;
 }
+
+/* ---------- SAC/LI: alternar vista (ticket/bulto) y filtros ---------- */
+.barra-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.selector-vista {
+  display: inline-flex;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.selector-vista button {
+  border: none;
+  border-radius: 0;
+  background: var(--superficie);
+  padding: 8px 14px;
+  color: var(--texto-secundario);
+}
+
+.selector-vista button + button {
+  border-left: 1px solid var(--borde);
+}
+
+.selector-vista button.activo {
+  background: var(--acento);
+  color: #fff;
+}
+
+.filtro-select {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.filtro-select select {
+  width: auto;
+}
