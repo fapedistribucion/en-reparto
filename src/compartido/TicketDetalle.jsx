@@ -29,22 +29,6 @@ function Galeria({ fotos, onAmpliar }) {
   );
 }
 
-// Badge de validación: distinto según si la observación es logística (no requiere
-// llamada, "No aplica") o no logística (pendiente / contestó / no contestó el vendedor).
-function BadgeValidacion({ observacion }) {
-  if (observacion.categoria !== "NO_LOGISTICO") {
-    return <span className="badge-no-aplica">No aplica</span>;
-  }
-  if (observacion.validado !== "VALIDADO") {
-    return <span className="badge-pendiente">Pendiente de validar</span>;
-  }
-  return (
-    <span className={observacion.obtuvo_respuesta ? "badge-validacion-ok" : "badge-validacion-no"}>
-      {observacion.obtuvo_respuesta ? "Contestó" : "No contestó"}
-    </span>
-  );
-}
-
 // `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...).
 // `renderAccionObservacion(obs, recargar)`: controles bajo cada observación (validación de SAC).
 // `soloObservacionId`: si se abrió desde la vista "Por producto", el modal entra en modo enfocado:
@@ -161,7 +145,6 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                   <div className="obs-card" key={o.id}>
                     <div className="obs-card-encabezado">
                       <strong>{etiquetaMotivo(o.subcategoria)}</strong>
-                      <BadgeValidacion observacion={o} />
                     </div>
 
                     {!modoEnfocado &&

@@ -12,6 +12,8 @@ import {
 // observados). Solo la usan SAC/LI; para transportista no aporta y se mantiene oculta por defecto.
 // `accionExtra(ticket)`: botón adicional por fila (ej. "Marcar llegada a LI"), sin tener que abrir el detalle.
 // Devuelve null/undefined para esa fila si no aplica.
+// "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje);
+// se espera que el ticket ya traiga ese campo combinado.
 export default function TablaTickets({
   tickets,
   onVerDetalle,
@@ -30,13 +32,14 @@ export default function TablaTickets({
           <tr>
             <th>Fecha creación</th>
             <th>N° Ticket</th>
+            <th>Fecha viaje</th>
+            {mostrarTransporte && <th>Transporte</th>}
             <th>Estado</th>
             <th>Factura</th>
             <th>Pedido</th>
             <th>Alcance</th>
             {mostrarSkuObservados && <th>SKU observados</th>}
             <th>Cliente</th>
-            {mostrarTransporte && <th>Transporte</th>}
             <th>Fecha llegada LI</th>
             <th>Nota de crédito</th>
             <th>Por validar</th>
@@ -48,6 +51,8 @@ export default function TablaTickets({
             <tr key={t.id}>
               <td>{formatearFecha(t.fecha_creacion)}</td>
               <td>{t.codigo_ticket}</td>
+              <td>{formatearFecha(t.fecha_viaje)}</td>
+              {mostrarTransporte && <td>{t.empresa_transporte}</td>}
               <td>
                 <span className={`badge-estado badge-estado-${t.estado?.toLowerCase()}`}>
                   {ETIQUETAS_ESTADO[t.estado] ?? t.estado}
@@ -58,7 +63,6 @@ export default function TablaTickets({
               <td>{textoAlcance(t)}</td>
               {mostrarSkuObservados && <td>{textoSkuObservados(t)}</td>}
               <td>{t.cliente}</td>
-              {mostrarTransporte && <td>{t.empresa_transporte}</td>}
               <td>{fechaOPendiente(t.fecha_entrega_li)}</td>
               <td>{t.nota_credito ?? "Pendiente"}</td>
               <td>

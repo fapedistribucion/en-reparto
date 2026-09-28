@@ -137,6 +137,24 @@ textarea:focus {
   white-space: nowrap;
 }
 
+/* Título de cada pestaña (Por factura / Por producto / Dashboard), a la misma
+   altura que la barra de herramientas (exportar, actualizar, filtrar). */
+.encabezado-vista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.titulo-vista {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--texto);
+}
+
 .usuario-actual {
   display: flex;
   align-items: center;
@@ -606,6 +624,7 @@ textarea:focus {
   padding: 12px 16px;
   border-bottom: 1px solid var(--borde);
   border-right: 1px solid var(--borde);
+  text-align: center;
 }
 
 .tabla-tickets th:last-child,
@@ -978,35 +997,14 @@ textarea:focus {
   font-size: 13px;
 }
 
-.badge-pendiente,
-.badge-validacion-ok,
-.badge-validacion-no,
-.badge-no-aplica {
+.badge-pendiente {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-}
-
-.badge-pendiente {
   background: #fdf0dc;
   color: var(--advertencia);
-}
-
-.badge-validacion-ok {
-  background: #e1f5ee;
-  color: var(--exito);
-}
-
-.badge-validacion-no {
-  background: #fbe4e4;
-  color: var(--peligro);
-}
-
-.badge-no-aplica {
-  background: var(--fondo);
-  color: var(--texto-secundario);
 }
 
 .accion-observacion {

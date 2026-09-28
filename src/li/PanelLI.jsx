@@ -64,11 +64,18 @@ export default function PanelLI({ sidebarAbierta }) {
   const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
   const fechasViaje = useFacturasViaje(facturasVisibles);
 
+  // `fecha_viaje` viene de facturas_data (tabla aparte); se combina una sola vez
+  // aquí para que tanto la tabla "Por factura" como "Por producto" la tengan.
+  const ticketsConFechaViaje = useMemo(
+    () => tickets.map((t) => ({ ...t, fecha_viaje: fechasViaje.get(t.factura) ?? null })),
+    [tickets, fechasViaje]
+  );
+
   const filtrosActivos = Object.values(filtros).some((v) => v);
 
   const ticketsFiltrados = useMemo(
     () =>
-      tickets.filter(
+      ticketsConFechaViaje.filter(
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
@@ -76,16 +83,16 @@ export default function PanelLI({ sidebarAbierta }) {
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
       ),
-    [tickets, filtros]
+    [ticketsConFechaViaje, filtros]
   );
 
   const observacionesConTicket = useMemo(
     () =>
       observaciones.map((o) => {
-        const t = tickets.find((tt) => tt.id === o.ticket_id);
-        return { ...o, ticket: t ? { ...t, fecha_viaje: fechasViaje.get(t.factura) ?? null } : t };
+        const t = ticketsConFechaViaje.find((tt) => tt.id === o.ticket_id);
+        return { ...o, ticket: t };
       }),
-    [observaciones, tickets, fechasViaje]
+    [observaciones, ticketsConFechaViaje]
   );
 
   const observacionesFiltradas = useMemo(
@@ -143,7 +150,7 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
         { titulo: "Categoría", obtener: (o) => (o.categoria === "LOGISTICO" ? "Logístico" : "No logístico") },
         { titulo: "Bulto", clave: "numero_bulto" },
-        { titulo: "Cant. Obs.", clave: "cantidad_observada" },
+        { titulo: "Cant. Reclamada", clave: "cantidad_observada" },
         { titulo: "Cant. Total", clave: "cantidad_facturada" },
         { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
         { titulo: "Nota de Crédito", obtener: (o) => o.ticket?.nota_credito },
@@ -152,14 +159,15 @@ export default function PanelLI({ sidebarAbierta }) {
       exportarCsv("en-reparto-por-ticket", [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
         { titulo: "N° Ticket", clave: "codigo_ticket" },
+        { titulo: "Fecha viaje", clave: "fecha_viaje" },
+        { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
         { titulo: "Factura", clave: "factura" },
         { titulo: "Pedido", clave: "pedido_entrega" },
         { titulo: "Alcance", obtener: (t) => textoAlcance(t) },
         { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
         { titulo: "Cliente", clave: "cliente" },
-        { titulo: "Transporte", clave: "empresa_transporte" },
-        { titulo: "Llegada a LI", clave: "fecha_entrega_li" },
+        { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
         { titulo: "Nota de crédito", clave: "nota_credito" },
       ], ticketsFiltrados);
     }
@@ -240,16 +248,18 @@ export default function PanelLI({ sidebarAbierta }) {
 
   return (
     <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
-      <h2>{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
       {errorCarga && <p className="mensaje-error">No se pudieron cargar los tickets: {errorCarga}</p>}
 
-      <BarraHerramientas
-        onExportar={pestana !== "dashboard" ? exportarVistaActual : undefined}
-        onQuitarFiltros={limpiarFiltros}
-        onRefrescar={refrescarTodo}
-        onAbrirFiltros={abrirPanelFiltros}
-        filtrosActivos={filtrosActivos}
-      />
+      <div className="encabezado-vista">
+        <h2 className="titulo-vista">{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
+        <BarraHerramientas
+          onExportar={pestana !== "dashboard" ? exportarVistaActual : undefined}
+          onQuitarFiltros={limpiarFiltros}
+          onRefrescar={refrescarTodo}
+          onAbrirFiltros={abrirPanelFiltros}
+          filtrosActivos={filtrosActivos}
+        />
+      </div>
 
       {pestana === "factura" && (
         <TablaTickets

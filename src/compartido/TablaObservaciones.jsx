@@ -36,7 +36,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>Motivo</th>
             <th>Categoría</th>
             <th>Bulto</th>
-            <th>Cant. Obs.</th>
+            <th>Cant. Reclamada</th>
             <th>Cant. Total</th>
             <th>Fecha llegada LI</th>
             <th>Nota de Crédito</th>
