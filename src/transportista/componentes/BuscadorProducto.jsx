@@ -57,7 +57,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
           </strong>
           <span>{seleccionado.nombre_producto}</span>
           <span className="dato-menor">
-            Lote {seleccionado.lote ?? "—"} · Facturado: {seleccionado.cantidad}
+            Lote {seleccionado.lote ?? "—"} · Cantidad: {seleccionado.cantidad}
           </span>
         </div>
         <button type="button" onClick={onCambiar}>
@@ -96,7 +96,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
                   </strong>
                   <span>{p.nombre_producto}</span>
                   <span className="dato-menor">
-                    Lote {p.lote ?? "—"} · Facturado: {p.cantidad}
+                    Lote {p.lote ?? "—"} · Cantidad: {p.cantidad}
                   </span>
                 </button>
               </li>
