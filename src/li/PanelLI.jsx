@@ -15,7 +15,7 @@ import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
 
 const PESTANAS = [
-  { clave: "factura", etiqueta: "Por ticket" },
+  { clave: "factura", etiqueta: "Por factura" },
   { clave: "sku", etiqueta: "Por producto" },
   { clave: "dashboard", etiqueta: "Dashboard" },
 ];

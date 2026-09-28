@@ -1,4 +1,4 @@
-import { formatearFecha } from "../utils/estadosTicket";
+import { formatearFecha, fechaOPendiente } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 const ETIQUETAS_CATEGORIA = {
@@ -61,8 +61,8 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{o.numero_bulto ?? "—"}</td>
                 <td>{o.posicion != null ? o.cantidad_observada : "—"}</td>
                 <td>{o.posicion != null ? o.cantidad_facturada : "—"}</td>
-                <td>{formatearFecha(t?.fecha_entrega_li)}</td>
-                <td>{t?.nota_credito ?? "—"}</td>
+                <td>{fechaOPendiente(t?.fecha_entrega_li)}</td>
+                <td>{t?.nota_credito ?? "Pendiente"}</td>
                 <td>
                   <div className="acciones-fila">
                     {t && accionExtra?.(t)}

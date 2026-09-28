@@ -152,39 +152,13 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
               })}
             </div>
 
-            {!modoEnfocado && fotosFactura.length > 0 && (
+            {fotosFactura.length > 0 && (
               <div className="panel-detalle-seccion">
                 <p className="panel-detalle-titulo-seccion">Foto de la factura</p>
                 <Galeria fotos={fotosFactura} onAmpliar={setFotoAmpliada} />
               </div>
             )}
           </>
-        )}
-
-        {!modoEnfocado && (
-          <div className="panel-detalle-seccion">
-            <p className="panel-detalle-titulo-seccion">Trazabilidad</p>
-            <table className="tabla-trazabilidad">
-              <tbody>
-                <tr>
-                  <td>Llegada a LI</td>
-                  <td>{ticket.fecha_entrega_li ? formatearFecha(ticket.fecha_entrega_li, true) : "Pendiente"}</td>
-                </tr>
-                <tr>
-                  <td>Nota de crédito</td>
-                  <td>{ticket.nota_credito ?? "Pendiente"}</td>
-                </tr>
-                <tr>
-                  <td>Verificación IA (factura)</td>
-                  <td>
-                    {ticket.factura_verificada_ia === true && "Coincide"}
-                    {ticket.factura_verificada_ia === false && "No coincide"}
-                    {ticket.factura_verificada_ia === null && "No verificado"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         )}
 
         {acciones && <div className="panel-detalle-acciones">{acciones}</div>}

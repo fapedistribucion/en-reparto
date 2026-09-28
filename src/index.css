@@ -263,8 +263,30 @@ textarea:focus {
 
 .layout-lateral {
   display: flex;
+  flex-direction: column;
   min-height: calc(100vh - 57px);
-  position: relative;
+}
+
+.franja-superior {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--borde);
+  flex-shrink: 0;
+}
+
+.marca-lateral {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--acento);
+  white-space: nowrap;
+}
+
+.layout-lateral-cuerpo {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .barra-lateral {
@@ -275,16 +297,6 @@ textarea:focus {
   padding: 16px 0;
   overflow: hidden;
   transition: width 0.2s ease, padding 0.2s ease;
-}
-
-.marca-lateral {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--acento);
-  padding: 4px 20px 16px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--borde);
-  white-space: nowrap;
 }
 
 .barra-lateral nav {
@@ -318,12 +330,6 @@ textarea:focus {
   flex: 1;
   min-width: 0;
   padding: 24px;
-}
-
-.franja-superior {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
 }
 
 /* ---------- Formulario de nuevo reclamo ---------- */
@@ -603,11 +609,18 @@ textarea:focus {
   font-weight: 500;
   padding: 12px 16px;
   border-bottom: 1px solid var(--borde);
+  border-right: 1px solid var(--borde);
 }
 
 .tabla-tickets td {
   padding: 12px 16px;
   border-bottom: 1px solid var(--borde);
+  border-right: 1px solid var(--borde);
+}
+
+.tabla-tickets th:last-child,
+.tabla-tickets td:last-child {
+  border-right: none;
 }
 
 .tabla-tickets tbody tr:last-child td {

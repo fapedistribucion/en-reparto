@@ -1,4 +1,10 @@
-import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance, textoSkuObservados } from "../utils/estadosTicket";
+import {
+  ETIQUETAS_ESTADO,
+  formatearFecha,
+  fechaOPendiente,
+  textoAlcance,
+  textoSkuObservados,
+} from "../utils/estadosTicket";
 
 // `mostrarTransporte`: agrega la columna de empresa de transporte (SAC/LI la necesitan; el propio
 // transportista no, ya que en su vista todos los tickets son de su misma empresa).
@@ -31,7 +37,7 @@ export default function TablaTickets({
             {mostrarSkuObservados && <th>SKU observados</th>}
             <th>Cliente</th>
             {mostrarTransporte && <th>Transporte</th>}
-            <th>Llegada a LI</th>
+            <th>Fecha llegada LI</th>
             <th>Nota de crédito</th>
             <th>Por validar</th>
             <th></th>
@@ -53,8 +59,8 @@ export default function TablaTickets({
               {mostrarSkuObservados && <td>{textoSkuObservados(t)}</td>}
               <td>{t.cliente}</td>
               {mostrarTransporte && <td>{t.empresa_transporte}</td>}
-              <td>{formatearFecha(t.fecha_entrega_li)}</td>
-              <td>{t.nota_credito ?? "—"}</td>
+              <td>{fechaOPendiente(t.fecha_entrega_li)}</td>
+              <td>{t.nota_credito ?? "Pendiente"}</td>
               <td>
                 {t.n_pendientes_validacion > 0 ? (
                   <span className="badge-pendiente">{t.n_pendientes_validacion} pendiente(s)</span>
