@@ -1,50 +1,64 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
+import { etiquetaMotivo } from "../utils/etiquetasMotivo";
+import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estadosTicket";
 
 const SEGUNDOS_VIGENCIA_URL = 60 * 10; // 10 minutos, solo mientras el popup está abierto
 
-function formatearFecha(valor) {
-  if (!valor) return null;
-  return new Date(valor).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+function Galeria({ fotos, onAmpliar }) {
+  if (fotos.length === 0) return null;
+  return (
+    <div className="galeria-adjuntos">
+      {fotos.map((a) => (
+        <button
+          type="button"
+          key={a.id}
+          className="miniatura-adjunto"
+          onClick={() => a.urlVisible && onAmpliar(a.urlVisible)}
+        >
+          {a.urlVisible ? (
+            <img src={a.urlVisible} alt={etiquetaEvidencia(a.tipo_evidencia)} />
+          ) : (
+            <span className="miniatura-adjunto-error">No disponible</span>
+          )}
+          <span className="miniatura-adjunto-etiqueta">{etiquetaEvidencia(a.tipo_evidencia)}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
-const ETIQUETAS_ESTADO = {
-  EN_RUTA: "En ruta",
-  EN_LI: "En LI",
-  SOLUCIONADO: "Solucionado",
-  ANULADO: "Anulado",
-};
-
-export default function TicketDetalle({ ticket, onCerrar, acciones }) {
+// `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...).
+// `renderAccionObservacion(obs, recargar)`: controles bajo cada observación (validación de SAC).
+export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion }) {
   const [observaciones, setObservaciones] = useState([]);
   const [adjuntos, setAdjuntos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [version, setVersion] = useState(0);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
 
   useEffect(() => {
     let cancelado = false;
 
     async function cargarDetalle() {
-      setCargando(true);
-
       const [{ data: obs }, { data: adj }] = await Promise.all([
-        supabase.from("ticket_observaciones").select("*").eq("ticket_id", ticket.id),
-        supabase.from("ticket_adjuntos").select("*").eq("ticket_id", ticket.id),
+        supabase.from("ticket_observaciones").select("*").eq("ticket_id", ticket.id).order("id"),
+        supabase.from("ticket_adjuntos").select("*").eq("ticket_id", ticket.id).order("id"),
       ]);
 
-      const adjuntosConUrl = await Promise.all(
-        (adj ?? []).map(async (a) => {
-          const { data: firmada } = await supabase.storage
-            .from("evidencias")
-            .createSignedUrl(a.url_storage, SEGUNDOS_VIGENCIA_URL);
-          return { ...a, urlVisible: firmada?.signedUrl ?? null };
-        })
-      );
+      // Bucket privado: cada foto necesita una URL firmada temporal (se piden todas en una sola llamada)
+      const rutas = (adj ?? []).map((a) => a.url_storage);
+      let firmadas = [];
+      if (rutas.length > 0) {
+        const { data } = await supabase.storage.from("evidencias").createSignedUrls(rutas, SEGUNDOS_VIGENCIA_URL);
+        firmadas = data ?? [];
+      }
+      const urlPorRuta = new Map(firmadas.map((f) => [f.path, f.signedUrl]));
 
       if (!cancelado) {
         setObservaciones(obs ?? []);
-        setAdjuntos(adjuntosConUrl);
+        setAdjuntos((adj ?? []).map((a) => ({ ...a, urlVisible: urlPorRuta.get(a.url_storage) ?? null })));
         setCargando(false);
       }
     }
@@ -53,7 +67,10 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
     return () => {
       cancelado = true;
     };
-  }, [ticket.id]);
+  }, [ticket.id, version]);
+
+  const recargar = () => setVersion((v) => v + 1);
+  const fotosFactura = adjuntos.filter((a) => a.observacion_id === null);
 
   return (
     <div className="fondo-modal" onClick={onCerrar}>
@@ -61,7 +78,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
         <div className="panel-detalle-encabezado">
           <div>
             <p className="panel-detalle-codigo">{ticket.codigo_ticket}</p>
-            <p className="panel-detalle-fecha">Creado {formatearFecha(ticket.fecha_creacion)}</p>
+            <p className="panel-detalle-fecha">Creado {formatearFecha(ticket.fecha_creacion, true)}</p>
           </div>
           <span className={`badge-estado badge-estado-${ticket.estado?.toLowerCase()}`}>
             {ETIQUETAS_ESTADO[ticket.estado] ?? ticket.estado}
@@ -73,61 +90,60 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
           <div><span>Pedido</span><strong>{ticket.pedido_entrega}</strong></div>
           <div><span>Cliente</span><strong>{ticket.cliente}</strong></div>
           <div><span>Transporte</span><strong>{ticket.empresa_transporte}</strong></div>
-          <div><span>Categoría</span><strong>{ticket.categoria === "LOGISTICO" ? "Logístico" : "No logístico"}</strong></div>
-          <div><span>Subcategoría</span><strong>{ticket.subcategoria}</strong></div>
+          <div><span>Vendedor</span><strong>{ticket.vendedor ?? "—"}</strong></div>
+          <div><span>Alcance</span><strong>{textoAlcance(ticket)}</strong></div>
         </div>
 
-        {ticket.detalle_servicio && (
-          <div className="panel-detalle-seccion">
-            <p className="panel-detalle-titulo-seccion">Observación</p>
-            <p className="panel-detalle-texto-libre">{ticket.detalle_servicio}</p>
-          </div>
-        )}
-
         {cargando ? (
-          <p className="panel-detalle-seccion">Cargando evidencia...</p>
+          <p className="panel-detalle-seccion">Cargando detalle...</p>
         ) : (
           <>
-            {observaciones.length > 0 && (
-              <div className="panel-detalle-seccion">
-                <p className="panel-detalle-titulo-seccion">Bultos observados</p>
-                <table className="tabla-observaciones">
-                  <thead>
-                    <tr><th>N° bulto</th><th>Posición</th><th>Cantidad</th></tr>
-                  </thead>
-                  <tbody>
-                    {observaciones.map((o) => (
-                      <tr key={o.id}>
-                        <td>{o.numero_bulto || "—"}</td>
-                        <td>{o.posicion || "—"}</td>
-                        <td>{o.cantidad ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {adjuntos.length > 0 && (
-              <div className="panel-detalle-seccion">
-                <p className="panel-detalle-titulo-seccion">Evidencia adjunta</p>
-                <div className="galeria-adjuntos">
-                  {adjuntos.map((a) => (
-                    <button
-                      type="button"
-                      key={a.id}
-                      className="miniatura-adjunto"
-                      onClick={() => a.urlVisible && setFotoAmpliada(a.urlVisible)}
-                    >
-                      {a.urlVisible ? (
-                        <img src={a.urlVisible} alt={etiquetaEvidencia(a.tipo_evidencia)} />
-                      ) : (
-                        <span className="miniatura-adjunto-error">No disponible</span>
+            <div className="panel-detalle-seccion">
+              <p className="panel-detalle-titulo-seccion">Observaciones</p>
+              {observaciones.map((o) => {
+                const esNoLogistico = o.categoria === "NO_LOGISTICO";
+                return (
+                  <div className="obs-card" key={o.id}>
+                    <div className="obs-card-encabezado">
+                      <strong>{etiquetaMotivo(o.subcategoria)}</strong>
+                      {esNoLogistico && (
+                        <span className={o.validado === "VALIDADO" ? "badge-validacion-ok" : "badge-pendiente"}>
+                          {o.validado === "VALIDADO" ? "Validado por SAC" : "Pendiente de validar"}
+                        </span>
                       )}
-                      <span className="miniatura-adjunto-etiqueta">{etiquetaEvidencia(a.tipo_evidencia)}</span>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+
+                    {o.posicion != null ? (
+                      <>
+                        <p className="obs-card-linea">
+                          Pos. {o.posicion} · {o.codigo_producto} — {o.nombre_producto}
+                        </p>
+                        <p className="obs-card-linea">
+                          Bulto: {o.numero_bulto} · Cantidad observada: {o.cantidad_observada} de {o.cantidad_facturada}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="dato-menor">Toda la factura</p>
+                    )}
+
+                    {esNoLogistico && o.validado === "VALIDADO" && (
+                      <p className="dato-menor">
+                        ¿Se obtuvo respuesta del vendedor? {o.obtuvo_respuesta ? "Sí" : "No"}
+                      </p>
+                    )}
+
+                    <Galeria fotos={adjuntos.filter((a) => a.observacion_id === o.id)} onAmpliar={setFotoAmpliada} />
+
+                    {renderAccionObservacion?.(o, recargar)}
+                  </div>
+                );
+              })}
+            </div>
+
+            {fotosFactura.length > 0 && (
+              <div className="panel-detalle-seccion">
+                <p className="panel-detalle-titulo-seccion">Foto de la factura</p>
+                <Galeria fotos={fotosFactura} onAmpliar={setFotoAmpliada} />
               </div>
             )}
           </>
@@ -139,7 +155,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
             <tbody>
               <tr>
                 <td>Llegada a LI</td>
-                <td>{formatearFecha(ticket.fecha_entrega_li) ?? "Pendiente"}</td>
+                <td>{ticket.fecha_entrega_li ? formatearFecha(ticket.fecha_entrega_li, true) : "Pendiente"}</td>
               </tr>
               <tr>
                 <td>Nota de crédito</td>
@@ -153,12 +169,6 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
                   {ticket.factura_verificada_ia === null && "No verificado"}
                 </td>
               </tr>
-              {ticket.categoria === "NO_LOGISTICO" && (
-                <tr>
-                  <td>Validado por SAC</td>
-                  <td>{ticket.validado === "VALIDADO" ? "Sí" : "Pendiente"}</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -171,7 +181,13 @@ export default function TicketDetalle({ ticket, onCerrar, acciones }) {
       </div>
 
       {fotoAmpliada && (
-        <div className="fondo-modal fondo-modal-foto" onClick={() => setFotoAmpliada(null)}>
+        <div
+          className="fondo-modal fondo-modal-foto"
+          onClick={(e) => {
+            e.stopPropagation();
+            setFotoAmpliada(null);
+          }}
+        >
           <img src={fotoAmpliada} alt="Evidencia ampliada" className="foto-ampliada" />
         </div>
       )}

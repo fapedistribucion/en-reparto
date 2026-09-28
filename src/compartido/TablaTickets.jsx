@@ -1,0 +1,60 @@
+import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estadosTicket";
+
+export default function TablaTickets({ tickets, onVerDetalle }) {
+  if (tickets.length === 0) {
+    return <p>No hay tickets para mostrar.</p>;
+  }
+
+  return (
+    <div className="contenedor-tabla">
+      <table className="tabla-tickets">
+        <thead>
+          <tr>
+            <th>Fecha creación</th>
+            <th>N° Ticket</th>
+            <th>Estado</th>
+            <th>Factura</th>
+            <th>Pedido</th>
+            <th>Alcance</th>
+            <th>Cliente</th>
+            <th>Llegada a LI</th>
+            <th>Nota de crédito</th>
+            <th>Por validar</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {tickets.map((t) => (
+            <tr key={t.id}>
+              <td>{formatearFecha(t.fecha_creacion)}</td>
+              <td>{t.codigo_ticket}</td>
+              <td>
+                <span className={`badge-estado badge-estado-${t.estado?.toLowerCase()}`}>
+                  {ETIQUETAS_ESTADO[t.estado] ?? t.estado}
+                </span>
+              </td>
+              <td>{t.factura}</td>
+              <td>{t.pedido_entrega}</td>
+              <td>{textoAlcance(t)}</td>
+              <td>{t.cliente}</td>
+              <td>{formatearFecha(t.fecha_entrega_li)}</td>
+              <td>{t.nota_credito ?? "—"}</td>
+              <td>
+                {t.n_pendientes_validacion > 0 ? (
+                  <span className="badge-pendiente">{t.n_pendientes_validacion} pendiente(s)</span>
+                ) : (
+                  "—"
+                )}
+              </td>
+              <td>
+                <button type="button" onClick={() => onVerDetalle(t)}>
+                  Ver detalle
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
