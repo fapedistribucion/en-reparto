@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
+import { useFacturasViaje } from "../compartido/useFacturasViaje";
 import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
@@ -10,13 +11,13 @@ import ValidarObservacion from "./ValidarObservacion";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
-import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
 
 const PESTANAS = [
-  { clave: "factura", etiqueta: "Seguimiento a nivel factura" },
-  { clave: "sku", etiqueta: "Seguimiento a nivel SKU" },
+  { clave: "factura", etiqueta: "Por ticket" },
+  { clave: "sku", etiqueta: "Por producto" },
   { clave: "dashboard", etiqueta: "Dashboard" },
 ];
 
@@ -60,6 +61,9 @@ export default function PanelSAC() {
     [tickets]
   );
 
+  const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
+  const fechasViaje = useFacturasViaje(facturasVisibles);
+
   const filtrosActivos = Object.values(filtros).some((v) => v);
 
   const ticketsFiltrados = useMemo(
@@ -76,8 +80,12 @@ export default function PanelSAC() {
   );
 
   const observacionesConTicket = useMemo(
-    () => observaciones.map((o) => ({ ...o, ticket: tickets.find((t) => t.id === o.ticket_id) })),
-    [observaciones, tickets]
+    () =>
+      observaciones.map((o) => {
+        const t = tickets.find((tt) => tt.id === o.ticket_id);
+        return { ...o, ticket: t ? { ...t, fecha_viaje: fechasViaje.get(t.factura) ?? null } : t };
+      }),
+    [observaciones, tickets, fechasViaje]
   );
 
   const observacionesFiltradas = useMemo(
@@ -123,20 +131,22 @@ export default function PanelSAC() {
 
   function exportarVistaActual() {
     if (pestana === "sku") {
-      exportarCsv("en-reparto-por-sku", [
+      exportarCsv("en-reparto-por-producto", [
+        { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
         { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
-        { titulo: "Estado", obtener: (o) => ETIQUETAS_ESTADO[o.ticket?.estado] ?? o.ticket?.estado },
+        { titulo: "Fecha viaje", obtener: (o) => o.ticket?.fecha_viaje },
+        { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
         { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
-        { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
-        { titulo: "Posición", clave: "posicion" },
-        { titulo: "Código producto", clave: "codigo_producto" },
+        { titulo: "Cód. Producto", clave: "codigo_producto" },
         { titulo: "Producto", clave: "nombre_producto" },
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
+        { titulo: "Categoría", obtener: (o) => (o.categoria === "LOGISTICO" ? "Logístico" : "No logístico") },
         { titulo: "Bulto", clave: "numero_bulto" },
-        { titulo: "Cant. observada", clave: "cantidad_observada" },
-        { titulo: "Cant. facturada", clave: "cantidad_facturada" },
-        { titulo: "Validado", obtener: (o) => (o.validado === "VALIDADO" ? "Sí" : "No") },
+        { titulo: "Cant. Obs.", clave: "cantidad_observada" },
+        { titulo: "Cant. Total", clave: "cantidad_facturada" },
+        { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
+        { titulo: "Nota de Crédito", obtener: (o) => o.ticket?.nota_credito },
       ], observacionesFiltradas);
     } else {
       exportarCsv("en-reparto-por-ticket", [
@@ -145,6 +155,8 @@ export default function PanelSAC() {
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
         { titulo: "Factura", clave: "factura" },
         { titulo: "Pedido", clave: "pedido_entrega" },
+        { titulo: "Alcance", obtener: (t) => textoAlcance(t) },
+        { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
         { titulo: "Cliente", clave: "cliente" },
         { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Llegada a LI", clave: "fecha_entrega_li" },
@@ -206,7 +218,12 @@ export default function PanelSAC() {
       />
 
       {pestana === "factura" && (
-        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} mostrarTransporte />
+        <TablaTickets
+          tickets={ticketsFiltrados}
+          onVerDetalle={abrirDetalle}
+          mostrarTransporte
+          mostrarSkuObservados
+        />
       )}
       {pestana === "sku" && (
         <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} mostrarTransporte />

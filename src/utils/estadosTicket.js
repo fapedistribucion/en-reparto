@@ -17,13 +17,20 @@ export function formatearFecha(valor, conHora = false) {
 }
 
 // Texto de la columna "Alcance" (usa los campos de la vista tickets_resumen).
-// Ej.: "Rechazo total", "Rechazo parcial (3)", "Local cerrado - Reeditado"
+// Ej.: "Rechazo total", "Rechazo parcial", "Local cerrado - Reeditado"
+// La cantidad de productos observados ya no va aquí entre paréntesis: es la
+// columna aparte "SKU observados" (ver textoSkuObservados más abajo).
 export function textoAlcance(ticket) {
   if (ticket.alcance_reclamo === "REEDITADO") {
     return `${etiquetaMotivo(ticket.motivos?.[0] ?? "LOCAL_CERRADO")} - Reeditado`;
   }
-  if (ticket.alcance_reclamo === "RECHAZO_PARCIAL") {
-    return `Rechazo parcial (${ticket.n_observaciones ?? "?"})`;
-  }
   return etiquetaAlcance(ticket.alcance_reclamo);
+}
+
+// Cantidad de productos distintos observados en el ticket (columna "SKU
+// observados"). Solo aplica a rechazo parcial: en rechazo total/reeditado la
+// observación es de la factura completa, no de productos puntuales.
+export function textoSkuObservados(ticket) {
+  if (ticket.alcance_reclamo !== "RECHAZO_PARCIAL") return "—";
+  return ticket.n_observaciones ?? "—";
 }

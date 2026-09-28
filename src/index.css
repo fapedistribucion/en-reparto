@@ -120,13 +120,8 @@ textarea:focus {
   border-bottom: 1px solid var(--borde);
   padding: 12px 24px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-}
-
-.marca {
-  font-weight: 500;
-  color: var(--acento);
 }
 
 .usuario-actual {
@@ -139,6 +134,96 @@ textarea:focus {
 
 .contenido {
   min-height: calc(100vh - 57px);
+}
+
+/* ---------- Encabezado: círculo de usuario ---------- */
+.menu-usuario {
+  position: relative;
+}
+
+.circulo-usuario {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.circulo-usuario:hover {
+  background: var(--acento-hover);
+}
+
+.desplegable-usuario {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  min-width: 220px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.desplegable-usuario-correo {
+  font-size: 12px;
+  color: var(--texto-secundario);
+  padding: 4px 8px 8px;
+  margin: 0 0 4px;
+  border-bottom: 1px solid var(--borde);
+  word-break: break-all;
+}
+
+.desplegable-usuario button {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px;
+  border-radius: 6px;
+  color: var(--texto);
+  font-size: 13px;
+}
+
+.desplegable-usuario button:hover {
+  background: var(--fondo);
+}
+
+.desplegable-usuario .opcion-salir {
+  color: var(--peligro);
+}
+
+.bloque-cambiar-clave {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px;
+}
+
+.bloque-cambiar-clave input {
+  font-size: 13px;
+}
+
+.bloque-cambiar-clave-acciones {
+  display: flex;
+  gap: 6px;
+}
+
+.bloque-cambiar-clave-acciones button {
+  flex: 1;
+  text-align: center;
+  border: 1px solid var(--borde);
 }
 
 .contenedor-simple {
@@ -179,6 +264,7 @@ textarea:focus {
 .layout-lateral {
   display: flex;
   min-height: calc(100vh - 57px);
+  position: relative;
 }
 
 .barra-lateral {
@@ -187,6 +273,18 @@ textarea:focus {
   background: var(--superficie);
   border-right: 1px solid var(--borde);
   padding: 16px 0;
+  overflow: hidden;
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+
+.marca-lateral {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--acento);
+  padding: 4px 20px 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
 }
 
 .barra-lateral nav {
@@ -202,6 +300,7 @@ textarea:focus {
   text-align: left;
   padding: 10px 20px;
   color: var(--texto-secundario);
+  white-space: nowrap;
 }
 
 .barra-lateral button:hover {
@@ -219,6 +318,12 @@ textarea:focus {
   flex: 1;
   min-width: 0;
   padding: 24px;
+}
+
+.franja-superior {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 /* ---------- Formulario de nuevo reclamo ---------- */
@@ -905,47 +1010,32 @@ textarea:focus {
 }
 
 /* ---------- Barra lateral: botón para mostrar/ocultar ---------- */
-.layout-lateral {
-  position: relative;
-}
-
 .boton-toggle-barra {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 20;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   padding: 0;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 6px;
 }
 
 .boton-toggle-barra:hover {
-  border-color: var(--acento);
+  background: var(--superficie);
+  border-color: var(--borde);
 }
 
 .boton-toggle-barra span {
   display: block;
   width: 16px;
   height: 2px;
-  background: var(--texto);
+  background: var(--texto-secundario);
   border-radius: 1px;
-}
-
-.barra-lateral {
-  overflow: hidden;
-  transition: width 0.2s ease, padding 0.2s ease;
-}
-
-.barra-lateral nav {
-  padding-top: 40px;
 }
 
 .layout-lateral.barra-cerrada .barra-lateral {

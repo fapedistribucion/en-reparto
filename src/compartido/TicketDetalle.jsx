@@ -31,15 +31,17 @@ function Galeria({ fotos, onAmpliar }) {
 
 // `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...).
 // `renderAccionObservacion(obs, recargar)`: controles bajo cada observación (validación de SAC).
-// `soloObservacionId`: si se abrió desde la vista por SKU, muestra solo esa observación
-// (y su evidencia) en vez de todas las del ticket. El usuario puede expandir a "ver todas".
+// `soloObservacionId`: si se abrió desde la vista "Por producto", el modal entra en modo enfocado:
+// solo esa observación, solo sus evidencias, y sin repetir datos que ya se ven en la tabla
+// (factura, cliente, transporte, motivo, bulto, cantidades, etc. quedan fuera).
 export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion, soloObservacionId }) {
   const [observaciones, setObservaciones] = useState([]);
   const [adjuntos, setAdjuntos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [version, setVersion] = useState(0);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
-  const [verTodas, setVerTodas] = useState(false);
+
+  const modoEnfocado = Boolean(soloObservacionId);
 
   useEffect(() => {
     let cancelado = false;
@@ -74,8 +76,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
 
   const recargar = () => setVersion((v) => v + 1);
   const fotosFactura = adjuntos.filter((a) => a.observacion_id === null);
-  const filtrando = Boolean(soloObservacionId) && !verTodas;
-  const observacionesMostradas = filtrando
+  const observacionesMostradas = modoEnfocado
     ? observaciones.filter((o) => o.id === soloObservacionId)
     : observaciones;
 
@@ -92,29 +93,23 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
           </span>
         </div>
 
-        <div className="panel-detalle-grid">
-          <div><span>Factura</span><strong>{ticket.factura}</strong></div>
-          <div><span>Pedido</span><strong>{ticket.pedido_entrega}</strong></div>
-          <div><span>Cliente</span><strong>{ticket.cliente}</strong></div>
-          <div><span>Transporte</span><strong>{ticket.empresa_transporte}</strong></div>
-          <div><span>Vendedor</span><strong>{ticket.vendedor ?? "—"}</strong></div>
-          <div><span>Alcance</span><strong>{textoAlcance(ticket)}</strong></div>
-        </div>
+        {!modoEnfocado && (
+          <div className="panel-detalle-grid">
+            <div><span>Factura</span><strong>{ticket.factura}</strong></div>
+            <div><span>Pedido</span><strong>{ticket.pedido_entrega}</strong></div>
+            <div><span>Cliente</span><strong>{ticket.cliente}</strong></div>
+            <div><span>Transporte</span><strong>{ticket.empresa_transporte}</strong></div>
+            <div><span>Vendedor</span><strong>{ticket.vendedor ?? "—"}</strong></div>
+            <div><span>Alcance</span><strong>{textoAlcance(ticket)}</strong></div>
+          </div>
+        )}
 
         {cargando ? (
           <p className="panel-detalle-seccion">Cargando detalle...</p>
         ) : (
           <>
             <div className="panel-detalle-seccion">
-              <p className="panel-detalle-titulo-seccion">Observaciones</p>
-              {filtrando && (
-                <p className="dato-menor aviso-filtro-observacion">
-                  Mostrando solo esta posición.{" "}
-                  <button type="button" className="boton-enlace" onClick={() => setVerTodas(true)}>
-                    Ver todas las observaciones del ticket
-                  </button>
-                </p>
-              )}
+              {!modoEnfocado && <p className="panel-detalle-titulo-seccion">Observaciones</p>}
               {observacionesMostradas.map((o) => {
                 const esNoLogistico = o.categoria === "NO_LOGISTICO";
                 return (
@@ -128,18 +123,20 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                       )}
                     </div>
 
-                    {o.posicion != null ? (
-                      <>
-                        <p className="obs-card-linea">
-                          Pos. {o.posicion} · {o.codigo_producto} — {o.nombre_producto}
-                        </p>
-                        <p className="obs-card-linea">
-                          Bulto: {o.numero_bulto} · Cantidad observada: {o.cantidad_observada} de {o.cantidad_facturada}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="dato-menor">Toda la factura</p>
-                    )}
+                    {!modoEnfocado &&
+                      (o.posicion != null ? (
+                        <>
+                          <p className="obs-card-linea">
+                            Pos. {o.posicion} · {o.codigo_producto} — {o.nombre_producto}
+                          </p>
+                          <p className="obs-card-linea">
+                            Bulto: {o.numero_bulto} · Cantidad observada: {o.cantidad_observada} de{" "}
+                            {o.cantidad_facturada}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="dato-menor">Toda la factura</p>
+                      ))}
 
                     {esNoLogistico && o.validado === "VALIDADO" && (
                       <p className="dato-menor">
@@ -155,7 +152,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
               })}
             </div>
 
-            {fotosFactura.length > 0 && (
+            {!modoEnfocado && fotosFactura.length > 0 && (
               <div className="panel-detalle-seccion">
                 <p className="panel-detalle-titulo-seccion">Foto de la factura</p>
                 <Galeria fotos={fotosFactura} onAmpliar={setFotoAmpliada} />
@@ -164,29 +161,31 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
           </>
         )}
 
-        <div className="panel-detalle-seccion">
-          <p className="panel-detalle-titulo-seccion">Trazabilidad</p>
-          <table className="tabla-trazabilidad">
-            <tbody>
-              <tr>
-                <td>Llegada a LI</td>
-                <td>{ticket.fecha_entrega_li ? formatearFecha(ticket.fecha_entrega_li, true) : "Pendiente"}</td>
-              </tr>
-              <tr>
-                <td>Nota de crédito</td>
-                <td>{ticket.nota_credito ?? "Pendiente"}</td>
-              </tr>
-              <tr>
-                <td>Verificación IA (factura)</td>
-                <td>
-                  {ticket.factura_verificada_ia === true && "Coincide"}
-                  {ticket.factura_verificada_ia === false && "No coincide"}
-                  {ticket.factura_verificada_ia === null && "No verificado"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {!modoEnfocado && (
+          <div className="panel-detalle-seccion">
+            <p className="panel-detalle-titulo-seccion">Trazabilidad</p>
+            <table className="tabla-trazabilidad">
+              <tbody>
+                <tr>
+                  <td>Llegada a LI</td>
+                  <td>{ticket.fecha_entrega_li ? formatearFecha(ticket.fecha_entrega_li, true) : "Pendiente"}</td>
+                </tr>
+                <tr>
+                  <td>Nota de crédito</td>
+                  <td>{ticket.nota_credito ?? "Pendiente"}</td>
+                </tr>
+                <tr>
+                  <td>Verificación IA (factura)</td>
+                  <td>
+                    {ticket.factura_verificada_ia === true && "Coincide"}
+                    {ticket.factura_verificada_ia === false && "No coincide"}
+                    {ticket.factura_verificada_ia === null && "No verificado"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {acciones && <div className="panel-detalle-acciones">{acciones}</div>}
 
