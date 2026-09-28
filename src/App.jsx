@@ -5,6 +5,7 @@ import PanelTransportista from "./transportista/PanelTransportista";
 import PanelSAC from "./sac/PanelSAC";
 import PanelLI from "./li/PanelLI";
 import MenuUsuario from "./compartido/MenuUsuario";
+import { IconoMenu } from "./compartido/iconos";
 
 // Solo SAC y LI tienen sidebar (Por factura / Por producto / Dashboard); el
 // transportista usa una vista simple sin menú lateral.
@@ -32,9 +33,7 @@ export default function App() {
               aria-label={sidebarAbierta ? "Ocultar menú" : "Mostrar menú"}
               title={sidebarAbierta ? "Ocultar menú" : "Mostrar menú"}
             >
-              <span />
-              <span />
-              <span />
+              <IconoMenu />
             </button>
           )}
           <span className="marca">EnReparto</span>

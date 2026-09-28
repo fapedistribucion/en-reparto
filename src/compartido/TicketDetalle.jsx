@@ -116,15 +116,16 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
 
         {modoEnfocado && !cargando && observacionEnfocada && (
           <div className="panel-detalle-grid">
-            <div><span>Factura</span><strong>{ticket.factura}</strong></div>
-            <div>
-              <span>Producto</span>
-              <strong>
-                {observacionEnfocada.codigo_producto ? observacionEnfocada.nombre_producto : "Toda la factura"}
-              </strong>
+            <div className="panel-detalle-grid-full">
+              <span>Factura</span>
+              <strong>{ticket.factura}</strong>
             </div>
             <div>
-              <span>Cantidad observada</span>
+              <span>Motivo</span>
+              <strong>{etiquetaMotivo(observacionEnfocada.subcategoria)}</strong>
+            </div>
+            <div>
+              <span>Cantidad reclamada</span>
               <strong>
                 {observacionEnfocada.posicion != null
                   ? `${observacionEnfocada.cantidad_observada} de ${observacionEnfocada.cantidad_facturada}`
@@ -143,9 +144,11 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
               {observacionesMostradas.map((o) => {
                 return (
                   <div className="obs-card" key={o.id}>
-                    <div className="obs-card-encabezado">
-                      <strong>{etiquetaMotivo(o.subcategoria)}</strong>
-                    </div>
+                    {!modoEnfocado && (
+                      <div className="obs-card-encabezado">
+                        <strong>{etiquetaMotivo(o.subcategoria)}</strong>
+                      </div>
+                    )}
 
                     {!modoEnfocado &&
                       (o.posicion != null ? (
@@ -162,20 +165,18 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                         <p className="dato-menor">Toda la factura</p>
                       ))}
 
-                    <Galeria fotos={adjuntos.filter((a) => a.observacion_id === o.id)} onAmpliar={setFotoAmpliada} />
+                    {/* Evidencias del producto + foto de la factura juntas, a la misma
+                        altura, en una sola galería (sin separarlas en recuadros aparte). */}
+                    <Galeria
+                      fotos={[...adjuntos.filter((a) => a.observacion_id === o.id), ...fotosFactura]}
+                      onAmpliar={setFotoAmpliada}
+                    />
 
                     {renderAccionObservacion?.(o, recargar)}
                   </div>
                 );
               })}
             </div>
-
-            {fotosFactura.length > 0 && (
-              <div className="panel-detalle-seccion">
-                <p className="panel-detalle-titulo-seccion">Foto de la factura</p>
-                <Galeria fotos={fotosFactura} onAmpliar={setFotoAmpliada} />
-              </div>
-            )}
           </>
         )}
 

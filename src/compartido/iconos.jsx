@@ -71,6 +71,20 @@ export function IconoCerrar(props) {
   );
 }
 
+// Hamburguesa (abrir/cerrar sidebar): trazos SVG, no divs, para que las 3
+// líneas midan siempre exactamente lo mismo (con divs + flex/gap el
+// navegador puede redondear el alto de la línea del medio de forma distinta).
+export function IconoMenu(props) {
+  return base(
+    <>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </>,
+    props
+  );
+}
+
 export function IconoBuscar(props) {
   return base(
     <>
