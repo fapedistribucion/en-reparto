@@ -1,4 +1,4 @@
-import { ETIQUETAS_ESTADO, formatearFecha, fechaOPendiente, etiquetaRespuestaVendedor } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, formatearFecha, fechaOPendiente, etiquetaRespuestaVendedor, formatearPrecio } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 const ETIQUETAS_CATEGORIA = {
@@ -36,6 +36,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>Cliente</th>
             <th>Cód. Producto</th>
             <th>Producto</th>
+            <th>Precio Unitario</th>
             <th>Motivo</th>
             <th>Categoría</th>
             <th>Respuesta vendedor</th>
@@ -70,6 +71,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{t?.cliente ?? "—"}</td>
                 <td>{o.codigo_producto ?? "—"}</td>
                 <td>{o.codigo_producto ? o.nombre_producto : "Toda la factura"}</td>
+                <td>{o.codigo_producto ? formatearPrecio(o.precio_unitario) : "—"}</td>
                 <td>{etiquetaMotivo(o.subcategoria)}</td>
                 <td>{ETIQUETAS_CATEGORIA[o.categoria] ?? o.categoria}</td>
                 <td>

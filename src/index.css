@@ -313,6 +313,9 @@ textarea:focus {
 }
 
 .barra-lateral button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border: none;
   border-radius: 0;
   border-left: 3px solid transparent;
@@ -321,6 +324,10 @@ textarea:focus {
   padding: 10px 20px;
   color: var(--texto-secundario);
   white-space: nowrap;
+}
+
+.barra-lateral button svg {
+  flex-shrink: 0;
 }
 
 .barra-lateral button:hover {

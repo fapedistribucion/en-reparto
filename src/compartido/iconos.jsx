@@ -94,6 +94,31 @@ export function IconoCheck(props) {
   );
 }
 
+// Ítem de sidebar "Seguimiento" (tablas Por factura / Por producto): tabla/layout
+// con una fila de encabezado y una columna dividida.
+export function IconoSeguimiento(props) {
+  return base(
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M9 10v10" />
+    </>,
+    props
+  );
+}
+
+// Ítem de sidebar "Dashboard": gráfico de barras.
+export function IconoDashboard(props) {
+  return base(
+    <>
+      <path d="M5 20v-8" />
+      <path d="M12 20V6" />
+      <path d="M19 20v-5" />
+    </>,
+    props
+  );
+}
+
 export function IconoBuscar(props) {
   return base(
     <>

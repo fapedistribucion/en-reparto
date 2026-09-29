@@ -12,14 +12,15 @@ import ValidarObservacion from "./ValidarObservacion";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, etiquetaRespuestaVendedor } from "../utils/estadosTicket";
+import { IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
+import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, etiquetaRespuestaVendedor, formatearPrecio } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
 
 const PESTANAS = [
-  { clave: "factura", etiqueta: "Por factura" },
-  { clave: "sku", etiqueta: "Por producto" },
-  { clave: "dashboard", etiqueta: "Dashboard" },
+  { clave: "factura", etiqueta: "Por factura", icono: IconoSeguimiento },
+  { clave: "sku", etiqueta: "Por producto", icono: IconoSeguimiento },
+  { clave: "dashboard", etiqueta: "Dashboard", icono: IconoDashboard },
 ];
 
 const FILTROS_VACIOS = { ticket: "", factura: "", transporte: "", estado: "", desde: "", hasta: "" };
@@ -149,6 +150,7 @@ export default function PanelSAC({ sidebarAbierta }) {
         { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
         { titulo: "Cód. Producto", clave: "codigo_producto" },
         { titulo: "Producto", clave: "nombre_producto" },
+        { titulo: "Precio Unitario", obtener: (o) => (o.codigo_producto ? formatearPrecio(o.precio_unitario) : "") },
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
         { titulo: "Categoría", obtener: (o) => (o.categoria === "LOGISTICO" ? "Logístico" : "No logístico") },
         { titulo: "Respuesta vendedor", obtener: (o) => (o.respuesta_vendedor ? etiquetaRespuestaVendedor(o.respuesta_vendedor) : "") },

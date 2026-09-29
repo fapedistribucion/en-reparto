@@ -41,6 +41,13 @@ export function fechaOPendiente(valor) {
   return valor ? formatearFecha(valor) : "Pendiente";
 }
 
+// Precio unitario del producto (ticket_observaciones.precio_unitario), formateado
+// en soles. Puede venir null (reclamos de toda la factura, sin producto puntual).
+export function formatearPrecio(valor) {
+  if (valor == null) return "—";
+  return `S/ ${Number(valor).toFixed(2)}`;
+}
+
 // Texto de la columna "Alcance" (usa los campos de la vista tickets_resumen).
 // Ej.: "Rechazo total", "Rechazo parcial", "Local cerrado - Reeditado"
 // La cantidad de productos observados ya no va aquí entre paréntesis: es la
