@@ -7,6 +7,7 @@ import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
+import ConfirmModal from "../compartido/ConfirmModal";
 import ValidarObservacion from "./ValidarObservacion";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
@@ -49,6 +50,7 @@ export default function PanelSAC({ sidebarAbierta }) {
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  const [confirmarAnulacion, setConfirmarAnulacion] = useState(false);
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
@@ -173,15 +175,20 @@ export default function PanelSAC({ sidebarAbierta }) {
     }
   }
 
-  async function anularTicket() {
+  // El botón "Anular ticket" pide confirmación con nuestro propio popup (ConfirmModal)
+  // en vez del diálogo nativo del navegador; anularTicket() hace el cambio recién
+  // cuando se confirma ahí.
+  function pedirConfirmarAnulacion() {
     if (!motivoAnulacion.trim()) {
       setError("Escribe el motivo de anulación.");
       return;
     }
-    if (!window.confirm(`¿Anular el ticket ${seleccionado.codigo_ticket}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+    setError("");
+    setConfirmarAnulacion(true);
+  }
 
+  async function anularTicket() {
+    setConfirmarAnulacion(false);
     setGuardando(true);
     setError("");
     const { data: sesion } = await supabase.auth.getUser();
@@ -281,12 +288,22 @@ export default function PanelSAC({ sidebarAbierta }) {
                   onChange={(e) => setMotivoAnulacion(e.target.value)}
                 />
                 {error && <p className="mensaje-error">{error}</p>}
-                <button type="button" onClick={anularTicket} disabled={guardando} className="boton-peligro">
+                <button type="button" onClick={pedirConfirmarAnulacion} disabled={guardando} className="boton-peligro">
                   Anular ticket
                 </button>
               </div>
             ) : null
           }
+        />
+      )}
+
+      {confirmarAnulacion && seleccionado && (
+        <ConfirmModal
+          mensaje={`¿Anular el ticket ${seleccionado.codigo_ticket}? Esta acción no se puede deshacer.`}
+          onConfirmar={anularTicket}
+          onCancelar={() => setConfirmarAnulacion(false)}
+          cargando={guardando}
+          textoConfirmar="Anular"
         />
       )}
     </LayoutLateral>

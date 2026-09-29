@@ -10,11 +10,13 @@ const ETIQUETAS_CATEGORIA = {
 // del ticket al que pertenece (se espera `observacion.ticket` ya combinado).
 // `mostrarTransporte`: se mantiene como prop por compatibilidad; SAC y LI siempre la piden en true,
 // ya que "Transporte" es columna fija en esta vista.
-// `onVerTicket(ticket, observacionId)`: abre el detalle enfocado solo en esta observación
-// (el botón dice "Ver evidencias" porque en esta vista solo importan las fotos del producto).
-// `accionExtra(ticket)`: botón adicional por fila (ej. "Marcar llegada a LI").
+// `onVerTicket(ticket, observacionId)`: abre el detalle enfocado solo en esta observación.
+// `accionExtra(ticket)`: botón adicional por fila (ej. confirmar llegada a LI), va en la columna
+// fija "Confirmar recepción".
 //
 // "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje).
+// Las últimas 2 columnas ("Confirmar recepción" y "Detalle") quedan fijas a la derecha (sticky) para
+// no tener que scrollear hasta el final de la tabla para usarlas.
 export default function TablaObservaciones({ observaciones, onVerTicket, mostrarTransporte = false, accionExtra }) {
   if (observaciones.length === 0) {
     return <p>No hay bultos/productos para mostrar.</p>;
@@ -41,7 +43,8 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>Cant. Total</th>
             <th>Fecha llegada LI</th>
             <th>Nota de Crédito</th>
-            <th></th>
+            <th className="col-fija-accion">Confirmar recepción</th>
+            <th className="col-fija-detalle">Detalle</th>
           </tr>
         </thead>
         <tbody>
@@ -73,13 +76,11 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{o.posicion != null ? o.cantidad_facturada : "—"}</td>
                 <td>{fechaOPendiente(t?.fecha_entrega_li)}</td>
                 <td>{t?.nota_credito ?? "Pendiente"}</td>
-                <td>
-                  <div className="acciones-fila">
-                    {t && accionExtra?.(t)}
-                    <button type="button" onClick={() => t && onVerTicket(t, o.id)} disabled={!t}>
-                      Ver evidencias
-                    </button>
-                  </div>
+                <td className="col-fija-accion">{t && accionExtra?.(t)}</td>
+                <td className="col-fija-detalle">
+                  <button type="button" onClick={() => t && onVerTicket(t, o.id)} disabled={!t}>
+                    Ver
+                  </button>
                 </td>
               </tr>
             );

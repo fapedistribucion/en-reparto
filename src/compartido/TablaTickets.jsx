@@ -10,10 +10,12 @@ import {
 // transportista no, ya que en su vista todos los tickets son de su misma empresa).
 // `mostrarSkuObservados`: agrega la columna "SKU observados" (cantidad de productos distintos
 // observados). Solo la usan SAC/LI; para transportista no aporta y se mantiene oculta por defecto.
-// `accionExtra(ticket)`: botón adicional por fila (ej. "Marcar llegada a LI"), sin tener que abrir el detalle.
-// Devuelve null/undefined para esa fila si no aplica.
+// `accionExtra(ticket)`: botón adicional por fila (ej. confirmar llegada a LI), sin tener que abrir
+// el detalle. Va en la columna fija "Confirmar recepción". Devuelve null/undefined si no aplica.
 // "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje);
 // se espera que el ticket ya traiga ese campo combinado.
+// Las últimas 2 columnas ("Confirmar recepción" y "Detalle") quedan fijas a la derecha (sticky) para
+// no tener que scrollear hasta el final de la tabla para usarlas.
 export default function TablaTickets({
   tickets,
   onVerDetalle,
@@ -43,7 +45,8 @@ export default function TablaTickets({
             <th>Fecha llegada LI</th>
             <th>Nota de crédito</th>
             <th>Por validar</th>
-            <th></th>
+            <th className="col-fija-accion">Confirmar recepción</th>
+            <th className="col-fija-detalle">Detalle</th>
           </tr>
         </thead>
         <tbody>
@@ -72,13 +75,11 @@ export default function TablaTickets({
                   "—"
                 )}
               </td>
-              <td>
-                <div className="acciones-fila">
-                  {accionExtra?.(t)}
-                  <button type="button" onClick={() => onVerDetalle(t)}>
-                    Ver detalle
-                  </button>
-                </div>
+              <td className="col-fija-accion">{accionExtra?.(t)}</td>
+              <td className="col-fija-detalle">
+                <button type="button" onClick={() => onVerDetalle(t)}>
+                  Ver
+                </button>
               </td>
             </tr>
           ))}

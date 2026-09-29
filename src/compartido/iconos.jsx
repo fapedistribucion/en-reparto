@@ -85,6 +85,15 @@ export function IconoMenu(props) {
   );
 }
 
+export function IconoCheck(props) {
+  return base(
+    <>
+      <path d="M5 13l4 4L19 7" />
+    </>,
+    props
+  );
+}
+
 export function IconoBuscar(props) {
   return base(
     <>

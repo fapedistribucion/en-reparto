@@ -132,7 +132,7 @@ textarea:focus {
 
 .marca {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 17px;
   color: var(--acento);
   white-space: nowrap;
 }
@@ -592,6 +592,27 @@ textarea:focus {
   width: 100%;
 }
 
+/* ---------- Popup de confirmación (reemplaza window.confirm) ---------- */
+.modal-confirmar {
+  background: var(--superficie);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+}
+
+.modal-confirmar-mensaje {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.modal-confirmar-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* ---------- Tabla de tickets ---------- */
 .contenedor-tabla {
   background: var(--superficie);
@@ -640,9 +661,49 @@ textarea:focus {
   background: var(--fondo);
 }
 
-.tabla-tickets td:last-child {
+.tabla-tickets td.col-fija-accion,
+.tabla-tickets td.col-fija-detalle {
   padding-top: 6px;
   padding-bottom: 6px;
+}
+
+/* "Confirmar recepción" y "Detalle": columnas fijas a la derecha, se mantienen
+   visibles aunque se scrollee la tabla horizontalmente. */
+.tabla-tickets th.col-fija-accion,
+.tabla-tickets th.col-fija-detalle,
+.tabla-tickets td.col-fija-accion,
+.tabla-tickets td.col-fija-detalle {
+  position: sticky;
+  background: var(--superficie);
+}
+
+.tabla-tickets thead th.col-fija-accion,
+.tabla-tickets thead th.col-fija-detalle {
+  background: var(--fondo);
+  z-index: 2;
+}
+
+.tabla-tickets tbody td.col-fija-accion,
+.tabla-tickets tbody td.col-fija-detalle {
+  z-index: 1;
+}
+
+.tabla-tickets tbody tr:hover td.col-fija-accion,
+.tabla-tickets tbody tr:hover td.col-fija-detalle {
+  background: var(--fondo);
+}
+
+.col-fija-detalle {
+  right: 0;
+  width: 90px;
+  min-width: 90px;
+}
+
+.col-fija-accion {
+  right: 90px;
+  width: 140px;
+  min-width: 140px;
+  border-left: 1px solid var(--borde);
 }
 
 .badge-estado {
@@ -1124,6 +1185,16 @@ textarea:focus {
   border-color: var(--acento);
 }
 
+.boton-confirmar-recepcion {
+  color: var(--exito);
+  border-color: var(--exito);
+}
+
+.boton-confirmar-recepcion:hover {
+  background: var(--exito);
+  color: #fff;
+}
+
 .boton-filtrar {
   background: var(--acento);
   color: #fff;
@@ -1419,12 +1490,6 @@ textarea:focus {
 }
 
 /* ---------- Acciones por fila (tabla) y aviso de detalle filtrado ---------- */
-.acciones-fila {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
 .boton-enlace {
   border: none;
   background: transparent;

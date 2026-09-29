@@ -7,6 +7,8 @@ import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
+import ConfirmModal from "../compartido/ConfirmModal";
+import { IconoCheck } from "../compartido/iconos";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
@@ -49,6 +51,8 @@ export default function PanelLI({ sidebarAbierta }) {
   const [guardando, setGuardando] = useState(false);
   const [procesandoLlegadaId, setProcesandoLlegadaId] = useState(null);
   const [error, setError] = useState("");
+  const [ticketConfirmarLlegada, setTicketConfirmarLlegada] = useState(null);
+  const [confirmarNC, setConfirmarNC] = useState(false);
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
@@ -173,12 +177,18 @@ export default function PanelLI({ sidebarAbierta }) {
     }
   }
 
-  // `ticket`: se llama tanto desde el botón dentro del detalle (con `seleccionado`)
-  // como desde el botón externo en la tabla (sin abrir el detalle).
-  async function marcarLlegada(ticket) {
-    if (!window.confirm(`¿Confirmar que el ticket ${ticket.codigo_ticket} llegó a Logística Inversa?`)) {
-      return;
-    }
+  // `ticket`: se pide tanto desde el botón dentro del detalle (con `seleccionado`)
+  // como desde el botón externo en la tabla (sin abrir el detalle). En vez del
+  // diálogo nativo del navegador, se pide confirmación con nuestro ConfirmModal;
+  // marcarLlegada() hace el cambio recién cuando se confirma ahí.
+  function pedirConfirmarLlegada(ticket) {
+    setTicketConfirmarLlegada(ticket);
+  }
+
+  async function marcarLlegada() {
+    const ticket = ticketConfirmarLlegada;
+    setTicketConfirmarLlegada(null);
+    if (!ticket) return;
 
     setProcesandoLlegadaId(ticket.id);
     setGuardando(true);
@@ -203,19 +213,17 @@ export default function PanelLI({ sidebarAbierta }) {
     await recargar();
   }
 
-  async function guardarNotaCredito() {
+  function pedirConfirmarNC() {
     if (!notaCredito.trim()) {
       setError("Ingresa el número de Nota de Crédito.");
       return;
     }
-    if (
-      !window.confirm(
-        `¿Registrar la NC "${notaCredito}" para el ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`
-      )
-    ) {
-      return;
-    }
+    setError("");
+    setConfirmarNC(true);
+  }
 
+  async function guardarNotaCredito() {
+    setConfirmarNC(false);
     setGuardando(true);
     setError("");
     const { data: sesion } = await supabase.auth.getUser();
@@ -269,8 +277,15 @@ export default function PanelLI({ sidebarAbierta }) {
           mostrarSkuObservados
           accionExtra={(t) =>
             t.estado === "EN_RUTA" ? (
-              <button type="button" onClick={() => marcarLlegada(t)} disabled={procesandoLlegadaId === t.id}>
-                Marcar llegada a LI
+              <button
+                type="button"
+                className="boton-icono boton-confirmar-recepcion"
+                onClick={() => pedirConfirmarLlegada(t)}
+                disabled={procesandoLlegadaId === t.id}
+                title="Marcar llegada a LI"
+                aria-label="Marcar llegada a LI"
+              >
+                <IconoCheck size={16} />
               </button>
             ) : null
           }
@@ -283,8 +298,15 @@ export default function PanelLI({ sidebarAbierta }) {
           mostrarTransporte
           accionExtra={(t) =>
             t.estado === "EN_RUTA" ? (
-              <button type="button" onClick={() => marcarLlegada(t)} disabled={procesandoLlegadaId === t.id}>
-                Marcar llegada a LI
+              <button
+                type="button"
+                className="boton-icono boton-confirmar-recepcion"
+                onClick={() => pedirConfirmarLlegada(t)}
+                disabled={procesandoLlegadaId === t.id}
+                title="Marcar llegada a LI"
+                aria-label="Marcar llegada a LI"
+              >
+                <IconoCheck size={16} />
               </button>
             ) : null
           }
@@ -318,7 +340,7 @@ export default function PanelLI({ sidebarAbierta }) {
                 {error && <p className="mensaje-error">{error}</p>}
 
                 {seleccionado.estado === "EN_RUTA" && (
-                  <button type="button" onClick={() => marcarLlegada(seleccionado)} disabled={guardando}>
+                  <button type="button" onClick={() => pedirConfirmarLlegada(seleccionado)} disabled={guardando}>
                     Marcar llegada a LI
                   </button>
                 )}
@@ -333,7 +355,7 @@ export default function PanelLI({ sidebarAbierta }) {
                       onChange={(e) => setNotaCredito(e.target.value)}
                       placeholder="N° de NC"
                     />
-                    <button type="button" onClick={guardarNotaCredito} disabled={guardando}>
+                    <button type="button" onClick={pedirConfirmarNC} disabled={guardando}>
                       Guardar NC
                     </button>
                   </div>
@@ -341,6 +363,24 @@ export default function PanelLI({ sidebarAbierta }) {
               </>
             ) : null
           }
+        />
+      )}
+
+      {ticketConfirmarLlegada && (
+        <ConfirmModal
+          mensaje={`¿Confirmar que el ticket ${ticketConfirmarLlegada.codigo_ticket} llegó a Logística Inversa?`}
+          onConfirmar={marcarLlegada}
+          onCancelar={() => setTicketConfirmarLlegada(null)}
+          cargando={guardando}
+        />
+      )}
+
+      {confirmarNC && seleccionado && (
+        <ConfirmModal
+          mensaje={`¿Registrar la NC "${notaCredito}" para el ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`}
+          onConfirmar={guardarNotaCredito}
+          onCancelar={() => setConfirmarNC(false)}
+          cargando={guardando}
         />
       )}
     </LayoutLateral>

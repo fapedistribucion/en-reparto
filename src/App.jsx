@@ -7,9 +7,9 @@ import PanelLI from "./li/PanelLI";
 import MenuUsuario from "./compartido/MenuUsuario";
 import { IconoMenu } from "./compartido/iconos";
 
-// Solo SAC y LI tienen sidebar (Por factura / Por producto / Dashboard); el
-// transportista usa una vista simple sin menú lateral.
-const ROLES_CON_SIDEBAR = ["sac", "li"];
+// Los 3 roles tienen sidebar propio (SAC/LI: Por factura / Por producto / Dashboard;
+// transportista: Nuevo reclamo / Seguimiento).
+const ROLES_CON_SIDEBAR = ["sac", "li", "transportista"];
 
 export default function App() {
   const { usuario, rol, cargando, cerrarSesion } = useAuth();
@@ -42,7 +42,7 @@ export default function App() {
       </header>
 
       <main className="contenido">
-        {rol === "transportista" && <PanelTransportista />}
+        {rol === "transportista" && <PanelTransportista sidebarAbierta={sidebarAbierta} />}
         {rol === "sac" && <PanelSAC sidebarAbierta={sidebarAbierta} />}
         {rol === "li" && <PanelLI sidebarAbierta={sidebarAbierta} />}
         {!rol && (
