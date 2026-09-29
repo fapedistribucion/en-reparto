@@ -368,7 +368,7 @@ export default function PanelLI({ sidebarAbierta }) {
 
       {ticketConfirmarLlegada && (
         <ConfirmModal
-          mensaje={`¿Confirmar que el ticket ${ticketConfirmarLlegada.codigo_ticket} llegó a Logística Inversa?`}
+          mensaje={`¿Confirmar que la factura ${ticketConfirmarLlegada.factura} llegó a Logística Inversa?`}
           onConfirmar={marcarLlegada}
           onCancelar={() => setTicketConfirmarLlegada(null)}
           cargando={guardando}

@@ -43,7 +43,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>Cant. Total</th>
             <th>Fecha llegada LI</th>
             <th>Nota de Crédito</th>
-            <th className="col-fija-accion">Confirmar recepción</th>
+            {accionExtra && <th className="col-fija-accion">Confirmar recepción</th>}
             <th className="col-fija-detalle">Detalle</th>
           </tr>
         </thead>
@@ -76,7 +76,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{o.posicion != null ? o.cantidad_facturada : "—"}</td>
                 <td>{fechaOPendiente(t?.fecha_entrega_li)}</td>
                 <td>{t?.nota_credito ?? "Pendiente"}</td>
-                <td className="col-fija-accion">{t && accionExtra?.(t)}</td>
+                {accionExtra && <td className="col-fija-accion">{t && accionExtra(t)}</td>}
                 <td className="col-fija-detalle">
                   <button type="button" onClick={() => t && onVerTicket(t, o.id)} disabled={!t}>
                     Ver

@@ -11,11 +11,12 @@ import {
 // `mostrarSkuObservados`: agrega la columna "SKU observados" (cantidad de productos distintos
 // observados). Solo la usan SAC/LI; para transportista no aporta y se mantiene oculta por defecto.
 // `accionExtra(ticket)`: botón adicional por fila (ej. confirmar llegada a LI), sin tener que abrir
-// el detalle. Va en la columna fija "Confirmar recepción". Devuelve null/undefined si no aplica.
+// el detalle. Va en la columna fija "Confirmar recepción", que solo aparece cuando se pasa esta prop
+// (LI la usa; SAC y transportista no, así que no la ven).
 // "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje);
 // se espera que el ticket ya traiga ese campo combinado.
-// Las últimas 2 columnas ("Confirmar recepción" y "Detalle") quedan fijas a la derecha (sticky) para
-// no tener que scrollear hasta el final de la tabla para usarlas.
+// "Detalle" (y "Confirmar recepción" cuando aplica) quedan fijas a la derecha (sticky) para no tener
+// que scrollear hasta el final de la tabla para usarlas.
 export default function TablaTickets({
   tickets,
   onVerDetalle,
@@ -45,7 +46,7 @@ export default function TablaTickets({
             <th>Fecha llegada LI</th>
             <th>Nota de crédito</th>
             <th>Por validar</th>
-            <th className="col-fija-accion">Confirmar recepción</th>
+            {accionExtra && <th className="col-fija-accion">Confirmar recepción</th>}
             <th className="col-fija-detalle">Detalle</th>
           </tr>
         </thead>
@@ -75,7 +76,7 @@ export default function TablaTickets({
                   "—"
                 )}
               </td>
-              <td className="col-fija-accion">{accionExtra?.(t)}</td>
+              {accionExtra && <td className="col-fija-accion">{accionExtra(t)}</td>}
               <td className="col-fija-detalle">
                 <button type="button" onClick={() => onVerDetalle(t)}>
                   Ver
