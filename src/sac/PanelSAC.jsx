@@ -12,7 +12,7 @@ import ValidarObservacion from "./ValidarObservacion";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, etiquetaRespuestaVendedor } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
 
@@ -151,6 +151,7 @@ export default function PanelSAC({ sidebarAbierta }) {
         { titulo: "Producto", clave: "nombre_producto" },
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
         { titulo: "Categoría", obtener: (o) => (o.categoria === "LOGISTICO" ? "Logístico" : "No logístico") },
+        { titulo: "Respuesta vendedor", obtener: (o) => (o.respuesta_vendedor ? etiquetaRespuestaVendedor(o.respuesta_vendedor) : "") },
         { titulo: "Bulto", clave: "numero_bulto" },
         { titulo: "Cant. Reclamada", clave: "cantidad_observada" },
         { titulo: "Cant. Total", clave: "cantidad_facturada" },

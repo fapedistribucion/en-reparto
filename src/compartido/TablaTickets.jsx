@@ -45,7 +45,6 @@ export default function TablaTickets({
             <th>Cliente</th>
             <th>Fecha llegada LI</th>
             <th>Nota de crédito</th>
-            <th>Por validar</th>
             {accionExtra && <th className="col-fija-accion">Confirmar recepción</th>}
             <th className="col-fija-detalle">Detalle</th>
           </tr>
@@ -69,13 +68,6 @@ export default function TablaTickets({
               <td>{t.cliente}</td>
               <td>{fechaOPendiente(t.fecha_entrega_li)}</td>
               <td>{t.nota_credito ?? "Pendiente"}</td>
-              <td>
-                {t.n_pendientes_validacion > 0 ? (
-                  <span className="badge-pendiente">{t.n_pendientes_validacion} pendiente(s)</span>
-                ) : (
-                  "—"
-                )}
-              </td>
               {accionExtra && <td className="col-fija-accion">{accionExtra(t)}</td>}
               <td className="col-fija-detalle">
                 <button type="button" onClick={() => onVerDetalle(t)}>

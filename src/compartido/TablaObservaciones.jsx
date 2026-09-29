@@ -1,4 +1,4 @@
-import { ETIQUETAS_ESTADO, formatearFecha, fechaOPendiente } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, formatearFecha, fechaOPendiente, etiquetaRespuestaVendedor } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 const ETIQUETAS_CATEGORIA = {
@@ -38,6 +38,7 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>Producto</th>
             <th>Motivo</th>
             <th>Categoría</th>
+            <th>Respuesta vendedor</th>
             <th>Bulto</th>
             <th>Cant. Reclamada</th>
             <th>Cant. Total</th>
@@ -71,6 +72,15 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{o.codigo_producto ? o.nombre_producto : "Toda la factura"}</td>
                 <td>{etiquetaMotivo(o.subcategoria)}</td>
                 <td>{ETIQUETAS_CATEGORIA[o.categoria] ?? o.categoria}</td>
+                <td>
+                  {o.respuesta_vendedor ? (
+                    <span className={`badge-respuesta badge-respuesta-${o.respuesta_vendedor.toLowerCase()}`}>
+                      {etiquetaRespuestaVendedor(o.respuesta_vendedor)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td>{o.numero_bulto ?? "—"}</td>
                 <td>{o.posicion != null ? o.cantidad_observada : "—"}</td>
                 <td>{o.posicion != null ? o.cantidad_facturada : "—"}</td>

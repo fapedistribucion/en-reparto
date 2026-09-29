@@ -11,3 +11,14 @@ export const ETIQUETAS_EVIDENCIA = {
 export function etiquetaEvidencia(tipo) {
   return ETIQUETAS_EVIDENCIA[tipo] ?? tipo;
 }
+
+// Cantidad EXACTA de fotos que exige cada tipo de evidencia (ni más, ni menos), según
+// lo definido en el instructivo de motivos. Los tipos que no aparecen acá piden 1 sola foto.
+export const CANTIDAD_EVIDENCIA = {
+  foto_4_lados_bulto: 4,
+  foto_4_lados_caja: 4,
+};
+
+export function cantidadEvidencia(tipo) {
+  return CANTIDAD_EVIDENCIA[tipo] ?? 1;
+}

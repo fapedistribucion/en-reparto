@@ -9,7 +9,7 @@ export default function ValidarObservacion({ observacion, onHecho }) {
   const [error, setError] = useState("");
   const [confirmando, setConfirmando] = useState(false);
 
-  if (observacion.categoria !== "NO_LOGISTICO" || observacion.validado === "VALIDADO") return null;
+  if (observacion.categoria !== "NO_LOGISTICO" || observacion.respuesta_vendedor != null) return null;
 
   // El botón "Validar" pide confirmación con nuestro propio popup (ConfirmModal)
   // en vez de guardar directo; validar() hace el cambio recién cuando se confirma ahí.
@@ -31,8 +31,7 @@ export default function ValidarObservacion({ observacion, onHecho }) {
     const { data, error: errorUpdate } = await supabase
       .from("ticket_observaciones")
       .update({
-        validado: "VALIDADO",
-        obtuvo_respuesta: respuesta === "si",
+        respuesta_vendedor: respuesta === "si" ? "CONTESTO" : "NO_CONTESTO",
         usuario_validacion: sesion.user.id,
         fecha_validacion: new Date().toISOString(),
       })

@@ -1,6 +1,6 @@
 // Lógica pura del formulario de reclamo (sin React ni Supabase), para poder probarla aislada.
 
-import { etiquetaEvidencia } from "../utils/etiquetasEvidencia.js";
+import { etiquetaEvidencia, cantidadEvidencia } from "../utils/etiquetasEvidencia.js";
 
 // La "opción" que elige el transportista puede ser:
 //   "RECHAZO_TOTAL" | "RECHAZO_PARCIAL" | "REEDITADO:LOCAL_CERRADO" (alcance forzado por un motivo)
@@ -17,8 +17,17 @@ export function evidenciasDe(motivos, subcategoria) {
   return motivos.find((m) => m.subcategoria === subcategoria)?.evidencias_requeridas ?? [];
 }
 
+// Cada tipo exige una cantidad EXACTA de fotos (ver cantidadEvidencia): esto detecta
+// tanto lo que no se subió como lo que quedó incompleto (SubidaEvidencia ya impide
+// subir de más, así que en la práctica esto solo puede quedar por debajo del cupo).
 function faltantes(motivos, subcategoria, archivos) {
-  return evidenciasDe(motivos, subcategoria).filter((tipo) => !(archivos?.[tipo]?.length > 0));
+  return evidenciasDe(motivos, subcategoria).filter(
+    (tipo) => (archivos?.[tipo]?.length ?? 0) !== cantidadEvidencia(tipo)
+  );
+}
+
+function descripcionFaltante(tipo, archivos) {
+  return `${etiquetaEvidencia(tipo)} (${archivos?.[tipo]?.length ?? 0}/${cantidadEvidencia(tipo)})`;
 }
 
 // Solo viajan las fotos que el motivo elegido exige (si cambió de motivo, las anteriores sobran)
@@ -81,13 +90,17 @@ export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, t
       if (!t.bulto.trim()) return `Producto ${n}: indica el número de bulto.`;
 
       const falta = faltantes(motivos, t.subcategoria, t.archivos);
-      if (falta.length) return `Producto ${n}: falta subir ${falta.map(etiquetaEvidencia).join(", ")}.`;
+      if (falta.length) {
+        return `Producto ${n}: falta subir ${falta.map((tipo) => descripcionFaltante(tipo, t.archivos)).join(", ")}.`;
+      }
     }
   } else {
     const subcategoria = motivoFijo ?? motivoTotal;
     if (!subcategoria) return "Selecciona el motivo.";
     const falta = faltantes(motivos, subcategoria, archivosMotivo);
-    if (falta.length) return `Falta subir ${falta.map(etiquetaEvidencia).join(", ")}.`;
+    if (falta.length) {
+      return `Falta subir ${falta.map((tipo) => descripcionFaltante(tipo, archivosMotivo)).join(", ")}.`;
+    }
   }
 
   if (!archivosFactura || archivosFactura.length === 0) return "Sube la foto de la factura.";

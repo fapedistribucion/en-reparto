@@ -471,6 +471,15 @@ textarea:focus {
   margin: 0 0 8px;
 }
 
+.contador-evidencia {
+  font-weight: 600;
+  color: var(--advertencia);
+}
+
+.contador-evidencia-completo {
+  color: var(--exito);
+}
+
 .miniaturas {
   display: flex;
   flex-wrap: wrap;
@@ -731,6 +740,29 @@ textarea:focus {
 }
 
 .badge-estado-anulado {
+  background: #f8e3e1;
+  color: var(--peligro);
+}
+
+.badge-respuesta {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-respuesta-no_aplica {
+  background: #eee;
+  color: var(--texto-secundario);
+}
+
+.badge-respuesta-contesto {
+  background: #e1f5ee;
+  color: var(--exito);
+}
+
+.badge-respuesta-no_contesto {
   background: #f8e3e1;
   color: var(--peligro);
 }
@@ -1058,16 +1090,6 @@ textarea:focus {
 .obs-card-linea {
   margin: 0;
   font-size: 13px;
-}
-
-.badge-pendiente {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  background: #fdf0dc;
-  color: var(--advertencia);
 }
 
 .accion-observacion {

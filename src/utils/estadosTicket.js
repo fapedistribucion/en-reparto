@@ -8,6 +8,19 @@ export const ETIQUETAS_ESTADO = {
   ANULADO: "ANULADO",
 };
 
+// `respuesta_vendedor` (ticket_observaciones): NO_APLICA para Logístico (nunca
+// requiere contactar al vendedor), CONTESTO/NO_CONTESTO para No logístico una vez
+// que SAC lo valida, o null mientras sigue pendiente de validar.
+export const ETIQUETAS_RESPUESTA_VENDEDOR = {
+  NO_APLICA: "NO APLICA",
+  CONTESTO: "CONTESTÓ",
+  NO_CONTESTO: "NO CONTESTÓ",
+};
+
+export function etiquetaRespuestaVendedor(valor) {
+  return ETIQUETAS_RESPUESTA_VENDEDOR[valor] ?? valor;
+}
+
 // Siempre DD/MM/AAAA (con hora opcional), sin depender del formato "corto" del
 // navegador/locale (que puede dar año de 2 dígitos u otro orden según el dispositivo).
 export function formatearFecha(valor, conHora = false) {
