@@ -184,15 +184,6 @@ export default function NuevoReclamo() {
                 </div>
               )}
 
-              {alcance === "REEDITADO" && (
-                <div className="seccion-reclamo">
-                  <p className="aviso-info">
-                    Motivo: <strong>{etiquetaMotivo(motivoFijo)}</strong>. La factura quedará reeditada para
-                    atenderse otro día.
-                  </p>
-                </div>
-              )}
-
               {alcance && alcance !== "RECHAZO_PARCIAL" && evidenciasMotivo.length > 0 && (
                 <div className="seccion-reclamo">
                   <p className="etiqueta-seccion">Evidencia</p>

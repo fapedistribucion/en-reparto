@@ -13,11 +13,6 @@ export default function DashboardTickets({ tickets, observaciones, rol }) {
     return conteo;
   }, [tickets]);
 
-  const pendientesValidar = useMemo(
-    () => observaciones.filter((o) => o.categoria === "NO_LOGISTICO" && o.validado !== "VALIDADO").length,
-    [observaciones]
-  );
-
   const porMotivo = useMemo(() => {
     const conteo = new Map();
     observaciones.forEach((o) => {
@@ -35,13 +30,6 @@ export default function DashboardTickets({ tickets, observaciones, rol }) {
           <span className="tarjeta-stat-numero">{tickets.length}</span>
           <span className="tarjeta-stat-etiqueta">Tickets totales</span>
         </div>
-
-        {rol === "SAC" && (
-          <div className="tarjeta-stat tarjeta-stat-alerta">
-            <span className="tarjeta-stat-numero">{pendientesValidar}</span>
-            <span className="tarjeta-stat-etiqueta">Pendientes de validar</span>
-          </div>
-        )}
 
         <div className={`tarjeta-stat ${rol === "LI" ? "tarjeta-stat-alerta" : ""}`}>
           <span className="tarjeta-stat-numero">{porEstado.EN_RUTA}</span>

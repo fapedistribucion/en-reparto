@@ -71,6 +71,68 @@ export function IconoCerrar(props) {
   );
 }
 
+// Hamburguesa (abrir/cerrar sidebar): trazos SVG, no divs, para que las 3
+// líneas midan siempre exactamente lo mismo (con divs + flex/gap el
+// navegador puede redondear el alto de la línea del medio de forma distinta).
+export function IconoMenu(props) {
+  return base(
+    <>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </>,
+    props
+  );
+}
+
+export function IconoCheck(props) {
+  return base(
+    <>
+      <path d="M5 13l4 4L19 7" />
+    </>,
+    props
+  );
+}
+
+// Ítem de sidebar "Seguimiento" (tablas Por factura / Por producto): tabla/layout
+// con una fila de encabezado y una columna dividida.
+export function IconoSeguimiento(props) {
+  return base(
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M9 10v10" />
+    </>,
+    props
+  );
+}
+
+// Ítem de sidebar "Dashboard": gráfico de barras.
+export function IconoDashboard(props) {
+  return base(
+    <>
+      <path d="M5 20v-8" />
+      <path d="M12 20V6" />
+      <path d="M19 20v-5" />
+    </>,
+    props
+  );
+}
+
+// Ítem de sidebar "Nuevo reclamo" (transportista): ticket/formulario con un "+",
+// para representar la creación de un reclamo nuevo.
+export function IconoNuevoReclamo(props) {
+  return base(
+    <>
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <path d="M8 8h8" />
+      <path d="M9 15h6" />
+      <path d="M12 12v6" />
+    </>,
+    props
+  );
+}
+
 export function IconoBuscar(props) {
   return base(
     <>

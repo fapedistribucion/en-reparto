@@ -10,8 +10,7 @@ export default function SelectorAlcance({ opciones, valor, onCambiar }) {
           className={`opcion-alcance ${valor === o.clave ? "activa" : ""}`}
           onClick={() => onCambiar(o.clave)}
         >
-          <strong>{o.titulo}</strong>
-          <span>{o.ayuda}</span>
+          <span className="opcion-alcance-titulo">{o.titulo}</span>
         </button>
       ))}
     </div>

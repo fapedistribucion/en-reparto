@@ -1,11 +1,12 @@
 import { useState } from "react";
 import LayoutLateral from "../compartido/LayoutLateral";
+import { IconoNuevoReclamo, IconoSeguimiento } from "../compartido/iconos";
 import NuevoReclamo from "./NuevoReclamo";
 import Seguimiento from "./Seguimiento";
 
 const SECCIONES = [
-  { clave: "nuevo", etiqueta: "Nuevo reclamo" },
-  { clave: "seguimiento", etiqueta: "Seguimiento" },
+  { clave: "nuevo", etiqueta: "Nuevo reclamo", icono: IconoNuevoReclamo },
+  { clave: "seguimiento", etiqueta: "Seguimiento", icono: IconoSeguimiento },
 ];
 
 // `sidebarAbierta`: igual que en PanelSAC/PanelLI, el estado del sidebar vive en App.jsx
