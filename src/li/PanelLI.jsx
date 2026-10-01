@@ -2,24 +2,21 @@ import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
-import { useFacturasViaje } from "../compartido/useFacturasViaje";
 import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
-import ConfirmModal from "../compartido/ConfirmModal";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
-import { IconoCheck, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, etiquetaRespuestaVendedor, formatearPrecio } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
 
 const PESTANAS = [
-  { clave: "factura", etiqueta: "Por factura", icono: IconoSeguimiento },
-  { clave: "sku", etiqueta: "Por producto", icono: IconoSeguimiento },
-  { clave: "dashboard", etiqueta: "Dashboard", icono: IconoDashboard },
+  { clave: "factura", etiqueta: "Seguimiento a nivel factura" },
+  { clave: "sku", etiqueta: "Seguimiento a nivel SKU" },
+  { clave: "dashboard", etiqueta: "Dashboard" },
 ];
 
 const FILTROS_VACIOS = { ticket: "", factura: "", transporte: "", estado: "", desde: "", hasta: "" };
@@ -40,19 +37,15 @@ function coincideFecha(fechaIso, desde, hasta) {
   return true;
 }
 
-export default function PanelLI({ sidebarAbierta }) {
+export default function PanelLI() {
   const { tickets, cargando: cargandoTickets, error: errorCarga, recargar } = useTickets();
   const { observaciones, cargando: cargandoObs, recargar: recargarObs } = useObservaciones();
 
   const [pestana, setPestana] = useState("factura");
   const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const [observacionFocoId, setObservacionFocoId] = useState(null);
   const [notaCredito, setNotaCredito] = useState("");
   const [guardando, setGuardando] = useState(false);
-  const [procesandoLlegadaId, setProcesandoLlegadaId] = useState(null);
   const [error, setError] = useState("");
-  const [ticketConfirmarLlegada, setTicketConfirmarLlegada] = useState(null);
-  const [confirmarNC, setConfirmarNC] = useState(false);
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
@@ -65,21 +58,11 @@ export default function PanelLI({ sidebarAbierta }) {
     [tickets]
   );
 
-  const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
-  const fechasViaje = useFacturasViaje(facturasVisibles);
-
-  // `fecha_viaje` viene de facturas_data (tabla aparte); se combina una sola vez
-  // aquí para que tanto la tabla "Por factura" como "Por producto" la tengan.
-  const ticketsConFechaViaje = useMemo(
-    () => tickets.map((t) => ({ ...t, fecha_viaje: fechasViaje.get(t.factura) ?? null })),
-    [tickets, fechasViaje]
-  );
-
   const filtrosActivos = Object.values(filtros).some((v) => v);
 
   const ticketsFiltrados = useMemo(
     () =>
-      ticketsConFechaViaje.filter(
+      tickets.filter(
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
@@ -87,16 +70,12 @@ export default function PanelLI({ sidebarAbierta }) {
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
       ),
-    [ticketsConFechaViaje, filtros]
+    [tickets, filtros]
   );
 
   const observacionesConTicket = useMemo(
-    () =>
-      observaciones.map((o) => {
-        const t = ticketsConFechaViaje.find((tt) => tt.id === o.ticket_id);
-        return { ...o, ticket: t };
-      }),
-    [observaciones, ticketsConFechaViaje]
+    () => observaciones.map((o) => ({ ...o, ticket: tickets.find((t) => t.id === o.ticket_id) })),
+    [observaciones, tickets]
   );
 
   const observacionesFiltradas = useMemo(
@@ -112,9 +91,8 @@ export default function PanelLI({ sidebarAbierta }) {
     [observacionesConTicket, filtros]
   );
 
-  function abrirDetalle(ticket, observacionId = null) {
+  function abrirDetalle(ticket) {
     setSeleccionadoId(ticket.id);
-    setObservacionFocoId(observacionId);
     setNotaCredito("");
     setError("");
   }
@@ -142,57 +120,40 @@ export default function PanelLI({ sidebarAbierta }) {
 
   function exportarVistaActual() {
     if (pestana === "sku") {
-      exportarCsv("en-reparto-por-producto", [
-        { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
+      exportarCsv("en-reparto-por-sku", [
         { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
-        { titulo: "Fecha viaje", obtener: (o) => o.ticket?.fecha_viaje },
-        { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
+        { titulo: "Estado", obtener: (o) => ETIQUETAS_ESTADO[o.ticket?.estado] ?? o.ticket?.estado },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
         { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
-        { titulo: "Cód. Producto", clave: "codigo_producto" },
+        { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
+        { titulo: "Posición", clave: "posicion" },
+        { titulo: "Código producto", clave: "codigo_producto" },
         { titulo: "Producto", clave: "nombre_producto" },
-        { titulo: "Precio Unitario", obtener: (o) => (o.codigo_producto ? formatearPrecio(o.precio_unitario) : "") },
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
-        { titulo: "Categoría", obtener: (o) => (o.categoria === "LOGISTICO" ? "Logístico" : "No logístico") },
-        { titulo: "Respuesta vendedor", obtener: (o) => (o.respuesta_vendedor ? etiquetaRespuestaVendedor(o.respuesta_vendedor) : "") },
         { titulo: "Bulto", clave: "numero_bulto" },
-        { titulo: "Cant. Reclamada", clave: "cantidad_observada" },
-        { titulo: "Cant. Total", clave: "cantidad_facturada" },
-        { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
-        { titulo: "Nota de Crédito", obtener: (o) => o.ticket?.nota_credito },
+        { titulo: "Cant. observada", clave: "cantidad_observada" },
+        { titulo: "Cant. facturada", clave: "cantidad_facturada" },
       ], observacionesFiltradas);
     } else {
       exportarCsv("en-reparto-por-ticket", [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
         { titulo: "N° Ticket", clave: "codigo_ticket" },
-        { titulo: "Fecha viaje", clave: "fecha_viaje" },
-        { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
         { titulo: "Factura", clave: "factura" },
         { titulo: "Pedido", clave: "pedido_entrega" },
-        { titulo: "Alcance", obtener: (t) => textoAlcance(t) },
-        { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
         { titulo: "Cliente", clave: "cliente" },
-        { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
+        { titulo: "Transporte", clave: "empresa_transporte" },
+        { titulo: "Llegada a LI", clave: "fecha_entrega_li" },
         { titulo: "Nota de crédito", clave: "nota_credito" },
       ], ticketsFiltrados);
     }
   }
 
-  // `ticket`: se pide tanto desde el botón dentro del detalle (con `seleccionado`)
-  // como desde el botón externo en la tabla (sin abrir el detalle). En vez del
-  // diálogo nativo del navegador, se pide confirmación con nuestro ConfirmModal;
-  // marcarLlegada() hace el cambio recién cuando se confirma ahí.
-  function pedirConfirmarLlegada(ticket) {
-    setTicketConfirmarLlegada(ticket);
-  }
-
   async function marcarLlegada() {
-    const ticket = ticketConfirmarLlegada;
-    setTicketConfirmarLlegada(null);
-    if (!ticket) return;
+    if (!window.confirm(`¿Confirmar que el ticket ${seleccionado.codigo_ticket} llegó a Logística Inversa?`)) {
+      return;
+    }
 
-    setProcesandoLlegadaId(ticket.id);
     setGuardando(true);
     setError("");
     const { data: sesion } = await supabase.auth.getUser();
@@ -203,10 +164,9 @@ export default function PanelLI({ sidebarAbierta }) {
         usuario_llegada_li: sesion.user.id,
         fecha_entrega_li: new Date().toISOString(),
       })
-      .eq("id", ticket.id);
+      .eq("id", seleccionado.id);
 
     setGuardando(false);
-    setProcesandoLlegadaId(null);
 
     if (errorUpdate) {
       setError("No se pudo registrar la llegada: " + errorUpdate.message);
@@ -215,17 +175,19 @@ export default function PanelLI({ sidebarAbierta }) {
     await recargar();
   }
 
-  function pedirConfirmarNC() {
+  async function guardarNotaCredito() {
     if (!notaCredito.trim()) {
       setError("Ingresa el número de Nota de Crédito.");
       return;
     }
-    setError("");
-    setConfirmarNC(true);
-  }
+    if (
+      !window.confirm(
+        `¿Registrar la NC "${notaCredito}" para el ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`
+      )
+    ) {
+      return;
+    }
 
-  async function guardarNotaCredito() {
-    setConfirmarNC(false);
     setGuardando(true);
     setError("");
     const { data: sesion } = await supabase.auth.getUser();
@@ -250,69 +212,30 @@ export default function PanelLI({ sidebarAbierta }) {
 
   if (cargandoTickets || cargandoObs) {
     return (
-      <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
+      <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana}>
         <p>Cargando tickets...</p>
       </LayoutLateral>
     );
   }
 
   return (
-    <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
+    <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana}>
+      <h2>{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
       {errorCarga && <p className="mensaje-error">No se pudieron cargar los tickets: {errorCarga}</p>}
 
-      <div className="encabezado-vista">
-        <h2 className="titulo-vista">{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
-        <BarraHerramientas
-          onExportar={pestana !== "dashboard" ? exportarVistaActual : undefined}
-          onQuitarFiltros={limpiarFiltros}
-          onRefrescar={refrescarTodo}
-          onAbrirFiltros={abrirPanelFiltros}
-          filtrosActivos={filtrosActivos}
-        />
-      </div>
+      <BarraHerramientas
+        onExportar={pestana !== "dashboard" ? exportarVistaActual : undefined}
+        onQuitarFiltros={limpiarFiltros}
+        onRefrescar={refrescarTodo}
+        onAbrirFiltros={abrirPanelFiltros}
+        filtrosActivos={filtrosActivos}
+      />
 
       {pestana === "factura" && (
-        <TablaTickets
-          tickets={ticketsFiltrados}
-          onVerDetalle={abrirDetalle}
-          mostrarTransporte
-          mostrarSkuObservados
-          accionExtra={(t) =>
-            t.estado === "EN_RUTA" ? (
-              <button
-                type="button"
-                className="boton-icono boton-confirmar-recepcion"
-                onClick={() => pedirConfirmarLlegada(t)}
-                disabled={procesandoLlegadaId === t.id}
-                title="Marcar llegada a LI"
-                aria-label="Marcar llegada a LI"
-              >
-                <IconoCheck size={16} />
-              </button>
-            ) : null
-          }
-        />
+        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} mostrarTransporte />
       )}
       {pestana === "sku" && (
-        <TablaObservaciones
-          observaciones={observacionesFiltradas}
-          onVerTicket={abrirDetalle}
-          mostrarTransporte
-          accionExtra={(t) =>
-            t.estado === "EN_RUTA" ? (
-              <button
-                type="button"
-                className="boton-icono boton-confirmar-recepcion"
-                onClick={() => pedirConfirmarLlegada(t)}
-                disabled={procesandoLlegadaId === t.id}
-                title="Marcar llegada a LI"
-                aria-label="Marcar llegada a LI"
-              >
-                <IconoCheck size={16} />
-              </button>
-            ) : null
-          }
-        />
+        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} mostrarTransporte />
       )}
       {pestana === "dashboard" && (
         <DashboardTickets tickets={ticketsFiltrados} observaciones={observacionesFiltradas} rol="LI" />
@@ -331,18 +254,14 @@ export default function PanelLI({ sidebarAbierta }) {
       {seleccionado && (
         <TicketDetalle
           ticket={seleccionado}
-          soloObservacionId={observacionFocoId}
-          onCerrar={() => {
-            setSeleccionadoId(null);
-            setObservacionFocoId(null);
-          }}
+          onCerrar={() => setSeleccionadoId(null)}
           acciones={
             seleccionado.estado === "EN_RUTA" || seleccionado.estado === "EN_LI" ? (
               <>
                 {error && <p className="mensaje-error">{error}</p>}
 
                 {seleccionado.estado === "EN_RUTA" && (
-                  <button type="button" onClick={() => pedirConfirmarLlegada(seleccionado)} disabled={guardando}>
+                  <button type="button" onClick={marcarLlegada} disabled={guardando}>
                     Marcar llegada a LI
                   </button>
                 )}
@@ -357,7 +276,7 @@ export default function PanelLI({ sidebarAbierta }) {
                       onChange={(e) => setNotaCredito(e.target.value)}
                       placeholder="N° de NC"
                     />
-                    <button type="button" onClick={pedirConfirmarNC} disabled={guardando}>
+                    <button type="button" onClick={guardarNotaCredito} disabled={guardando}>
                       Guardar NC
                     </button>
                   </div>
@@ -365,24 +284,6 @@ export default function PanelLI({ sidebarAbierta }) {
               </>
             ) : null
           }
-        />
-      )}
-
-      {ticketConfirmarLlegada && (
-        <ConfirmModal
-          mensaje={`¿Confirmar que la factura ${ticketConfirmarLlegada.factura} llegó a Logística Inversa?`}
-          onConfirmar={marcarLlegada}
-          onCancelar={() => setTicketConfirmarLlegada(null)}
-          cargando={guardando}
-        />
-      )}
-
-      {confirmarNC && seleccionado && (
-        <ConfirmModal
-          mensaje={`¿Registrar la NC "${notaCredito}" para el ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`}
-          onConfirmar={guardarNotaCredito}
-          onCancelar={() => setConfirmarNC(false)}
-          cargando={guardando}
         />
       )}
     </LayoutLateral>

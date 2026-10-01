@@ -1,26 +1,33 @@
-// La hamburguesa y el logo "EnReparto" viven en el encabezado global (App.jsx),
-// a la misma altura que el círculo de usuario. Este componente solo dibuja el
-// sidebar (nav) y el contenido; `abierta` es controlada desde afuera.
-// `item.icono`: componente de ícono opcional (ver compartido/iconos.jsx), se dibuja
-// antes de la etiqueta. Si un item no trae ícono, solo se muestra el texto.
-export default function LayoutLateral({ items, activo, onCambiar, abierta = true, children }) {
+import { useState } from "react";
+
+export default function LayoutLateral({ items, activo, onCambiar, children }) {
+  const [abierta, setAbierta] = useState(true);
+
   return (
     <div className={`layout-lateral ${abierta ? "" : "barra-cerrada"}`}>
+      <button
+        type="button"
+        className="boton-toggle-barra"
+        onClick={() => setAbierta((valor) => !valor)}
+        aria-label={abierta ? "Ocultar menú" : "Mostrar menú"}
+        title={abierta ? "Ocultar menú" : "Mostrar menú"}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
       <aside className="barra-lateral">
         <nav>
-          {items.map((item) => {
-            const Icono = item.icono;
-            return (
-              <button
-                key={item.clave}
-                className={activo === item.clave ? "activo" : ""}
-                onClick={() => onCambiar(item.clave)}
-              >
-                {Icono && <Icono size={18} />}
-                {item.etiqueta}
-              </button>
-            );
-          })}
+          {items.map((item) => (
+            <button
+              key={item.clave}
+              className={activo === item.clave ? "activo" : ""}
+              onClick={() => onCambiar(item.clave)}
+            >
+              {item.etiqueta}
+            </button>
+          ))}
         </nav>
       </aside>
 

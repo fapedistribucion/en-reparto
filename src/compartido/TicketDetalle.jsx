@@ -31,35 +31,21 @@ function Galeria({ fotos, onAmpliar }) {
 
 // `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...).
 // `renderAccionObservacion(obs, recargar)`: controles bajo cada observación (validación de SAC).
-// `soloObservacionId`: si se abrió desde la vista "Por producto", el modal entra en modo enfocado:
-// solo esa observación, solo sus evidencias (+ la foto de factura completa), y sin repetir datos
-// que ya se ven en la tabla. En este modo la consulta también pide solo esos datos puntuales
-// (no toda la factura), para que cargue más rápido.
-export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion, soloObservacionId }) {
+export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion }) {
   const [observaciones, setObservaciones] = useState([]);
   const [adjuntos, setAdjuntos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [version, setVersion] = useState(0);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
 
-  const modoEnfocado = Boolean(soloObservacionId);
-
   useEffect(() => {
     let cancelado = false;
 
     async function cargarDetalle() {
-      let obsQuery = supabase.from("ticket_observaciones").select("*").eq("ticket_id", ticket.id);
-      let adjQuery = supabase.from("ticket_adjuntos").select("*").eq("ticket_id", ticket.id);
-
-      // Modo enfocado: solo la observación puntual y sus evidencias (+ la foto de
-      // factura completa, que no tiene observacion_id). Menos filas, menos fotos
-      // que firmar, carga más rápido que traer todo el ticket para mostrar una sola.
-      if (modoEnfocado) {
-        obsQuery = obsQuery.eq("id", soloObservacionId);
-        adjQuery = adjQuery.or(`observacion_id.eq.${soloObservacionId},observacion_id.is.null`);
-      }
-
-      const [{ data: obs }, { data: adj }] = await Promise.all([obsQuery.order("id"), adjQuery.order("id")]);
+      const [{ data: obs }, { data: adj }] = await Promise.all([
+        supabase.from("ticket_observaciones").select("*").eq("ticket_id", ticket.id).order("id"),
+        supabase.from("ticket_adjuntos").select("*").eq("ticket_id", ticket.id).order("id"),
+      ]);
 
       // Bucket privado: cada foto necesita una URL firmada temporal (se piden todas en una sola llamada)
       const rutas = (adj ?? []).map((a) => a.url_storage);
@@ -81,14 +67,10 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
     return () => {
       cancelado = true;
     };
-  }, [ticket.id, version, modoEnfocado, soloObservacionId]);
+  }, [ticket.id, version]);
 
   const recargar = () => setVersion((v) => v + 1);
   const fotosFactura = adjuntos.filter((a) => a.observacion_id === null);
-  const observacionesMostradas = modoEnfocado
-    ? observaciones.filter((o) => o.id === soloObservacionId)
-    : observaciones;
-  const observacionEnfocada = modoEnfocado ? observacionesMostradas[0] : null;
 
   return (
     <div className="fondo-modal" onClick={onCerrar}>
@@ -103,86 +85,93 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
           </span>
         </div>
 
-        {!modoEnfocado && (
-          <div className="panel-detalle-grid">
-            <div><span>Factura</span><strong>{ticket.factura}</strong></div>
-            <div><span>Pedido</span><strong>{ticket.pedido_entrega}</strong></div>
-            <div><span>Cliente</span><strong>{ticket.cliente}</strong></div>
-            <div><span>Transporte</span><strong>{ticket.empresa_transporte}</strong></div>
-            <div><span>Vendedor</span><strong>{ticket.vendedor ?? "—"}</strong></div>
-            <div><span>Alcance</span><strong>{textoAlcance(ticket)}</strong></div>
-          </div>
-        )}
-
-        {modoEnfocado && !cargando && observacionEnfocada && (
-          <div className="panel-detalle-grid">
-            <div>
-              <span>Factura</span>
-              <strong>{ticket.factura}</strong>
-            </div>
-            <div>
-              <span>Cliente</span>
-              <strong>{ticket.cliente}</strong>
-            </div>
-            <div>
-              <span>Motivo</span>
-              <strong>{etiquetaMotivo(observacionEnfocada.subcategoria)}</strong>
-            </div>
-            <div>
-              <span>Cantidad reclamada</span>
-              <strong>
-                {observacionEnfocada.posicion != null
-                  ? `${observacionEnfocada.cantidad_observada} de ${observacionEnfocada.cantidad_facturada}`
-                  : "—"}
-              </strong>
-            </div>
-          </div>
-        )}
+        <div className="panel-detalle-grid">
+          <div><span>Factura</span><strong>{ticket.factura}</strong></div>
+          <div><span>Pedido</span><strong>{ticket.pedido_entrega}</strong></div>
+          <div><span>Cliente</span><strong>{ticket.cliente}</strong></div>
+          <div><span>Transporte</span><strong>{ticket.empresa_transporte}</strong></div>
+          <div><span>Vendedor</span><strong>{ticket.vendedor ?? "—"}</strong></div>
+          <div><span>Alcance</span><strong>{textoAlcance(ticket)}</strong></div>
+        </div>
 
         {cargando ? (
           <p className="panel-detalle-seccion">Cargando detalle...</p>
         ) : (
           <>
             <div className="panel-detalle-seccion">
-              {!modoEnfocado && <p className="panel-detalle-titulo-seccion">Observaciones</p>}
-              {observacionesMostradas.map((o) => {
+              <p className="panel-detalle-titulo-seccion">Observaciones</p>
+              {observaciones.map((o) => {
+                const esNoLogistico = o.categoria === "NO_LOGISTICO";
                 return (
                   <div className="obs-card" key={o.id}>
-                    {!modoEnfocado && (
-                      <div className="obs-card-encabezado">
-                        <strong>{etiquetaMotivo(o.subcategoria)}</strong>
-                      </div>
+                    <div className="obs-card-encabezado">
+                      <strong>{etiquetaMotivo(o.subcategoria)}</strong>
+                      {esNoLogistico && (
+                        <span className={o.validado === "VALIDADO" ? "badge-validacion-ok" : "badge-pendiente"}>
+                          {o.validado === "VALIDADO" ? "Validado por SAC" : "Pendiente de validar"}
+                        </span>
+                      )}
+                    </div>
+
+                    {o.posicion != null ? (
+                      <>
+                        <p className="obs-card-linea">
+                          Pos. {o.posicion} · {o.codigo_producto} — {o.nombre_producto}
+                        </p>
+                        <p className="obs-card-linea">
+                          Bulto: {o.numero_bulto} · Cantidad observada: {o.cantidad_observada} de {o.cantidad_facturada}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="dato-menor">Toda la factura</p>
                     )}
 
-                    {!modoEnfocado &&
-                      (o.posicion != null ? (
-                        <>
-                          <p className="obs-card-linea">
-                            Pos. {o.posicion} · {o.codigo_producto} — {o.nombre_producto}
-                          </p>
-                          <p className="obs-card-linea">
-                            Bulto: {o.numero_bulto} · Cantidad observada: {o.cantidad_observada} de{" "}
-                            {o.cantidad_facturada}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="dato-menor">Toda la factura</p>
-                      ))}
+                    {esNoLogistico && o.validado === "VALIDADO" && (
+                      <p className="dato-menor">
+                        ¿Se obtuvo respuesta del vendedor? {o.obtuvo_respuesta ? "Sí" : "No"}
+                      </p>
+                    )}
 
-                    {/* Evidencias del producto + foto de la factura juntas, a la misma
-                        altura, en una sola galería (sin separarlas en recuadros aparte). */}
-                    <Galeria
-                      fotos={[...adjuntos.filter((a) => a.observacion_id === o.id), ...fotosFactura]}
-                      onAmpliar={setFotoAmpliada}
-                    />
+                    <Galeria fotos={adjuntos.filter((a) => a.observacion_id === o.id)} onAmpliar={setFotoAmpliada} />
 
                     {renderAccionObservacion?.(o, recargar)}
                   </div>
                 );
               })}
             </div>
+
+            {fotosFactura.length > 0 && (
+              <div className="panel-detalle-seccion">
+                <p className="panel-detalle-titulo-seccion">Foto de la factura</p>
+                <Galeria fotos={fotosFactura} onAmpliar={setFotoAmpliada} />
+              </div>
+            )}
           </>
         )}
+
+        <div className="panel-detalle-seccion">
+          <p className="panel-detalle-titulo-seccion">Trazabilidad</p>
+          <table className="tabla-trazabilidad">
+            <tbody>
+              <tr>
+                <td>Llegada a LI</td>
+                <td>{ticket.fecha_entrega_li ? formatearFecha(ticket.fecha_entrega_li, true) : "Pendiente"}</td>
+              </tr>
+              <tr>
+                <td>Nota de crédito</td>
+                <td>{ticket.nota_credito ?? "Pendiente"}</td>
+              </tr>
+              <tr>
+                <td>Verificación IA (factura)</td>
+                <td>
+                  {ticket.factura_verificada_ia === true && "Coincide"}
+                  {ticket.factura_verificada_ia === false && "No coincide"}
+                  {ticket.factura_verificada_ia === null && "No verificado"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         {acciones && <div className="panel-detalle-acciones">{acciones}</div>}
 
