@@ -8,11 +8,20 @@ import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
 import ConfirmModal from "../compartido/ConfirmModal";
+import ModalEntregaTransporte from "../compartido/ModalEntregaTransporte";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
-import { IconoCheck, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, etiquetaRespuestaVendedor, formatearPrecio } from "../utils/estadosTicket";
+import { IconoCheck, IconoCamion, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
+import {
+  ETIQUETAS_ESTADO,
+  textoAlcance,
+  textoSkuObservados,
+  etiquetaRespuestaVendedor,
+  formatearPrecio,
+  textoEntregaTransporte,
+  textoMotivoRetencion,
+} from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
 
@@ -53,6 +62,8 @@ export default function PanelLI({ sidebarAbierta }) {
   const [error, setError] = useState("");
   const [ticketConfirmarLlegada, setTicketConfirmarLlegada] = useState(null);
   const [confirmarNC, setConfirmarNC] = useState(false);
+  const [ticketEntregaTransporte, setTicketEntregaTransporte] = useState(null);
+  const [guardandoEntrega, setGuardandoEntrega] = useState(false);
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
@@ -159,6 +170,8 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "Cant. Reclamada", clave: "cantidad_observada" },
         { titulo: "Cant. Total", clave: "cantidad_facturada" },
         { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
+        { titulo: "Entrega a transporte", obtener: (o) => textoEntregaTransporte(o.ticket) },
+        { titulo: "Motivo retención", obtener: (o) => textoMotivoRetencion(o.ticket) },
         { titulo: "Nota de Crédito", obtener: (o) => o.ticket?.nota_credito },
       ], observacionesFiltradas);
     } else {
@@ -174,6 +187,8 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
         { titulo: "Cliente", clave: "cliente" },
         { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
+        { titulo: "Entrega a transporte", obtener: (t) => textoEntregaTransporte(t) },
+        { titulo: "Motivo retención", obtener: (t) => textoMotivoRetencion(t) },
         { titulo: "Nota de crédito", clave: "nota_credito" },
       ], ticketsFiltrados);
     }
@@ -248,6 +263,43 @@ export default function PanelLI({ sidebarAbierta }) {
     await recargar();
   }
 
+  // Registrar (o corregir) si la factura ya se entregó al transporte. Independiente
+  // del `estado` del ticket: no participa en fn_calcular_estado_ticket(), solo deja
+  // traza informativa (fecha/usuario). Se habilita desde la tabla apenas existe
+  // fecha_entrega_li, y queda editable después (abrirEntregaTransporte reabre el
+  // modal precargado con lo ya guardado).
+  function abrirEntregaTransporte(ticket) {
+    setTicketEntregaTransporte(ticket);
+  }
+
+  async function guardarEntregaTransporte(valores) {
+    const ticket = ticketEntregaTransporte;
+    if (!ticket) return;
+
+    setGuardandoEntrega(true);
+    setError("");
+    const { data: sesion } = await supabase.auth.getUser();
+
+    const { error: errorUpdate } = await supabase
+      .from("tickets")
+      .update({
+        entrega_transporte: valores.entrega_transporte,
+        motivo_retencion: valores.motivo_retencion,
+        usuario_entrega_transporte: sesion.user.id,
+        fecha_entrega_transporte: new Date().toISOString(),
+      })
+      .eq("id", ticket.id);
+
+    setGuardandoEntrega(false);
+    setTicketEntregaTransporte(null);
+
+    if (errorUpdate) {
+      setError("No se pudo guardar la entrega a transporte: " + errorUpdate.message);
+      return;
+    }
+    await recargar();
+  }
+
   if (cargandoTickets || cargandoObs) {
     return (
       <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
@@ -291,6 +343,19 @@ export default function PanelLI({ sidebarAbierta }) {
               </button>
             ) : null
           }
+          accionExtra2={(t) =>
+            t.fecha_entrega_li ? (
+              <button
+                type="button"
+                className="boton-icono"
+                onClick={() => abrirEntregaTransporte(t)}
+                title={t.entrega_transporte ? "Editar entrega a transporte" : "Registrar entrega a transporte"}
+                aria-label={t.entrega_transporte ? "Editar entrega a transporte" : "Registrar entrega a transporte"}
+              >
+                <IconoCamion size={16} />
+              </button>
+            ) : null
+          }
         />
       )}
       {pestana === "sku" && (
@@ -309,6 +374,19 @@ export default function PanelLI({ sidebarAbierta }) {
                 aria-label="Marcar llegada a LI"
               >
                 <IconoCheck size={16} />
+              </button>
+            ) : null
+          }
+          accionExtra2={(t) =>
+            t.fecha_entrega_li ? (
+              <button
+                type="button"
+                className="boton-icono"
+                onClick={() => abrirEntregaTransporte(t)}
+                title={t.entrega_transporte ? "Editar entrega a transporte" : "Registrar entrega a transporte"}
+                aria-label={t.entrega_transporte ? "Editar entrega a transporte" : "Registrar entrega a transporte"}
+              >
+                <IconoCamion size={16} />
               </button>
             ) : null
           }
@@ -383,6 +461,15 @@ export default function PanelLI({ sidebarAbierta }) {
           onConfirmar={guardarNotaCredito}
           onCancelar={() => setConfirmarNC(false)}
           cargando={guardando}
+        />
+      )}
+
+      {ticketEntregaTransporte && (
+        <ModalEntregaTransporte
+          ticket={ticketEntregaTransporte}
+          onGuardar={guardarEntregaTransporte}
+          onCancelar={() => setTicketEntregaTransporte(null)}
+          cargando={guardandoEntrega}
         />
       )}
     </LayoutLateral>

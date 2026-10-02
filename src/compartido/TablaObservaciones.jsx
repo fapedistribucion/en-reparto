@@ -1,4 +1,12 @@
-import { ETIQUETAS_ESTADO, formatearFecha, fechaOPendiente, etiquetaRespuestaVendedor, formatearPrecio } from "../utils/estadosTicket";
+import {
+  ETIQUETAS_ESTADO,
+  formatearFecha,
+  fechaOPendiente,
+  etiquetaRespuestaVendedor,
+  formatearPrecio,
+  textoEntregaTransporte,
+  textoMotivoRetencion,
+} from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 const ETIQUETAS_CATEGORIA = {
@@ -10,14 +18,25 @@ const ETIQUETAS_CATEGORIA = {
 // del ticket al que pertenece (se espera `observacion.ticket` ya combinado).
 // `mostrarTransporte`: se mantiene como prop por compatibilidad; SAC y LI siempre la piden en true,
 // ya que "Transporte" es columna fija en esta vista.
+// `mostrarDetalle`: controla si se muestra la columna fija "Detalle" con el botón "Ver" (y por lo
+// tanto si hace falta `onVerTicket`). Por defecto true; Liquidaciones la pasa en false.
 // `onVerTicket(ticket, observacionId)`: abre el detalle enfocado solo en esta observación.
-// `accionExtra(ticket)`: botón adicional por fila (ej. confirmar llegada a LI), va en la columna
-// fija "Confirmar recepción".
+// `accionExtra(ticket)`: botón adicional por fila (confirmar llegada a LI), columna fija
+// "Confirmar recepción".
+// `accionExtra2(ticket)`: segundo botón adicional (registrar/editar entrega a transporte), columna
+// fija "Registrar entrega".
 //
 // "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje).
-// Las últimas 2 columnas ("Confirmar recepción" y "Detalle") quedan fijas a la derecha (sticky) para
-// no tener que scrollear hasta el final de la tabla para usarlas.
-export default function TablaObservaciones({ observaciones, onVerTicket, mostrarTransporte = false, accionExtra }) {
+// Las columnas de acción y "Detalle" quedan fijas a la derecha (sticky) para no tener que scrollear
+// hasta el final de la tabla para usarlas.
+export default function TablaObservaciones({
+  observaciones,
+  onVerTicket,
+  mostrarTransporte = false,
+  mostrarDetalle = true,
+  accionExtra,
+  accionExtra2,
+}) {
   if (observaciones.length === 0) {
     return <p>No hay bultos/productos para mostrar.</p>;
   }
@@ -44,9 +63,12 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
             <th>Cant. Reclamada</th>
             <th>Cant. Total</th>
             <th>Fecha llegada LI</th>
+            <th>Entrega a transporte</th>
+            <th>Motivo retención</th>
             <th>Nota de Crédito</th>
             {accionExtra && <th className="col-fija-accion">Confirmar recepción</th>}
-            <th className="col-fija-detalle">Detalle</th>
+            {accionExtra2 && <th className="col-fija-accion">Registrar entrega</th>}
+            {mostrarDetalle && <th className="col-fija-detalle">Detalle</th>}
           </tr>
         </thead>
         <tbody>
@@ -87,13 +109,18 @@ export default function TablaObservaciones({ observaciones, onVerTicket, mostrar
                 <td>{o.posicion != null ? o.cantidad_observada : "—"}</td>
                 <td>{o.posicion != null ? o.cantidad_facturada : "—"}</td>
                 <td>{fechaOPendiente(t?.fecha_entrega_li)}</td>
+                <td>{textoEntregaTransporte(t)}</td>
+                <td>{textoMotivoRetencion(t)}</td>
                 <td>{t?.nota_credito ?? "Pendiente"}</td>
                 {accionExtra && <td className="col-fija-accion">{t && accionExtra(t)}</td>}
-                <td className="col-fija-detalle">
-                  <button type="button" onClick={() => t && onVerTicket(t, o.id)} disabled={!t}>
-                    Ver
-                  </button>
-                </td>
+                {accionExtra2 && <td className="col-fija-accion">{t && accionExtra2(t)}</td>}
+                {mostrarDetalle && (
+                  <td className="col-fija-detalle">
+                    <button type="button" onClick={() => t && onVerTicket(t, o.id)} disabled={!t}>
+                      Ver
+                    </button>
+                  </td>
+                )}
               </tr>
             );
           })}

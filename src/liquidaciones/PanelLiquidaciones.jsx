@@ -1,14 +1,10 @@
 import { useMemo, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
 import { useFacturasViaje } from "../compartido/useFacturasViaje";
 import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
-import TicketDetalle from "../compartido/TicketDetalle";
-import ConfirmModal from "../compartido/ConfirmModal";
-import ValidarObservacion from "./ValidarObservacion";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
@@ -49,23 +45,17 @@ function coincideFecha(fechaIso, desde, hasta) {
   return true;
 }
 
-export default function PanelSAC({ sidebarAbierta }) {
+// Vista de solo lectura para Liquidaciones: mismas tablas y columnas que Logística
+// Inversa (incluida "Entrega a transporte"), con exportar CSV, pero sin ningún botón
+// de acción ni el detalle con fotos ("Ver") — Liquidaciones solo consulta.
+export default function PanelLiquidaciones({ sidebarAbierta }) {
   const { tickets, cargando: cargandoTickets, error: errorCarga, recargar } = useTickets();
   const { observaciones, cargando: cargandoObs, recargar: recargarObs } = useObservaciones();
 
   const [pestana, setPestana] = useState("factura");
-  const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const [observacionFocoId, setObservacionFocoId] = useState(null);
-  const [motivoAnulacion, setMotivoAnulacion] = useState("");
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState("");
-  const [confirmarAnulacion, setConfirmarAnulacion] = useState(false);
-
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
-
-  const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
 
   const opcionesTransporte = useMemo(
     () => [...new Set(tickets.map((t) => t.empresa_transporte).filter(Boolean))].sort(),
@@ -118,13 +108,6 @@ export default function PanelSAC({ sidebarAbierta }) {
       ),
     [observacionesConTicket, filtros]
   );
-
-  function abrirDetalle(ticket, observacionId = null) {
-    setSeleccionadoId(ticket.id);
-    setObservacionFocoId(observacionId);
-    setMotivoAnulacion("");
-    setError("");
-  }
 
   function abrirPanelFiltros() {
     setBorrador(filtros);
@@ -190,42 +173,6 @@ export default function PanelSAC({ sidebarAbierta }) {
     }
   }
 
-  // El botón "Anular ticket" pide confirmación con nuestro propio popup (ConfirmModal)
-  // en vez del diálogo nativo del navegador; anularTicket() hace el cambio recién
-  // cuando se confirma ahí.
-  function pedirConfirmarAnulacion() {
-    if (!motivoAnulacion.trim()) {
-      setError("Escribe el motivo de anulación.");
-      return;
-    }
-    setError("");
-    setConfirmarAnulacion(true);
-  }
-
-  async function anularTicket() {
-    setConfirmarAnulacion(false);
-    setGuardando(true);
-    setError("");
-    const { data: sesion } = await supabase.auth.getUser();
-
-    const { error: errorUpdate } = await supabase
-      .from("tickets")
-      .update({
-        motivo_anulacion: motivoAnulacion,
-        usuario_anulacion: sesion.user.id,
-        fecha_anulacion: new Date().toISOString(),
-      })
-      .eq("id", seleccionado.id);
-
-    setGuardando(false);
-
-    if (errorUpdate) {
-      setError("No se pudo anular: " + errorUpdate.message);
-      return;
-    }
-    await recargar();
-  }
-
   if (cargandoTickets || cargandoObs) {
     return (
       <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
@@ -252,16 +199,20 @@ export default function PanelSAC({ sidebarAbierta }) {
       {pestana === "factura" && (
         <TablaTickets
           tickets={ticketsFiltrados}
-          onVerDetalle={abrirDetalle}
           mostrarTransporte
           mostrarSkuObservados
+          mostrarDetalle={false}
         />
       )}
       {pestana === "sku" && (
-        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} mostrarTransporte />
+        <TablaObservaciones
+          observaciones={observacionesFiltradas}
+          mostrarTransporte
+          mostrarDetalle={false}
+        />
       )}
       {pestana === "dashboard" && (
-        <DashboardTickets tickets={ticketsFiltrados} observaciones={observacionesFiltradas} rol="SAC" />
+        <DashboardTickets tickets={ticketsFiltrados} observaciones={observacionesFiltradas} rol="Liquidaciones" />
       )}
 
       <PanelFiltros
@@ -273,54 +224,6 @@ export default function PanelSAC({ sidebarAbierta }) {
         onBuscar={aplicarFiltros}
         onLimpiar={limpiarFiltros}
       />
-
-      {seleccionado && (
-        <TicketDetalle
-          ticket={seleccionado}
-          soloObservacionId={observacionFocoId}
-          onCerrar={() => {
-            setSeleccionadoId(null);
-            setObservacionFocoId(null);
-          }}
-          renderAccionObservacion={(obs, recargarDetalle) => (
-            <ValidarObservacion
-              observacion={obs}
-              onHecho={() => {
-                recargarDetalle();
-                recargar();
-                recargarObs();
-              }}
-            />
-          )}
-          acciones={
-            seleccionado.estado === "EN_RUTA" ? (
-              <div className="accion-rol">
-                <label htmlFor="motivoAnulacion">Motivo de anulación</label>
-                <input
-                  id="motivoAnulacion"
-                  type="text"
-                  value={motivoAnulacion}
-                  onChange={(e) => setMotivoAnulacion(e.target.value)}
-                />
-                {error && <p className="mensaje-error">{error}</p>}
-                <button type="button" onClick={pedirConfirmarAnulacion} disabled={guardando} className="boton-peligro">
-                  Anular ticket
-                </button>
-              </div>
-            ) : null
-          }
-        />
-      )}
-
-      {confirmarAnulacion && seleccionado && (
-        <ConfirmModal
-          mensaje={`¿Anular el ticket ${seleccionado.codigo_ticket}? Esta acción no se puede deshacer.`}
-          onConfirmar={anularTicket}
-          onCancelar={() => setConfirmarAnulacion(false)}
-          cargando={guardando}
-          textoConfirmar="Anular"
-        />
-      )}
     </LayoutLateral>
   );
 }

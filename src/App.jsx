@@ -4,12 +4,14 @@ import Login from "./auth/Login";
 import PanelTransportista from "./transportista/PanelTransportista";
 import PanelSAC from "./sac/PanelSAC";
 import PanelLI from "./li/PanelLI";
+import PanelLiquidaciones from "./liquidaciones/PanelLiquidaciones";
 import MenuUsuario from "./compartido/MenuUsuario";
 import { IconoMenu } from "./compartido/iconos";
 
-// Los 3 roles tienen sidebar propio (SAC/LI: Por factura / Por producto / Dashboard;
-// transportista: Nuevo reclamo / Seguimiento).
-const ROLES_CON_SIDEBAR = ["sac", "li", "transportista"];
+// Los 4 roles tienen sidebar propio (SAC/LI/liquidaciones: Por factura / Por producto
+// / Dashboard; transportista: Nuevo reclamo / Seguimiento). liquidaciones es de solo
+// lectura (mismas tablas que LI, sin botones de acción ni detalle con fotos).
+const ROLES_CON_SIDEBAR = ["sac", "li", "transportista", "liquidaciones"];
 
 export default function App() {
   const { usuario, rol, cargando, cerrarSesion } = useAuth();
@@ -45,6 +47,7 @@ export default function App() {
         {rol === "transportista" && <PanelTransportista sidebarAbierta={sidebarAbierta} />}
         {rol === "sac" && <PanelSAC sidebarAbierta={sidebarAbierta} />}
         {rol === "li" && <PanelLI sidebarAbierta={sidebarAbierta} />}
+        {rol === "liquidaciones" && <PanelLiquidaciones sidebarAbierta={sidebarAbierta} />}
         {!rol && (
           <div className="contenedor-simple">
             <p>Tu cuenta no tiene un rol asignado. Contacta al administrador.</p>

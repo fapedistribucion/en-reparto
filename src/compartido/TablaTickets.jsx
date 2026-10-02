@@ -4,25 +4,33 @@ import {
   fechaOPendiente,
   textoAlcance,
   textoSkuObservados,
+  textoEntregaTransporte,
+  textoMotivoRetencion,
 } from "../utils/estadosTicket";
 
 // `mostrarTransporte`: agrega la columna de empresa de transporte (SAC/LI la necesitan; el propio
 // transportista no, ya que en su vista todos los tickets son de su misma empresa).
 // `mostrarSkuObservados`: agrega la columna "SKU observados" (cantidad de productos distintos
 // observados). Solo la usan SAC/LI; para transportista no aporta y se mantiene oculta por defecto.
-// `accionExtra(ticket)`: botón adicional por fila (ej. confirmar llegada a LI), sin tener que abrir
-// el detalle. Va en la columna fija "Confirmar recepción", que solo aparece cuando se pasa esta prop
-// (LI la usa; SAC y transportista no, así que no la ven).
+// `mostrarDetalle`: controla si se muestra la columna fija "Detalle" con el botón "Ver" (y por lo
+// tanto si hace falta `onVerDetalle`). Por defecto true; Liquidaciones la pasa en false porque su
+// vista es de solo lectura, sin el modal de detalle/fotos.
+// `accionExtra(ticket)`: botón adicional por fila (confirmar llegada a LI), en la columna fija
+// "Confirmar recepción" (solo LI la usa).
+// `accionExtra2(ticket)`: segundo botón adicional (registrar/editar entrega a transporte), en la
+// columna fija "Registrar entrega" (también solo LI).
 // "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje);
 // se espera que el ticket ya traiga ese campo combinado.
-// "Detalle" (y "Confirmar recepción" cuando aplica) quedan fijas a la derecha (sticky) para no tener
-// que scrollear hasta el final de la tabla para usarlas.
+// Las columnas de acción y "Detalle" quedan fijas a la derecha (sticky) para no tener que scrollear
+// hasta el final de la tabla para usarlas.
 export default function TablaTickets({
   tickets,
   onVerDetalle,
   mostrarTransporte = false,
   mostrarSkuObservados = false,
+  mostrarDetalle = true,
   accionExtra,
+  accionExtra2,
 }) {
   if (tickets.length === 0) {
     return <p>No hay tickets para mostrar.</p>;
@@ -44,9 +52,12 @@ export default function TablaTickets({
             {mostrarSkuObservados && <th>SKU observados</th>}
             <th>Cliente</th>
             <th>Fecha llegada LI</th>
+            <th>Entrega a transporte</th>
+            <th>Motivo retención</th>
             <th>Nota de crédito</th>
             {accionExtra && <th className="col-fija-accion">Confirmar recepción</th>}
-            <th className="col-fija-detalle">Detalle</th>
+            {accionExtra2 && <th className="col-fija-accion">Registrar entrega</th>}
+            {mostrarDetalle && <th className="col-fija-detalle">Detalle</th>}
           </tr>
         </thead>
         <tbody>
@@ -67,13 +78,18 @@ export default function TablaTickets({
               {mostrarSkuObservados && <td>{textoSkuObservados(t)}</td>}
               <td>{t.cliente}</td>
               <td>{fechaOPendiente(t.fecha_entrega_li)}</td>
+              <td>{textoEntregaTransporte(t)}</td>
+              <td>{textoMotivoRetencion(t)}</td>
               <td>{t.nota_credito ?? "Pendiente"}</td>
               {accionExtra && <td className="col-fija-accion">{accionExtra(t)}</td>}
-              <td className="col-fija-detalle">
-                <button type="button" onClick={() => onVerDetalle(t)}>
-                  Ver
-                </button>
-              </td>
+              {accionExtra2 && <td className="col-fija-accion">{accionExtra2(t)}</td>}
+              {mostrarDetalle && (
+                <td className="col-fija-detalle">
+                  <button type="button" onClick={() => onVerDetalle(t)}>
+                    Ver
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

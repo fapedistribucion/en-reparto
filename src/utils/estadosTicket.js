@@ -2,7 +2,7 @@ import { etiquetaAlcance } from "./alcance";
 
 export const ETIQUETAS_ESTADO = {
   EN_RUTA: "EN RUTA",
-  EN_LI: "EN LI",
+  EN_LI: "GESTION LI",
   SOLUCIONADO: "SOLUCIONADO",
   ANULADO: "ANULADO",
 };
@@ -18,6 +18,42 @@ export const ETIQUETAS_RESPUESTA_VENDEDOR = {
 
 export function etiquetaRespuestaVendedor(valor) {
   return ETIQUETAS_RESPUESTA_VENDEDOR[valor] ?? valor;
+}
+
+// `entrega_transporte` (tickets): registra si la factura ya se devolvió al
+// transporte, independiente del `estado` final del ticket (un ticket puede seguir
+// "GESTION LI" aunque la factura ya se haya entregado, si falta la NC).
+export const ETIQUETAS_ENTREGA_TRANSPORTE = {
+  SI: "SÍ",
+  NO_RETENCION: "NO (Retención)",
+};
+
+export function etiquetaEntregaTransporte(valor) {
+  return ETIQUETAS_ENTREGA_TRANSPORTE[valor] ?? valor;
+}
+
+// `motivo_retencion` (tickets): solo aplica cuando entrega_transporte = NO_RETENCION.
+export const ETIQUETAS_MOTIVO_RETENCION = {
+  GESTION_INVENTARIO: "Gestión de inventario",
+  NO_ASUME_COBRO_TRANSPORTE: "No asume cobro transporte",
+};
+
+export function etiquetaMotivoRetencion(valor) {
+  return ETIQUETAS_MOTIVO_RETENCION[valor] ?? valor;
+}
+
+// Columna "Entrega a transporte": "—" mientras el ticket ni siquiera llegó a LI
+// (fecha_entrega_li vacío, la acción no aplica todavía), "Pendiente" si ya llegó
+// pero LI aún no registra la respuesta, o la etiqueta Sí/No (Retención).
+export function textoEntregaTransporte(ticket) {
+  if (!ticket?.fecha_entrega_li) return "—";
+  if (!ticket.entrega_transporte) return "Pendiente";
+  return etiquetaEntregaTransporte(ticket.entrega_transporte);
+}
+
+// Columna "Motivo retención": solo tiene valor cuando hubo retención.
+export function textoMotivoRetencion(ticket) {
+  return ticket?.motivo_retencion ? etiquetaMotivoRetencion(ticket.motivo_retencion) : "—";
 }
 
 // Siempre DD/MM/AAAA (con hora opcional), sin depender del formato "corto" del

@@ -133,6 +133,19 @@ export function IconoNuevoReclamo(props) {
   );
 }
 
+// Botón "Registrar/editar entrega a transporte" (columna fija de LI): camión simple.
+export function IconoCamion(props) {
+  return base(
+    <>
+      <rect x="2" y="7" width="11" height="9" rx="1" />
+      <path d="M13 10h4l3 3v3h-7z" />
+      <circle cx="7" cy="18" r="1.6" />
+      <circle cx="16.5" cy="18" r="1.6" />
+    </>,
+    props
+  );
+}
+
 export function IconoBuscar(props) {
   return base(
     <>
