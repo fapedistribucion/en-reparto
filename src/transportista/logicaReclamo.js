@@ -1,6 +1,6 @@
 // Lógica pura del formulario de reclamo (sin React ni Supabase), para poder probarla aislada.
 
-import { etiquetaEvidencia, cantidadEvidencia } from "../utils/etiquetasEvidencia.js";
+import { etiquetaEvidencia, reglaEvidencia } from "../utils/etiquetasEvidencia.js";
 
 // La "opción" que elige el transportista puede ser:
 //   "RECHAZO_TOTAL" | "RECHAZO_PARCIAL" | "<alcance>:<motivo>" (si algún motivo
@@ -19,17 +19,23 @@ export function evidenciasDe(motivos, subcategoria) {
   return motivos.find((m) => m.subcategoria === subcategoria)?.evidencias_requeridas ?? [];
 }
 
-// Cada tipo exige una cantidad EXACTA de fotos (ver cantidadEvidencia): esto detecta
-// tanto lo que no se subió como lo que quedó incompleto (SubidaEvidencia ya impide
-// subir de más, así que en la práctica esto solo puede quedar por debajo del cupo).
+// Cada tipo exige una cantidad de fotos entre min y max (ver reglaEvidencia: normalmente
+// exacta; Avería admite de 1 hasta 4 en la foto del producto). Esto detecta tanto lo que
+// no se subió como lo que quedó incompleto o de más (SubidaEvidencia ya impide subir de
+// más, así que en la práctica esto solo puede quedar por debajo del mínimo).
 function faltantes(motivos, subcategoria, archivos) {
-  return evidenciasDe(motivos, subcategoria).filter(
-    (tipo) => (archivos?.[tipo]?.length ?? 0) !== cantidadEvidencia(tipo)
-  );
+  return evidenciasDe(motivos, subcategoria).filter((tipo) => {
+    const { min, max } = reglaEvidencia(tipo, subcategoria);
+    const n = archivos?.[tipo]?.length ?? 0;
+    return n < min || n > max;
+  });
 }
 
-function descripcionFaltante(tipo, archivos) {
-  return `${etiquetaEvidencia(tipo)} (${archivos?.[tipo]?.length ?? 0}/${cantidadEvidencia(tipo)})`;
+function descripcionFaltante(tipo, subcategoria, archivos) {
+  const { min, max } = reglaEvidencia(tipo, subcategoria);
+  const n = archivos?.[tipo]?.length ?? 0;
+  const detalle = min === max ? `${n}/${max}` : `${n}/${max}, mínimo ${min}`;
+  return `${etiquetaEvidencia(tipo, subcategoria)} (${detalle})`;
 }
 
 // Solo viajan las fotos que el motivo elegido exige (si cambió de motivo, las anteriores sobran)
@@ -83,9 +89,13 @@ export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, t
 
       const cantidad = Number(t.cantidad);
       if (!Number.isFinite(cantidad) || cantidad <= 0) return `Producto ${n}: indica la cantidad observada.`;
-      const total = (acumulado.get(t.posicion) ?? 0) + cantidad;
+      // Un mismo producto puede tener varios motivos, pero entre todos no pueden superar lo facturado.
+      const previo = acumulado.get(t.posicion) ?? 0;
+      const total = previo + cantidad;
       if (total > Number(producto.cantidad)) {
-        return `Producto ${n}: la cantidad observada supera lo facturado (${producto.cantidad}).`;
+        return previo > 0
+          ? `Producto ${n}: entre todos los motivos de este producto superan lo facturado (${producto.cantidad}); en otras tarjetas ya hay ${previo}, quedan ${Math.max(0, producto.cantidad - previo)}.`
+          : `Producto ${n}: la cantidad observada supera lo facturado (${producto.cantidad}).`;
       }
       acumulado.set(t.posicion, total);
 
@@ -93,7 +103,7 @@ export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, t
 
       const falta = faltantes(motivos, t.subcategoria, t.archivos);
       if (falta.length) {
-        return `Producto ${n}: falta subir ${falta.map((tipo) => descripcionFaltante(tipo, t.archivos)).join(", ")}.`;
+        return `Producto ${n}: falta subir ${falta.map((tipo) => descripcionFaltante(tipo, t.subcategoria, t.archivos)).join(", ")}.`;
       }
     }
   } else {
@@ -101,7 +111,7 @@ export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, t
     if (!subcategoria) return "Selecciona el motivo.";
     const falta = faltantes(motivos, subcategoria, archivosMotivo);
     if (falta.length) {
-      return `Falta subir ${falta.map((tipo) => descripcionFaltante(tipo, archivosMotivo)).join(", ")}.`;
+      return `Falta subir ${falta.map((tipo) => descripcionFaltante(tipo, subcategoria, archivosMotivo)).join(", ")}.`;
     }
   }
 

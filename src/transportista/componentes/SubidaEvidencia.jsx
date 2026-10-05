@@ -1,25 +1,37 @@
 import { comprimirImagen } from "../../utils/comprimirImagen";
-import { etiquetaEvidencia, cantidadEvidencia } from "../../utils/etiquetasEvidencia";
+import { etiquetaEvidencia, reglaEvidencia } from "../../utils/etiquetasEvidencia";
 
-// `tipo` define cuántas fotos son exigidas (ver CANTIDAD_EVIDENCIA en etiquetasEvidencia.js):
-// la mayoría pide exactamente 1, "foto_4_lados_bulto"/"foto_4_lados_caja" piden exactamente 4.
-// No se permite subir de más (el botón "+" desaparece al llegar al cupo) ni de menos
-// (logicaReclamo.js exige que la cantidad final coincida exacto antes de generar el ticket).
-export default function SubidaEvidencia({ tipo, archivos, onCambiar }) {
-  const requerida = cantidadEvidencia(tipo);
-  const cupoDisponible = Math.max(0, requerida - archivos.length);
-  const completo = archivos.length === requerida;
+// `tipo` (y opcionalmente `subcategoria`, el motivo elegido) definen cuántas fotos se permiten
+// (ver reglaEvidencia en etiquetasEvidencia.js): por defecto la mayoría pide exactamente 1 y
+// "foto_4_lados_bulto"/"foto_4_lados_caja" exactamente 4; Avería tiene excepciones (6 exactas
+// para bulto/caja y de 1 hasta 4 para la foto del producto).
+// Nunca se permite subir de más (el botón "+" desaparece al llegar al máximo) y
+// logicaReclamo.js exige el mínimo antes de generar el ticket.
+export default function SubidaEvidencia({ tipo, subcategoria, archivos, onCambiar }) {
+  const { min, max } = reglaEvidencia(tipo, subcategoria);
+  const exacta = min === max;
+  const etiqueta = etiquetaEvidencia(tipo, subcategoria);
+  const cupoDisponible = Math.max(0, max - archivos.length);
+  const completo = archivos.length >= min && archivos.length <= max;
 
   async function manejarSeleccion(e) {
     const seleccionados = Array.from(e.target.files);
     e.target.value = "";
 
     if (seleccionados.length > cupoDisponible) {
-      alert(
-        cupoDisponible === 0
-          ? `Ya subiste las ${requerida} foto(s) requeridas para "${etiquetaEvidencia(tipo)}". Quita alguna para reemplazarla.`
-          : `Para "${etiquetaEvidencia(tipo)}" se suben exactamente ${requerida} foto(s). Solo se tomaron las primeras ${cupoDisponible}.`
-      );
+      if (cupoDisponible === 0) {
+        alert(
+          exacta
+            ? `Ya subiste las ${max} foto(s) requeridas para "${etiqueta}". Quita alguna para reemplazarla.`
+            : `Ya subiste el máximo de ${max} foto(s) para "${etiqueta}". Quita alguna para reemplazarla.`
+        );
+      } else {
+        alert(
+          exacta
+            ? `Para "${etiqueta}" se suben exactamente ${max} foto(s). Solo se tomaron las primeras ${cupoDisponible}.`
+            : `Para "${etiqueta}" se admiten hasta ${max} foto(s). Solo se tomaron las primeras ${cupoDisponible}.`
+        );
+      }
     }
     const aProcesar = seleccionados.slice(0, cupoDisponible);
 
@@ -42,10 +54,11 @@ export default function SubidaEvidencia({ tipo, archivos, onCambiar }) {
   return (
     <div className="bloque-evidencia-tipo">
       <p className="etiqueta-evidencia">
-        {etiquetaEvidencia(tipo)}{" "}
+        {etiqueta}{" "}
         <span className={`contador-evidencia${completo ? " contador-evidencia-completo" : ""}`}>
-          ({archivos.length}/{requerida})
+          ({archivos.length}/{max})
         </span>
+        {!exacta && <span className="dato-menor"> · mínimo {min}, hasta {max}</span>}
       </p>
 
       <div className="miniaturas">

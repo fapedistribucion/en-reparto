@@ -82,6 +82,14 @@ export default function NuevoReclamo() {
     setTarjetas((prev) => prev.map((t) => (t.uid === uid ? nueva : t)));
   }
 
+  // Cantidad que ya tomaron las OTRAS tarjetas del mismo producto (mismo motivo distinto o no).
+  function cantidadOcupadaPorOtras(tarjeta) {
+    if (tarjeta.posicion == null) return 0;
+    return tarjetas
+      .filter((x) => x.uid !== tarjeta.uid && x.posicion === tarjeta.posicion)
+      .reduce((suma, x) => suma + (Number.isFinite(Number(x.cantidad)) ? Number(x.cantidad) : 0), 0);
+  }
+
   async function generarTicket() {
     setErrorEnvio("");
 
@@ -191,6 +199,7 @@ export default function NuevoReclamo() {
                     <SubidaEvidencia
                       key={tipo}
                       tipo={tipo}
+                      subcategoria={motivoActual}
                       archivos={archivosMotivo[tipo] ?? []}
                       onCambiar={(archivos) => setArchivosMotivo((prev) => ({ ...prev, [tipo]: archivos }))}
                     />
@@ -210,6 +219,7 @@ export default function NuevoReclamo() {
                       motivosSeleccionables={motivosSeleccionables}
                       motivos={motivos}
                       puedeQuitar={tarjetas.length > 1}
+                      cantidadOcupada={cantidadOcupadaPorOtras(t)}
                       onCambiar={(nueva) => actualizarTarjeta(t.uid, nueva)}
                       onQuitar={() => setTarjetas((prev) => prev.filter((x) => x.uid !== t.uid))}
                     />

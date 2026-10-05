@@ -6,7 +6,7 @@ import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estados
 
 const SEGUNDOS_VIGENCIA_URL = 60 * 10; // 10 minutos, solo mientras el popup está abierto
 
-function Galeria({ fotos, onAmpliar }) {
+function Galeria({ fotos, subcategoria, onAmpliar }) {
   if (fotos.length === 0) return null;
   return (
     <div className="galeria-adjuntos">
@@ -18,11 +18,11 @@ function Galeria({ fotos, onAmpliar }) {
           onClick={() => a.urlVisible && onAmpliar(a.urlVisible)}
         >
           {a.urlVisible ? (
-            <img src={a.urlVisible} alt={etiquetaEvidencia(a.tipo_evidencia)} />
+            <img src={a.urlVisible} alt={etiquetaEvidencia(a.tipo_evidencia, subcategoria)} />
           ) : (
             <span className="miniatura-adjunto-error">No disponible</span>
           )}
-          <span className="miniatura-adjunto-etiqueta">{etiquetaEvidencia(a.tipo_evidencia)}</span>
+          <span className="miniatura-adjunto-etiqueta">{etiquetaEvidencia(a.tipo_evidencia, subcategoria)}</span>
         </button>
       ))}
     </div>
@@ -173,6 +173,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                         altura, en una sola galería (sin separarlas en recuadros aparte). */}
                     <Galeria
                       fotos={[...adjuntos.filter((a) => a.observacion_id === o.id), ...fotosFactura]}
+                      subcategoria={o.subcategoria}
                       onAmpliar={setFotoAmpliada}
                     />
 

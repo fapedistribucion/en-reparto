@@ -10,11 +10,16 @@ export default function TarjetaProducto({
   motivosSeleccionables,
   motivos,
   puedeQuitar,
+  cantidadOcupada = 0,
   onCambiar,
   onQuitar,
 }) {
   const producto = productos.find((p) => p.posicion === tarjeta.posicion) ?? null;
   const requeridas = evidenciasDe(motivos, tarjeta.subcategoria);
+  // `cantidadOcupada`: lo que ya tomaron otros motivos/tarjetas del MISMO producto (un producto
+  // puede tener varios motivos, pero entre todos no pueden superar lo facturado).
+  const disponible = producto ? Math.max(0, Number(producto.cantidad) - cantidadOcupada) : 0;
+  const excede = producto && Number(tarjeta.cantidad) > disponible;
 
   return (
     <div className="tarjeta-producto">
@@ -53,11 +58,16 @@ export default function TarjetaProducto({
                   type="number"
                   inputMode="numeric"
                   min="1"
-                  max={producto.cantidad}
+                  max={disponible}
                   step="1"
                   value={tarjeta.cantidad}
                   onChange={(e) => onCambiar({ ...tarjeta, cantidad: e.target.value })}
                 />
+                <p className={excede ? "mensaje-error" : "dato-menor"}>
+                  {cantidadOcupada > 0
+                    ? `Disponible: ${disponible} de ${producto.cantidad} (${cantidadOcupada} ya en otro motivo)`
+                    : `Disponible: ${disponible} de ${producto.cantidad}`}
+                </p>
               </div>
               <div>
                 <label htmlFor={`bulto-${tarjeta.uid}`}>N° de bulto</label>
@@ -76,6 +86,7 @@ export default function TarjetaProducto({
             <SubidaEvidencia
               key={tipo}
               tipo={tipo}
+              subcategoria={tarjeta.subcategoria}
               archivos={tarjeta.archivos[tipo] ?? []}
               onCambiar={(archivos) =>
                 onCambiar({ ...tarjeta, archivos: { ...tarjeta.archivos, [tipo]: archivos } })
