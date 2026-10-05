@@ -1,3 +1,4 @@
+import { precargarDetalle } from "./cargaDetalle";
 import {
   ETIQUETAS_ESTADO,
   formatearFecha,
@@ -85,7 +86,13 @@ export default function TablaTickets({
               {accionExtra2 && <td className="col-fija-accion">{accionExtra2(t)}</td>}
               {mostrarDetalle && (
                 <td className="col-fija-detalle">
-                  <button type="button" onClick={() => onVerDetalle(t)}>
+                  <button
+                    type="button"
+                    onClick={() => onVerDetalle(t)}
+                    onMouseEnter={() => precargarDetalle(t.id)}
+                    onFocus={() => precargarDetalle(t.id)}
+                    onTouchStart={() => precargarDetalle(t.id)}
+                  >
                     Ver
                   </button>
                 </td>

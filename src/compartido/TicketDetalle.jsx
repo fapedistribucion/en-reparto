@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { cargarDetalle, leerDetalleEnCache } from "./cargaDetalle";
 import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estadosTicket";
-
-const SEGUNDOS_VIGENCIA_URL = 60 * 10; // 10 minutos, solo mientras el popup está abierto
 
 function Galeria({ fotos, subcategoria, onAmpliar }) {
   if (fotos.length === 0) return null;
@@ -18,7 +16,7 @@ function Galeria({ fotos, subcategoria, onAmpliar }) {
           onClick={() => a.urlVisible && onAmpliar(a.urlVisible)}
         >
           {a.urlVisible ? (
-            <img src={a.urlVisible} alt={etiquetaEvidencia(a.tipo_evidencia, subcategoria)} />
+            <img src={a.urlVisible} decoding="async" alt={etiquetaEvidencia(a.tipo_evidencia, subcategoria)} />
           ) : (
             <span className="miniatura-adjunto-error">No disponible</span>
           )}
@@ -29,16 +27,19 @@ function Galeria({ fotos, subcategoria, onAmpliar }) {
   );
 }
 
-// `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...).
+// `acciones`: botones a nivel de ticket (anular, marcar llegada, NC...). Puede ser un nodo o una
+// función `(recargar) => nodo` (para acciones que cambian los datos del popup, como agregar producto).
 // `renderAccionObservacion(obs, recargar)`: controles bajo cada observación (validación de SAC).
 // `soloObservacionId`: si se abrió desde la vista "Por producto", el modal entra en modo enfocado:
 // solo esa observación, solo sus evidencias (+ la foto de factura completa), y sin repetir datos
 // que ya se ven en la tabla. En este modo la consulta también pide solo esos datos puntuales
 // (no toda la factura), para que cargue más rápido.
 export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion, soloObservacionId }) {
-  const [observaciones, setObservaciones] = useState([]);
-  const [adjuntos, setAdjuntos] = useState([]);
-  const [cargando, setCargando] = useState(true);
+  // Si ese ticket ya se cargó/precargó (ver cargaDetalle.js) el popup se pinta al instante.
+  const enCache = leerDetalleEnCache(ticket.id, soloObservacionId);
+  const [observaciones, setObservaciones] = useState(enCache?.observaciones ?? []);
+  const [adjuntos, setAdjuntos] = useState(enCache?.adjuntos ?? []);
+  const [cargando, setCargando] = useState(!enCache);
   const [version, setVersion] = useState(0);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
 
@@ -47,41 +48,28 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
   useEffect(() => {
     let cancelado = false;
 
-    async function cargarDetalle() {
-      let obsQuery = supabase.from("ticket_observaciones").select("*").eq("ticket_id", ticket.id);
-      let adjQuery = supabase.from("ticket_adjuntos").select("*").eq("ticket_id", ticket.id);
-
-      // Modo enfocado: solo la observación puntual y sus evidencias (+ la foto de
-      // factura completa, que no tiene observacion_id). Menos filas, menos fotos
-      // que firmar, carga más rápido que traer todo el ticket para mostrar una sola.
-      if (modoEnfocado) {
-        obsQuery = obsQuery.eq("id", soloObservacionId);
-        adjQuery = adjQuery.or(`observacion_id.eq.${soloObservacionId},observacion_id.is.null`);
-      }
-
-      const [{ data: obs }, { data: adj }] = await Promise.all([obsQuery.order("id"), adjQuery.order("id")]);
-
-      // Bucket privado: cada foto necesita una URL firmada temporal (se piden todas en una sola llamada)
-      const rutas = (adj ?? []).map((a) => a.url_storage);
-      let firmadas = [];
-      if (rutas.length > 0) {
-        const { data } = await supabase.storage.from("evidencias").createSignedUrls(rutas, SEGUNDOS_VIGENCIA_URL);
-        firmadas = data ?? [];
-      }
-      const urlPorRuta = new Map(firmadas.map((f) => [f.path, f.signedUrl]));
-
-      if (!cancelado) {
-        setObservaciones(obs ?? []);
-        setAdjuntos((adj ?? []).map((a) => ({ ...a, urlVisible: urlPorRuta.get(a.url_storage) ?? null })));
-        setCargando(false);
-      }
+    function aplicar(datos) {
+      if (cancelado) return;
+      setObservaciones(datos.observaciones);
+      setAdjuntos(datos.adjuntos);
+      setCargando(false);
     }
 
-    cargarDetalle();
+    // Se muestra lo que haya en caché y se refresca en segundo plano (version > 0 = acción
+    // reciente, p. ej. validar una observación: se fuerza la consulta).
+    const previo = leerDetalleEnCache(ticket.id, soloObservacionId);
+    if (previo) aplicar(previo);
+
+    cargarDetalle(ticket.id, soloObservacionId, { forzar: version > 0 })
+      .then(aplicar)
+      .catch(() => {
+        if (!cancelado) setCargando(false);
+      });
+
     return () => {
       cancelado = true;
     };
-  }, [ticket.id, version, modoEnfocado, soloObservacionId]);
+  }, [ticket.id, version, soloObservacionId]);
 
   const recargar = () => setVersion((v) => v + 1);
   const fotosFactura = adjuntos.filter((a) => a.observacion_id === null);
@@ -89,6 +77,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
     ? observaciones.filter((o) => o.id === soloObservacionId)
     : observaciones;
   const observacionEnfocada = modoEnfocado ? observacionesMostradas[0] : null;
+  const contenidoAcciones = typeof acciones === "function" ? acciones(recargar) : acciones;
 
   return (
     <div className="fondo-modal" onClick={onCerrar}>
@@ -169,6 +158,13 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                         <p className="dato-menor">Toda la factura</p>
                       ))}
 
+                    {o.usuario_agregado_sac && (
+                      <p className="etiqueta-agregado-sac">
+                        Agregado por SAC
+                        {o.fecha_agregado_sac ? ` · ${formatearFecha(o.fecha_agregado_sac, true)}` : ""}
+                      </p>
+                    )}
+
                     {/* Evidencias del producto + foto de la factura juntas, a la misma
                         altura, en una sola galería (sin separarlas en recuadros aparte). */}
                     <Galeria
@@ -185,7 +181,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
           </>
         )}
 
-        {acciones && <div className="panel-detalle-acciones">{acciones}</div>}
+        {contenidoAcciones && <div className="panel-detalle-acciones">{contenidoAcciones}</div>}
 
         <button type="button" className="boton-cerrar-panel" onClick={onCerrar}>
           Cerrar

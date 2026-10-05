@@ -1537,3 +1537,15 @@ textarea:focus {
 .aviso-filtro-observacion {
   margin: 0 0 10px;
 }
+
+/* ---------- Observación agregada por SAC después de creado el ticket ---------- */
+.etiqueta-agregado-sac {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--acento);
+  color: var(--acento);
+  font-size: 11px;
+  font-weight: 600;
+}

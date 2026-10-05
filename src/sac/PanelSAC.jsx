@@ -9,6 +9,8 @@ import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
 import ConfirmModal from "../compartido/ConfirmModal";
 import ValidarObservacion from "./ValidarObservacion";
+import AgregarProductoSAC, { puedeAgregarProducto } from "./AgregarProductoSAC";
+import { invalidarDetalle } from "../compartido/cargaDetalle";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
@@ -292,23 +294,41 @@ export default function PanelSAC({ sidebarAbierta }) {
               }}
             />
           )}
-          acciones={
-            seleccionado.estado === "EN_RUTA" ? (
-              <div className="accion-rol">
-                <label htmlFor="motivoAnulacion">Motivo de anulación</label>
-                <input
-                  id="motivoAnulacion"
-                  type="text"
-                  value={motivoAnulacion}
-                  onChange={(e) => setMotivoAnulacion(e.target.value)}
-                />
-                {error && <p className="mensaje-error">{error}</p>}
-                <button type="button" onClick={pedirConfirmarAnulacion} disabled={guardando} className="boton-peligro">
-                  Anular ticket
-                </button>
-              </div>
-            ) : null
-          }
+          acciones={(recargarDetalle) => {
+            const puedeAgregar = puedeAgregarProducto(seleccionado);
+            const puedeAnular = seleccionado.estado === "EN_RUTA";
+            if (!puedeAgregar && !puedeAnular) return null;
+            return (
+              <>
+                {puedeAgregar && (
+                  <AgregarProductoSAC
+                    ticket={seleccionado}
+                    onAgregado={() => {
+                      invalidarDetalle(seleccionado.id);
+                      recargarDetalle();
+                      recargar();
+                      recargarObs();
+                    }}
+                  />
+                )}
+                {puedeAnular && (
+                  <div className="accion-rol">
+                    <label htmlFor="motivoAnulacion">Motivo de anulación</label>
+                    <input
+                      id="motivoAnulacion"
+                      type="text"
+                      value={motivoAnulacion}
+                      onChange={(e) => setMotivoAnulacion(e.target.value)}
+                    />
+                    {error && <p className="mensaje-error">{error}</p>}
+                    <button type="button" onClick={pedirConfirmarAnulacion} disabled={guardando} className="boton-peligro">
+                      Anular ticket
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          }}
         />
       )}
 

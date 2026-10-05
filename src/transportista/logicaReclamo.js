@@ -70,7 +70,19 @@ export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMot
 }
 
 // Devuelve el primer problema encontrado (texto para el usuario) o null si todo está bien.
-export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, tarjetas, productos, archivosFactura }) {
+// `cantidadesPrevias` (Map posicion -> cantidad ya observada en el ticket) y `exigirFactura=false`
+// los usa SAC al agregar un producto a un ticket que ya existe (ver validarProductoAgregado).
+export function validarReclamo({
+  opcion,
+  motivos,
+  motivoTotal,
+  archivosMotivo,
+  tarjetas,
+  productos,
+  archivosFactura,
+  cantidadesPrevias = new Map(),
+  exigirFactura = true,
+}) {
   const { alcance, motivoFijo } = interpretarOpcion(opcion);
   if (!alcance) return "Indica qué ocurrió con la entrega.";
 
@@ -90,11 +102,11 @@ export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, t
       const cantidad = Number(t.cantidad);
       if (!Number.isFinite(cantidad) || cantidad <= 0) return `Producto ${n}: indica la cantidad observada.`;
       // Un mismo producto puede tener varios motivos, pero entre todos no pueden superar lo facturado.
-      const previo = acumulado.get(t.posicion) ?? 0;
+      const previo = (cantidadesPrevias.get(t.posicion) ?? 0) + (acumulado.get(t.posicion) ?? 0);
       const total = previo + cantidad;
       if (total > Number(producto.cantidad)) {
         return previo > 0
-          ? `Producto ${n}: entre todos los motivos de este producto superan lo facturado (${producto.cantidad}); en otras tarjetas ya hay ${previo}, quedan ${Math.max(0, producto.cantidad - previo)}.`
+          ? `Producto ${n}: entre todos los motivos de este producto superan lo facturado (${producto.cantidad}); ya hay ${previo} en otros motivos, quedan ${Math.max(0, producto.cantidad - previo)}.`
           : `Producto ${n}: la cantidad observada supera lo facturado (${producto.cantidad}).`;
       }
       acumulado.set(t.posicion, total);
@@ -115,8 +127,32 @@ export function validarReclamo({ opcion, motivos, motivoTotal, archivosMotivo, t
     }
   }
 
-  if (!archivosFactura || archivosFactura.length === 0) return "Sube la foto de la factura.";
+  if (exigirFactura && (!archivosFactura || archivosFactura.length === 0)) return "Sube la foto de la factura.";
   return null;
+}
+
+// SAC agrega UN producto a un ticket existente (rechazo parcial): mismas reglas de producto,
+// motivo, cantidad, bulto y fotos que el transportista, pero la cantidad también cuenta lo que
+// ya está observado en el ticket y no se pide la foto de la factura (ya está en el ticket).
+export function validarProductoAgregado({ tarjeta, motivos, productos, cantidadesPrevias }) {
+  return validarReclamo({
+    opcion: "RECHAZO_PARCIAL",
+    motivos,
+    tarjetas: [tarjeta],
+    productos,
+    cantidadesPrevias,
+    exigirFactura: false,
+  });
+}
+
+// Suma de cantidad_observada por posición de las observaciones ya registradas en el ticket.
+export function cantidadesPreviasPorPosicion(observaciones) {
+  const mapa = new Map();
+  (observaciones ?? []).forEach((o) => {
+    if (o.posicion == null) return;
+    mapa.set(o.posicion, (mapa.get(o.posicion) ?? 0) + Number(o.cantidad_observada ?? 0));
+  });
+  return mapa;
 }
 
 // ¿Alguna observación es No Logística? (entonces el transportista debe coordinar con SAC)
