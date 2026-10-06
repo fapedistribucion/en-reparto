@@ -91,10 +91,7 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
     <div className="fondo-modal" onClick={enviando ? undefined : onCerrar}>
       <div className="panel-detalle" onClick={(e) => e.stopPropagation()}>
         <p className="panel-detalle-titulo-seccion">Agregar producto al ticket {ticket.codigo_ticket}</p>
-        <p className="dato-menor">
-          Factura {ticket.factura}. Mismas reglas de motivo, cantidad y evidencia que el transportista; quedará
-          marcado como «Agregado por SAC».
-        </p>
+        <p className="dato-menor">Factura {ticket.factura}</p>
 
         {cargando ? (
           <p className="panel-detalle-seccion">Cargando productos...</p>

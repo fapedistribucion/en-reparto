@@ -723,6 +723,14 @@ textarea:focus {
   box-shadow: inset 1px 0 0 var(--borde);
 }
 
+/* "Confirmar recepción" cuando hay dos columnas de acción: se fija justo a la izquierda de
+   "Registrar entrega" (90px de Detalle + 140px de Registrar entrega = 230px desde la derecha). */
+.col-fija-accion.col-fija-accion-previa {
+  right: 230px;
+  width: 170px;
+  min-width: 170px;
+}
+
 .badge-estado {
   display: inline-block;
   padding: 3px 10px;

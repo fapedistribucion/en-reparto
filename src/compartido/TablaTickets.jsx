@@ -33,6 +33,9 @@ export default function TablaTickets({
   accionExtra,
   accionExtra2,
 }) {
+  // Con dos columnas de acción, "Confirmar recepción" se fija a la izquierda de "Registrar entrega".
+  const claseAccionPrevia = accionExtra2 ? "col-fija-accion col-fija-accion-previa" : "col-fija-accion";
+
   if (tickets.length === 0) {
     return <p>No hay tickets para mostrar.</p>;
   }
@@ -56,7 +59,7 @@ export default function TablaTickets({
             <th>Entrega a transporte</th>
             <th>Motivo retención</th>
             <th>Nota de crédito</th>
-            {accionExtra && <th className="col-fija-accion">Confirmar recepción</th>}
+            {accionExtra && <th className={claseAccionPrevia}>Confirmar recepción</th>}
             {accionExtra2 && <th className="col-fija-accion">Registrar entrega</th>}
             {mostrarDetalle && <th className="col-fija-detalle">Detalle</th>}
           </tr>
@@ -82,7 +85,7 @@ export default function TablaTickets({
               <td>{textoEntregaTransporte(t)}</td>
               <td>{textoMotivoRetencion(t)}</td>
               <td>{t.nota_credito ?? "Pendiente"}</td>
-              {accionExtra && <td className="col-fija-accion">{accionExtra(t)}</td>}
+              {accionExtra && <td className={claseAccionPrevia}>{accionExtra(t)}</td>}
               {accionExtra2 && <td className="col-fija-accion">{accionExtra2(t)}</td>}
               {mostrarDetalle && (
                 <td className="col-fija-detalle">
