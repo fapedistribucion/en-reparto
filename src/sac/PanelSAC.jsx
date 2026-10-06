@@ -62,6 +62,7 @@ export default function PanelSAC({ sidebarAbierta }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [confirmarAnulacion, setConfirmarAnulacion] = useState(false);
+  const [anulando, setAnulando] = useState(false); // muestra el campo de motivo recién al elegir "Anular ticket"
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const [borrador, setBorrador] = useState(FILTROS_VACIOS);
@@ -124,6 +125,13 @@ export default function PanelSAC({ sidebarAbierta }) {
   function abrirDetalle(ticket, observacionId = null) {
     setSeleccionadoId(ticket.id);
     setObservacionFocoId(observacionId);
+    setMotivoAnulacion("");
+    setAnulando(false);
+    setError("");
+  }
+
+  function cancelarAnulacion() {
+    setAnulando(false);
     setMotivoAnulacion("");
     setError("");
   }
@@ -300,18 +308,34 @@ export default function PanelSAC({ sidebarAbierta }) {
             if (!puedeAgregar && !puedeAnular) return null;
             return (
               <>
-                {puedeAgregar && (
-                  <AgregarProductoSAC
-                    ticket={seleccionado}
-                    onAgregado={() => {
-                      invalidarDetalle(seleccionado.id);
-                      recargarDetalle();
-                      recargar();
-                      recargarObs();
-                    }}
-                  />
-                )}
-                {puedeAnular && (
+                <p className="panel-detalle-titulo-seccion">Acciones</p>
+                <div className="acciones-sac">
+                  {puedeAgregar && (
+                    <AgregarProductoSAC
+                      ticket={seleccionado}
+                      onAgregado={() => {
+                        invalidarDetalle(seleccionado.id);
+                        recargarDetalle();
+                        recargar();
+                        recargarObs();
+                      }}
+                    />
+                  )}
+                  {puedeAnular && (
+                    <button
+                      type="button"
+                      className="boton-peligro"
+                      onClick={() => {
+                        setError("");
+                        setAnulando(true);
+                      }}
+                      disabled={anulando || guardando}
+                    >
+                      Anular ticket
+                    </button>
+                  )}
+                </div>
+                {puedeAnular && anulando && (
                   <div className="accion-rol">
                     <label htmlFor="motivoAnulacion">Motivo de anulación</label>
                     <input
@@ -319,11 +343,17 @@ export default function PanelSAC({ sidebarAbierta }) {
                       type="text"
                       value={motivoAnulacion}
                       onChange={(e) => setMotivoAnulacion(e.target.value)}
+                      autoFocus
                     />
                     {error && <p className="mensaje-error">{error}</p>}
-                    <button type="button" onClick={pedirConfirmarAnulacion} disabled={guardando} className="boton-peligro">
-                      Anular ticket
-                    </button>
+                    <div className="acciones-sac">
+                      <button type="button" className="boton-neutro" onClick={cancelarAnulacion} disabled={guardando}>
+                        Cancelar
+                      </button>
+                      <button type="button" className="boton-peligro" onClick={pedirConfirmarAnulacion} disabled={guardando}>
+                        Confirmar anulación
+                      </button>
+                    </div>
                   </div>
                 )}
               </>

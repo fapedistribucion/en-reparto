@@ -59,8 +59,16 @@ export default function TablaTickets({
             <th>Entrega a transporte</th>
             <th>Motivo retención</th>
             <th>Nota de crédito</th>
-            {accionExtra && <th className={claseAccionPrevia}>Confirmar recepción</th>}
-            {accionExtra2 && <th className="col-fija-accion">Registrar entrega</th>}
+            {accionExtra && <th className={claseAccionPrevia}>
+                Confirmar
+                <br />
+                recepción
+              </th>}
+            {accionExtra2 && <th className="col-fija-accion">
+                Registrar
+                <br />
+                entrega
+              </th>}
             {mostrarDetalle && <th className="col-fija-detalle">Detalle</th>}
           </tr>
         </thead>

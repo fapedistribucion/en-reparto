@@ -27,10 +27,10 @@ export default function ModalEntregaTransporte({ ticket, onGuardar, onCancelar, 
 
   return (
     <div className="fondo-modal" onClick={cargando ? undefined : onCancelar}>
-      <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-confirmar modal-entrega" onClick={(e) => e.stopPropagation()}>
         <p className="modal-confirmar-mensaje">¿Se entregó la factura {ticket.factura} al transporte?</p>
 
-        <div className="modal-confirmar-acciones">
+        <div className="modal-opciones">
           <button
             type="button"
             className={respuesta === "SI" ? "boton-primario" : ""}

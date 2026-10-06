@@ -718,17 +718,18 @@ textarea:focus {
 
 .col-fija-accion {
   right: 90px;
-  width: 140px;
-  min-width: 140px;
+  width: 110px;
+  min-width: 110px;
   box-shadow: inset 1px 0 0 var(--borde);
 }
 
 /* "Confirmar recepción" cuando hay dos columnas de acción: se fija justo a la izquierda de
-   "Registrar entrega" (90px de Detalle + 140px de Registrar entrega = 230px desde la derecha). */
+   "Registrar entrega" (90px de Detalle + 110px de Registrar entrega = 200px desde la derecha).
+   Los títulos de estas columnas van en dos líneas para que no ensanchen la columna. */
 .col-fija-accion.col-fija-accion-previa {
-  right: 230px;
-  width: 170px;
-  min-width: 170px;
+  right: 200px;
+  width: 110px;
+  min-width: 110px;
 }
 
 .badge-estado {
@@ -1556,4 +1557,62 @@ textarea:focus {
   color: var(--acento);
   font-size: 11px;
   font-weight: 600;
+}
+
+/* ---------- Acciones de SAC en el detalle del ticket ---------- */
+.acciones-sac {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acciones-sac > button {
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+
+.accion-rol .acciones-sac button.boton-neutro {
+  background: var(--superficie);
+  color: var(--texto);
+  border-color: var(--borde);
+}
+
+/* ---------- Popup "¿Se entregó la factura al transporte?" ---------- */
+.modal-confirmar.modal-entrega {
+  max-width: 420px;
+}
+
+.modal-entrega .modal-confirmar-mensaje {
+  font-size: 15px;
+  line-height: 1.4;
+  margin-bottom: 18px;
+}
+
+/* Sí / No (Retención): dos opciones del mismo ancho, una al lado de la otra */
+.modal-opciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.modal-opciones button {
+  padding: 12px 8px;
+}
+
+.modal-entrega .accion-rol {
+  max-width: none;
+  margin-bottom: 18px;
+}
+
+.modal-entrega .accion-rol select {
+  width: 100%;
+}
+
+/* Cancelar / Guardar: separados de las opciones, uno junto al otro */
+.modal-entrega .modal-confirmar-acciones {
+  border-top: 1px solid var(--borde);
+  padding-top: 16px;
+  margin-top: 4px;
 }

@@ -415,31 +415,25 @@ export default function PanelLI({ sidebarAbierta }) {
             setObservacionFocoId(null);
           }}
           acciones={
-            seleccionado.estado === "EN_RUTA" || seleccionado.estado === "EN_LI" ? (
+            // La llegada a LI se marca con el ✓ de la columna "Confirmar recepción" de la tabla;
+            // en el popup solo queda la Nota de crédito (cuando el ticket está en GESTION LI).
+            seleccionado.estado === "EN_LI" ? (
               <>
-                {error && <p className="mensaje-error">{error}</p>}
-
-                {seleccionado.estado === "EN_RUTA" && (
-                  <button type="button" onClick={() => pedirConfirmarLlegada(seleccionado)} disabled={guardando}>
-                    Marcar llegada a LI
+                <p className="panel-detalle-titulo-seccion">Acciones</p>
+                <div className="accion-rol">
+                  <label htmlFor="notaCredito">Nota de crédito</label>
+                  <input
+                    id="notaCredito"
+                    type="text"
+                    value={notaCredito}
+                    onChange={(e) => setNotaCredito(e.target.value)}
+                    placeholder="N° de NC"
+                  />
+                  {error && <p className="mensaje-error">{error}</p>}
+                  <button type="button" onClick={pedirConfirmarNC} disabled={guardando}>
+                    Guardar NC
                   </button>
-                )}
-
-                {seleccionado.estado === "EN_LI" && (
-                  <div className="accion-rol">
-                    <label htmlFor="notaCredito">Nota de crédito</label>
-                    <input
-                      id="notaCredito"
-                      type="text"
-                      value={notaCredito}
-                      onChange={(e) => setNotaCredito(e.target.value)}
-                      placeholder="N° de NC"
-                    />
-                    <button type="button" onClick={pedirConfirmarNC} disabled={guardando}>
-                      Guardar NC
-                    </button>
-                  </div>
-                )}
+                </div>
               </>
             ) : null
           }

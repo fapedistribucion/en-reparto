@@ -131,11 +131,9 @@ export default function AgregarProductoSAC({ ticket, onAgregado }) {
 
   return (
     <>
-      <div className="accion-rol">
-        <button type="button" onClick={() => setAbierto(true)}>
-          Agregar producto
-        </button>
-      </div>
+      <button type="button" onClick={() => setAbierto(true)}>
+        Agregar producto
+      </button>
       {abierto && (
         <FormularioAgregar ticket={ticket} onCerrar={() => setAbierto(false)} onAgregado={onAgregado} />
       )}
