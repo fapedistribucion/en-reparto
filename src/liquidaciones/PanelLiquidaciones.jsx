@@ -17,6 +17,7 @@ import {
   formatearPrecio,
   textoEntregaTransporte,
   textoMotivoRetencion,
+  textoNotaCredito,
 } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
@@ -27,7 +28,7 @@ const PESTANAS = [
   { clave: "dashboard", etiqueta: "Dashboard", icono: IconoDashboard },
 ];
 
-const FILTROS_VACIOS = { ticket: "", factura: "", transporte: "", estado: "", desde: "", hasta: "" };
+const FILTROS_VACIOS = { ticket: "", factura: "", pedido: "", transporte: "", estado: "", desde: "", hasta: "" };
 
 function coincideTexto(valor, filtro) {
   if (!filtro) return true;
@@ -80,6 +81,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
+          coincideTexto(t.pedido_entrega, filtros.pedido) &&
           (!filtros.transporte || t.empresa_transporte === filtros.transporte) &&
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
@@ -102,6 +104,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
         (o) =>
           coincideTexto(o.ticket?.codigo_ticket, filtros.ticket) &&
           coincideTexto(o.ticket?.factura, filtros.factura) &&
+          coincideTexto(o.ticket?.pedido_entrega, filtros.pedido) &&
           (!filtros.transporte || o.ticket?.empresa_transporte === filtros.transporte) &&
           (!filtros.estado || o.ticket?.estado === filtros.estado) &&
           coincideFecha(o.ticket?.fecha_creacion, filtros.desde, filtros.hasta)
@@ -138,8 +141,10 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
         { titulo: "Fecha viaje", obtener: (o) => o.ticket?.fecha_viaje },
         { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
+        { titulo: "Pedido", obtener: (o) => o.ticket?.pedido_entrega },
         { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
         { titulo: "Cód. Producto", clave: "codigo_producto" },
+        { titulo: "Posición", clave: "posicion" },
         { titulo: "Producto", clave: "nombre_producto" },
         { titulo: "Precio Unitario", obtener: (o) => (o.codigo_producto ? formatearPrecio(o.precio_unitario) : "") },
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
@@ -151,7 +156,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
         { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
         { titulo: "Entrega a transporte", obtener: (o) => textoEntregaTransporte(o.ticket) },
         { titulo: "Motivo retención", obtener: (o) => textoMotivoRetencion(o.ticket) },
-        { titulo: "Nota de Crédito", obtener: (o) => o.ticket?.nota_credito },
+        { titulo: "Nota de Crédito", obtener: (o) => o.nota_credito },
       ], observacionesFiltradas);
     } else {
       exportarCsv("en-reparto-por-ticket", [
@@ -168,7 +173,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
         { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
         { titulo: "Entrega a transporte", obtener: (t) => textoEntregaTransporte(t) },
         { titulo: "Motivo retención", obtener: (t) => textoMotivoRetencion(t) },
-        { titulo: "Nota de crédito", clave: "nota_credito" },
+        { titulo: "Nota de crédito", obtener: (t) => textoNotaCredito(t) },
       ], ticketsFiltrados);
     }
   }

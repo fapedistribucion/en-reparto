@@ -1616,3 +1616,10 @@ textarea:focus {
   padding-top: 16px;
   margin-top: 4px;
 }
+
+/* Confirmación de una acción (p. ej. NC guardada) */
+.mensaje-exito {
+  color: var(--exito);
+  font-size: 13px;
+  margin: 8px 0 0;
+}

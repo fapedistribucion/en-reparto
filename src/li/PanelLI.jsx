@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
@@ -7,6 +7,7 @@ import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
+import { invalidarDetalle } from "../compartido/cargaDetalle";
 import ConfirmModal from "../compartido/ConfirmModal";
 import ModalEntregaTransporte from "../compartido/ModalEntregaTransporte";
 import BarraHerramientas from "../compartido/BarraHerramientas";
@@ -21,6 +22,8 @@ import {
   formatearPrecio,
   textoEntregaTransporte,
   textoMotivoRetencion,
+  textoNotaCredito,
+  formatearFecha,
 } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { exportarCsv } from "../utils/exportarCsv";
@@ -31,7 +34,7 @@ const PESTANAS = [
   { clave: "dashboard", etiqueta: "Dashboard", icono: IconoDashboard },
 ];
 
-const FILTROS_VACIOS = { ticket: "", factura: "", transporte: "", estado: "", desde: "", hasta: "" };
+const FILTROS_VACIOS = { ticket: "", factura: "", pedido: "", transporte: "", estado: "", desde: "", hasta: "" };
 
 function coincideTexto(valor, filtro) {
   if (!filtro) return true;
@@ -65,6 +68,9 @@ export default function PanelLI({ sidebarAbierta }) {
   const [errorAccionTabla, setErrorAccionTabla] = useState("");
   const [ticketConfirmarLlegada, setTicketConfirmarLlegada] = useState(null);
   const [confirmarNC, setConfirmarNC] = useState(false);
+  const [mensajeNC, setMensajeNC] = useState("");
+  // Función del popup para volver a pedir sus datos (se llena al dibujar el bloque de acciones).
+  const recargarDetalleRef = useRef(null);
   const [ticketEntregaTransporte, setTicketEntregaTransporte] = useState(null);
   const [guardandoEntrega, setGuardandoEntrega] = useState(false);
 
@@ -73,6 +79,16 @@ export default function PanelLI({ sidebarAbierta }) {
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
+
+  // La NC es por producto. Con el popup abierto desde "Por producto" se trabaja una sola observación
+  // (`observacionFoco`); desde "Por factura", todas las del ticket que aún no tienen NC.
+  const observacionesDelTicket = useMemo(
+    () => (seleccionado ? observaciones.filter((o) => o.ticket_id === seleccionado.id) : []),
+    [observaciones, seleccionado]
+  );
+  const observacionFoco = observacionFocoId ? observaciones.find((o) => o.id === observacionFocoId) ?? null : null;
+  const pendientesNC = observacionesDelTicket.filter((o) => !o.nota_credito);
+  const conNC = observacionesDelTicket.length - pendientesNC.length;
 
   const opcionesTransporte = useMemo(
     () => [...new Set(tickets.map((t) => t.empresa_transporte).filter(Boolean))].sort(),
@@ -97,6 +113,7 @@ export default function PanelLI({ sidebarAbierta }) {
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
+          coincideTexto(t.pedido_entrega, filtros.pedido) &&
           (!filtros.transporte || t.empresa_transporte === filtros.transporte) &&
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
@@ -119,6 +136,7 @@ export default function PanelLI({ sidebarAbierta }) {
         (o) =>
           coincideTexto(o.ticket?.codigo_ticket, filtros.ticket) &&
           coincideTexto(o.ticket?.factura, filtros.factura) &&
+          coincideTexto(o.ticket?.pedido_entrega, filtros.pedido) &&
           (!filtros.transporte || o.ticket?.empresa_transporte === filtros.transporte) &&
           (!filtros.estado || o.ticket?.estado === filtros.estado) &&
           coincideFecha(o.ticket?.fecha_creacion, filtros.desde, filtros.hasta)
@@ -129,8 +147,10 @@ export default function PanelLI({ sidebarAbierta }) {
   function abrirDetalle(ticket, observacionId = null) {
     setSeleccionadoId(ticket.id);
     setObservacionFocoId(observacionId);
-    setNotaCredito("");
+    // Desde "Por producto" se precarga la NC que ya tenga (para poder corregirla).
+    setNotaCredito(observaciones.find((o) => o.id === observacionId)?.nota_credito ?? "");
     setError("");
+    setMensajeNC("");
   }
 
   function abrirPanelFiltros() {
@@ -162,8 +182,10 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "Fecha viaje", obtener: (o) => o.ticket?.fecha_viaje },
         { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
+        { titulo: "Pedido", obtener: (o) => o.ticket?.pedido_entrega },
         { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
         { titulo: "Cód. Producto", clave: "codigo_producto" },
+        { titulo: "Posición", clave: "posicion" },
         { titulo: "Producto", clave: "nombre_producto" },
         { titulo: "Precio Unitario", obtener: (o) => (o.codigo_producto ? formatearPrecio(o.precio_unitario) : "") },
         { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
@@ -175,7 +197,7 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
         { titulo: "Entrega a transporte", obtener: (o) => textoEntregaTransporte(o.ticket) },
         { titulo: "Motivo retención", obtener: (o) => textoMotivoRetencion(o.ticket) },
-        { titulo: "Nota de Crédito", obtener: (o) => o.ticket?.nota_credito },
+        { titulo: "Nota de Crédito", obtener: (o) => o.nota_credito },
       ], observacionesFiltradas);
     } else {
       exportarCsv("en-reparto-por-ticket", [
@@ -192,7 +214,7 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
         { titulo: "Entrega a transporte", obtener: (t) => textoEntregaTransporte(t) },
         { titulo: "Motivo retención", obtener: (t) => textoMotivoRetencion(t) },
-        { titulo: "Nota de crédito", clave: "nota_credito" },
+        { titulo: "Nota de crédito", obtener: (t) => textoNotaCredito(t) },
       ], ticketsFiltrados);
     }
   }
@@ -240,36 +262,75 @@ export default function PanelLI({ sidebarAbierta }) {
   }
 
   function pedirConfirmarNC() {
-    if (!notaCredito.trim()) {
+    const nc = notaCredito.trim();
+    setMensajeNC("");
+    if (!nc) {
       setError("Ingresa el número de Nota de Crédito.");
+      return;
+    }
+    if (observacionFoco && observacionFoco.nota_credito === nc) {
+      setError("Ese producto ya tiene esa misma NC.");
+      return;
+    }
+    if (!observacionFoco && pendientesNC.length === 0) {
+      setError("Todos los productos de este ticket ya tienen NC.");
       return;
     }
     setError("");
     setConfirmarNC(true);
   }
 
+  // Texto del popup de confirmación (incluye la alerta cuando algunos productos ya tienen NC).
+  function mensajeConfirmarNC() {
+    const nc = notaCredito.trim();
+    if (observacionFoco) {
+      if (observacionFoco.nota_credito) {
+        return `¿Cambiar la NC de este producto de "${observacionFoco.nota_credito}" a "${nc}"?`;
+      }
+      const ultimo = pendientesNC.length === 1;
+      return `¿Registrar la NC "${nc}" para este producto?${ultimo ? " Es el último producto sin NC: el ticket pasará a Solucionado." : ""}`;
+    }
+    if (conNC > 0) {
+      return `Atención: ${conNC} de ${observacionesDelTicket.length} productos de este ticket ya tienen NC y no se modificarán. La NC "${nc}" se asignará solo a los ${pendientesNC.length} productos pendientes y el ticket pasará a Solucionado. ¿Continuar?`;
+    }
+    return `¿Registrar la NC "${nc}" para los ${pendientesNC.length} productos del ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`;
+  }
+
+  // La NC se guarda con la función registrar_nc_li: valida el rol y que el ticket esté en GESTION LI,
+  // guarda quién y cuándo (primera vez y última modificación) y recalcula el estado del ticket.
   async function guardarNotaCredito() {
+    const ticket = seleccionado;
     setConfirmarNC(false);
+    if (!ticket) return;
     setGuardando(true);
     setError("");
-    const { data: sesion } = await supabase.auth.getUser();
+    setMensajeNC("");
 
-    const { error: errorUpdate } = await supabase
-      .from("tickets")
-      .update({
-        nota_credito: notaCredito,
-        usuario_nc: sesion.user.id,
-        fecha_nc: new Date().toISOString(),
-      })
-      .eq("id", seleccionado.id);
+    const { data, error: errorRpc } = await supabase.rpc("registrar_nc_li", {
+      p_ticket_id: ticket.id,
+      p_nota_credito: notaCredito.trim(),
+      p_observacion_ids: observacionFoco ? [observacionFoco.id] : null,
+    });
 
     setGuardando(false);
 
-    if (errorUpdate) {
-      setError("No se pudo guardar la NC: " + errorUpdate.message);
+    if (errorRpc) {
+      setError("No se pudo guardar la NC: " + errorRpc.message);
       return;
     }
-    await recargar();
+
+    invalidarDetalle(ticket.id);
+    await Promise.all([recargar(), recargarObs()]);
+    recargarDetalleRef.current?.();
+
+    const solucionado = data?.estado === "SOLUCIONADO";
+    setMensajeNC(
+      (observacionFoco
+        ? "NC guardada para este producto."
+        : `NC asignada a ${data?.actualizadas ?? 0} producto(s).`) +
+        (solucionado ? " Todos los productos tienen NC: el ticket pasó a Solucionado." : "")
+    );
+    if (!observacionFoco) setNotaCredito("");
   }
 
   // Registrar (o corregir) si la factura ya se entregó al transporte. Independiente
@@ -429,14 +490,35 @@ export default function PanelLI({ sidebarAbierta }) {
             setSeleccionadoId(null);
             setObservacionFocoId(null);
           }}
-          acciones={
+          acciones={(recargarDetalle) => {
+            recargarDetalleRef.current = recargarDetalle;
             // La llegada a LI se marca con el ✓ de la columna "Confirmar recepción" de la tabla;
-            // en el popup solo queda la Nota de crédito (cuando el ticket está en GESTION LI).
-            seleccionado.estado === "EN_LI" ? (
+            // en el popup solo queda la Nota de crédito (ticket en GESTION LI o ya SOLUCIONADO,
+            // porque una NC se puede corregir).
+            if (seleccionado.estado !== "EN_LI" && seleccionado.estado !== "SOLUCIONADO") return null;
+
+            // Desde "Por factura" y sin productos pendientes: no hay nada que asignar en bloque.
+            if (!observacionFoco && pendientesNC.length === 0) {
+              return (
+                <>
+                  <p className="panel-detalle-titulo-seccion">Acciones</p>
+                  <p className="dato-menor">
+                    Todos los productos de este ticket ya tienen NC. Para corregir una, ábrela desde «Por producto».
+                  </p>
+                  {mensajeNC && <p className="mensaje-exito">{mensajeNC}</p>}
+                </>
+              );
+            }
+
+            return (
               <>
                 <p className="panel-detalle-titulo-seccion">Acciones</p>
                 <div className="accion-rol">
-                  <label htmlFor="notaCredito">Nota de crédito</label>
+                  <label htmlFor="notaCredito">
+                    {observacionFoco
+                      ? "Nota de crédito del producto"
+                      : `Nota de crédito (para los ${pendientesNC.length} productos pendientes)`}
+                  </label>
                   <input
                     id="notaCredito"
                     type="text"
@@ -444,14 +526,29 @@ export default function PanelLI({ sidebarAbierta }) {
                     onChange={(e) => setNotaCredito(e.target.value)}
                     placeholder="N° de NC"
                   />
+                  {!observacionFoco && conNC > 0 && (
+                    <p className="dato-menor">
+                      {conNC} de {observacionesDelTicket.length} productos ya tienen NC y no se modificarán.
+                    </p>
+                  )}
+                  {observacionFoco?.nota_credito && (
+                    <p className="dato-menor">
+                      NC registrada el {formatearFecha(observacionFoco.fecha_nc, true)}
+                      {observacionFoco.fecha_modif_nc &&
+                      observacionFoco.fecha_modif_nc !== observacionFoco.fecha_nc
+                        ? ` · Última modificación ${formatearFecha(observacionFoco.fecha_modif_nc, true)}`
+                        : ""}
+                    </p>
+                  )}
                   {error && <p className="mensaje-error">{error}</p>}
+                  {mensajeNC && <p className="mensaje-exito">{mensajeNC}</p>}
                   <button type="button" onClick={pedirConfirmarNC} disabled={guardando}>
-                    Guardar NC
+                    {observacionFoco?.nota_credito ? "Actualizar NC" : "Guardar NC"}
                   </button>
                 </div>
               </>
-            ) : null
-          }
+            );
+          }}
         />
       )}
 
@@ -466,7 +563,7 @@ export default function PanelLI({ sidebarAbierta }) {
 
       {confirmarNC && seleccionado && (
         <ConfirmModal
-          mensaje={`¿Registrar la NC "${notaCredito}" para el ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`}
+          mensaje={mensajeConfirmarNC()}
           onConfirmar={guardarNotaCredito}
           onCancelar={() => setConfirmarNC(false)}
           cargando={guardando}

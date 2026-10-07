@@ -7,6 +7,7 @@ import {
   textoSkuObservados,
   textoEntregaTransporte,
   textoMotivoRetencion,
+  textoNotaCredito,
 } from "../utils/estadosTicket";
 
 // `mostrarTransporte`: agrega la columna de empresa de transporte (SAC/LI la necesitan; el propio
@@ -92,7 +93,7 @@ export default function TablaTickets({
               <td>{fechaOPendiente(t.fecha_entrega_li)}</td>
               <td>{textoEntregaTransporte(t)}</td>
               <td>{textoMotivoRetencion(t)}</td>
-              <td>{t.nota_credito ?? "Pendiente"}</td>
+              <td>{textoNotaCredito(t)}</td>
               {accionExtra && <td className={claseAccionPrevia}>{accionExtra(t)}</td>}
               {accionExtra2 && <td className="col-fija-accion">{accionExtra2(t)}</td>}
               {mostrarDetalle && (

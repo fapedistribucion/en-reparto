@@ -56,8 +56,10 @@ export default function TablaObservaciones({
             {mostrarTransporte && <th>Transporte</th>}
             <th>Estado</th>
             <th>Factura</th>
+            <th>Pedido</th>
             <th>Cliente</th>
             <th>Cód. Producto</th>
+            <th>Posición</th>
             <th>Producto</th>
             <th>Precio Unitario</th>
             <th>Motivo</th>
@@ -102,8 +104,10 @@ export default function TablaObservaciones({
                   )}
                 </td>
                 <td>{t?.factura ?? "—"}</td>
+                <td>{t?.pedido_entrega ?? "—"}</td>
                 <td>{t?.cliente ?? "—"}</td>
                 <td>{o.codigo_producto ?? "—"}</td>
+                <td>{o.posicion ?? "—"}</td>
                 <td>{o.codigo_producto ? o.nombre_producto : "Toda la factura"}</td>
                 <td>{o.codigo_producto ? formatearPrecio(o.precio_unitario) : "—"}</td>
                 <td>{etiquetaMotivo(o.subcategoria)}</td>
@@ -123,7 +127,7 @@ export default function TablaObservaciones({
                 <td>{fechaOPendiente(t?.fecha_entrega_li)}</td>
                 <td>{textoEntregaTransporte(t)}</td>
                 <td>{textoMotivoRetencion(t)}</td>
-                <td>{t?.nota_credito ?? "Pendiente"}</td>
+                <td>{o.nota_credito ?? "Pendiente"}</td>
                 {accionExtra && <td className={claseAccionPrevia}>{t && accionExtra(t)}</td>}
                 {accionExtra2 && <td className="col-fija-accion">{t && accionExtra2(t)}</td>}
                 {mostrarDetalle && (

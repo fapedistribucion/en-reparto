@@ -56,6 +56,16 @@ export function textoMotivoRetencion(ticket) {
   return ticket?.motivo_retencion ? etiquetaMotivoRetencion(ticket.motivo_retencion) : "—";
 }
 
+// Columna "Nota de crédito" a nivel de ticket (vista "Por factura"): la NC es por producto, así que
+// el ticket muestra las NC distintas que tenga y cuántos productos ya la tienen si faltan algunos.
+// "Pendiente" mientras ningún producto tenga NC.
+export function textoNotaCredito(ticket) {
+  if (!ticket?.nota_credito) return "Pendiente";
+  const total = ticket.n_observaciones ?? 0;
+  const con = ticket.n_con_nc ?? total; // sin n_con_nc (vista antigua) se asume completo
+  return total > 0 && con < total ? `${ticket.nota_credito} (${con} de ${total})` : ticket.nota_credito;
+}
+
 // Siempre DD/MM/AAAA (con hora opcional), sin depender del formato "corto" del
 // navegador/locale (que puede dar año de 2 dígitos u otro orden según el dispositivo).
 export function formatearFecha(valor, conHora = false) {

@@ -3,7 +3,7 @@ import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
 import CalendarioRango from "./CalendarioRango";
 
 // Panel deslizable (derecha) con los filtros. Controlado desde el panel que lo usa:
-// `valores` = { ticket, factura, transporte, estado, desde, hasta }
+// `valores` = { ticket, factura, pedido, transporte, estado, desde, hasta }
 export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, opcionesTransporte, onBuscar, onLimpiar }) {
   if (!abierto) return null;
 
@@ -30,6 +30,11 @@ export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, op
           <label className="campo-filtro">
             N° Factura
             <input type="text" value={valores.factura} onChange={(e) => cambiar("factura", e.target.value)} />
+          </label>
+
+          <label className="campo-filtro">
+            N° Pedido
+            <input type="text" value={valores.pedido} onChange={(e) => cambiar("pedido", e.target.value)} />
           </label>
 
           <label className="campo-filtro">

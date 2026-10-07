@@ -5,10 +5,10 @@ import TablaTickets from "../compartido/TablaTickets";
 import TicketDetalle from "../compartido/TicketDetalle";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, textoNotaCredito } from "../utils/estadosTicket";
 import { exportarCsv } from "../utils/exportarCsv";
 
-const FILTROS_VACIOS = { ticket: "", factura: "", transporte: "", estado: "", desde: "", hasta: "" };
+const FILTROS_VACIOS = { ticket: "", factura: "", pedido: "", transporte: "", estado: "", desde: "", hasta: "" };
 
 function coincideTexto(valor, filtro) {
   if (!filtro) return true;
@@ -56,6 +56,7 @@ export default function Seguimiento() {
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
+          coincideTexto(t.pedido_entrega, filtros.pedido) &&
           (!filtros.transporte || t.empresa_transporte === filtros.transporte) &&
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
@@ -93,7 +94,7 @@ export default function Seguimiento() {
         { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
         { titulo: "Cliente", clave: "cliente" },
         { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
-        { titulo: "Nota de crédito", clave: "nota_credito" },
+        { titulo: "Nota de crédito", obtener: (t) => textoNotaCredito(t) },
       ],
       ticketsFiltrados
     );

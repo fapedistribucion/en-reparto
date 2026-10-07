@@ -125,6 +125,12 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                   : "—"}
               </strong>
             </div>
+            {(observacionEnfocada.nota_credito || ticket.fecha_entrega_li) && (
+              <div>
+                <span>Nota de crédito</span>
+                <strong>{observacionEnfocada.nota_credito ?? "Pendiente"}</strong>
+              </div>
+            )}
           </div>
         )}
 
@@ -157,6 +163,10 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                       ) : (
                         <p className="dato-menor">Toda la factura</p>
                       ))}
+
+                    {(o.nota_credito || ticket.fecha_entrega_li) && (
+                      <p className="obs-card-linea">Nota de crédito: {o.nota_credito ?? "Pendiente"}</p>
+                    )}
 
                     {o.usuario_agregado_sac && (
                       <p className="etiqueta-agregado-sac">
