@@ -60,6 +60,9 @@ export default function PanelLI({ sidebarAbierta }) {
   const [guardando, setGuardando] = useState(false);
   const [procesandoLlegadaId, setProcesandoLlegadaId] = useState(null);
   const [error, setError] = useState("");
+  // Errores de las acciones que se hacen desde la tabla (✓ de llegada, camión de entrega): se muestran
+  // arriba de la tabla porque el popup de detalle puede no estar abierto.
+  const [errorAccionTabla, setErrorAccionTabla] = useState("");
   const [ticketConfirmarLlegada, setTicketConfirmarLlegada] = useState(null);
   const [confirmarNC, setConfirmarNC] = useState(false);
   const [ticketEntregaTransporte, setTicketEntregaTransporte] = useState(null);
@@ -210,21 +213,27 @@ export default function PanelLI({ sidebarAbierta }) {
     setProcesandoLlegadaId(ticket.id);
     setGuardando(true);
     setError("");
+    setErrorAccionTabla("");
     const { data: sesion } = await supabase.auth.getUser();
 
-    const { error: errorUpdate } = await supabase
+    // .select("id") devuelve las filas realmente modificadas: si la base lo bloquea por permisos
+    // (RLS) no da error, solo 0 filas, y sin esto parecería que se guardó.
+    const { data: filas, error: errorUpdate } = await supabase
       .from("tickets")
       .update({
         usuario_llegada_li: sesion.user.id,
         fecha_entrega_li: new Date().toISOString(),
       })
-      .eq("id", ticket.id);
+      .eq("id", ticket.id)
+      .select("id");
 
     setGuardando(false);
     setProcesandoLlegadaId(null);
 
-    if (errorUpdate) {
-      setError("No se pudo registrar la llegada: " + errorUpdate.message);
+    if (errorUpdate || !filas || filas.length === 0) {
+      setErrorAccionTabla(
+        "No se pudo registrar la llegada" + (errorUpdate ? ": " + errorUpdate.message : " (sin permiso o ticket no encontrado).")
+      );
       return;
     }
     await recargar();
@@ -278,9 +287,10 @@ export default function PanelLI({ sidebarAbierta }) {
 
     setGuardandoEntrega(true);
     setError("");
+    setErrorAccionTabla("");
     const { data: sesion } = await supabase.auth.getUser();
 
-    const { error: errorUpdate } = await supabase
+    const { data: filas, error: errorUpdate } = await supabase
       .from("tickets")
       .update({
         entrega_transporte: valores.entrega_transporte,
@@ -288,13 +298,17 @@ export default function PanelLI({ sidebarAbierta }) {
         usuario_entrega_transporte: sesion.user.id,
         fecha_entrega_transporte: new Date().toISOString(),
       })
-      .eq("id", ticket.id);
+      .eq("id", ticket.id)
+      .select("id");
 
     setGuardandoEntrega(false);
     setTicketEntregaTransporte(null);
 
-    if (errorUpdate) {
-      setError("No se pudo guardar la entrega a transporte: " + errorUpdate.message);
+    if (errorUpdate || !filas || filas.length === 0) {
+      setErrorAccionTabla(
+        "No se pudo guardar la entrega a transporte" +
+          (errorUpdate ? ": " + errorUpdate.message : " (sin permiso o ticket no encontrado).")
+      );
       return;
     }
     await recargar();
@@ -311,6 +325,7 @@ export default function PanelLI({ sidebarAbierta }) {
   return (
     <LayoutLateral items={PESTANAS} activo={pestana} onCambiar={setPestana} abierta={sidebarAbierta}>
       {errorCarga && <p className="mensaje-error">No se pudieron cargar los tickets: {errorCarga}</p>}
+      {errorAccionTabla && <p className="mensaje-error">{errorAccionTabla}</p>}
 
       <div className="encabezado-vista">
         <h2 className="titulo-vista">{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
