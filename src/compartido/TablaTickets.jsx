@@ -21,7 +21,7 @@ import {
 // "Confirmar recepción" (solo LI la usa).
 // `accionExtra2(ticket)`: segundo botón adicional (registrar/editar entrega a transporte), en la
 // columna fija "Registrar entrega" (también solo LI).
-// "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje);
+// "Fecha factura" viene de facturas_data.fecha_factura, unida por número de factura (ver useFechasFactura);
 // se espera que el ticket ya traiga ese campo combinado.
 // Las columnas de acción y "Detalle" quedan fijas a la derecha (sticky) para no tener que scrollear
 // hasta el final de la tabla para usarlas.
@@ -48,7 +48,7 @@ export default function TablaTickets({
           <tr>
             <th>Fecha creación</th>
             <th>N° Ticket</th>
-            <th>Fecha viaje</th>
+            <th>Fecha factura</th>
             {mostrarTransporte && <th>Transporte</th>}
             <th>Estado</th>
             <th>Factura</th>
@@ -78,7 +78,7 @@ export default function TablaTickets({
             <tr key={t.id}>
               <td>{formatearFecha(t.fecha_creacion)}</td>
               <td>{t.codigo_ticket}</td>
-              <td>{formatearFecha(t.fecha_viaje)}</td>
+              <td>{formatearFecha(t.fecha_factura)}</td>
               {mostrarTransporte && <td>{t.empresa_transporte}</td>}
               <td>
                 <span className={`badge-estado badge-estado-${t.estado?.toLowerCase()}`}>

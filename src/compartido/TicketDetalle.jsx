@@ -98,7 +98,6 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
             <div><span>Pedido</span><strong>{ticket.pedido_entrega}</strong></div>
             <div><span>Cliente</span><strong>{ticket.cliente}</strong></div>
             <div><span>Transporte</span><strong>{ticket.empresa_transporte}</strong></div>
-            <div><span>Vendedor</span><strong>{ticket.vendedor ?? "—"}</strong></div>
             <div><span>Alcance</span><strong>{textoAlcance(ticket)}</strong></div>
           </div>
         )}

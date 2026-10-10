@@ -6,22 +6,23 @@ import { MENSAJE_FACTURA_NO_ENCONTRADA } from "../../config";
 // Busca la factura y, si existe, trae también sus productos. Si falta cualquiera de las dos cosas,
 // se muestra la alerta de "factura no encontrada" para que se revise la carga de datos.
 export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
-  const [parte1, setParte1] = useState("");
-  const [parte2, setParte2] = useState("");
+  const [serie, setSerie] = useState("");
+  const [numero, setNumero] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState("");
-  const refParte2 = useRef(null);
+  const refNumero = useRef(null);
 
-  const numeroCompleto = construirNumeroFactura(parte1 + parte2);
+  const numeroCompleto = construirNumeroFactura(serie, numero);
 
-  function cambioParte1(e) {
-    const valor = e.target.value.replace(/\D/g, "").slice(0, 2);
-    setParte1(valor);
-    if (valor.length === 2) refParte2.current?.focus();
+  // Serie de 4 caracteres: 2 letras (FF o BB) + 2 dígitos. Se escribe en mayúsculas sola.
+  function cambioSerie(e) {
+    const valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+    setSerie(valor);
+    if (valor.length === 4) refNumero.current?.focus();
   }
 
-  function cambioParte2(e) {
-    setParte2(e.target.value.replace(/\D/g, "").slice(0, 6));
+  function cambioNumero(e) {
+    setNumero(e.target.value.replace(/\D/g, "").slice(0, 6));
   }
 
   async function buscar(e) {
@@ -29,7 +30,7 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
     setError("");
 
     if (!numeroCompleto) {
-      setError("Ingresa el número de factura completo.");
+      setError("Ingresa la serie (por ejemplo FF01 o BB01) y los 6 dígitos del número de factura.");
       return;
     }
 
@@ -37,7 +38,7 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
 
     const { data: factura, error: errorFactura } = await supabase
       .from("facturas_data")
-      .select("factura, pedido_entrega, cliente, empresa_transporte, vendedor, canal, viaje")
+      .select("factura, pedido_entrega, cliente, empresa_transporte")
       .eq("factura", numeroCompleto)
       .maybeSingle();
 
@@ -51,7 +52,9 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
       setError(MENSAJE_FACTURA_NO_ENCONTRADA);
       return;
     }
-    if (factura.empresa_transporte !== empresaTransporte) {
+    // Una factura sin transporte asignado la puede ver cualquier transporte; con transporte, solo el suyo
+    // (la base ya filtra, esta es una segunda barrera por si acaso).
+    if (factura.empresa_transporte && factura.empresa_transporte !== empresaTransporte) {
       setBuscando(false);
       setError("Esta factura no corresponde a tu empresa de transporte.");
       return;
@@ -79,26 +82,29 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
 
   return (
     <form onSubmit={buscar} className="bloque-formulario">
-      <label htmlFor="parte1">Número de factura</label>
+      <label htmlFor="serie">Número de factura</label>
       <div className="campo-factura-segmentado">
-        <span className="literal-factura">01-0FF</span>
+        <span className="literal-factura">01-0</span>
         <input
-          id="parte1"
+          id="serie"
           type="text"
-          inputMode="numeric"
-          value={parte1}
-          onChange={cambioParte1}
-          maxLength={2}
-          className="casilla-factura casilla-factura-corta"
+          autoCapitalize="characters"
+          autoComplete="off"
+          value={serie}
+          onChange={cambioSerie}
+          maxLength={4}
+          placeholder="FF01"
+          className="casilla-factura casilla-factura-serie"
         />
         <span className="literal-factura">-0</span>
         <input
-          ref={refParte2}
+          ref={refNumero}
           type="text"
           inputMode="numeric"
-          value={parte2}
-          onChange={cambioParte2}
+          value={numero}
+          onChange={cambioNumero}
           maxLength={6}
+          placeholder="000000"
           className="casilla-factura casilla-factura-larga"
         />
       </div>

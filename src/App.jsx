@@ -15,13 +15,16 @@ const ROLES_CON_SIDEBAR = ["sac", "li", "transportista", "liquidaciones"];
 
 export default function App() {
   const { usuario, rol, cargando, cerrarSesion } = useAuth();
-  const [sidebarAbierta, setSidebarAbierta] = useState(true);
+  // null = todavía sin tocar: el transportista entra con el menú oculto (va directo a "Nuevo reclamo"),
+  // los demás roles con el menú abierto. Al usar la hamburguesa se guarda la elección explícita.
+  const [sidebarElegida, setSidebarElegida] = useState(null);
 
   if (cargando) return null;
 
   if (!usuario) return <Login />;
 
   const tieneSidebar = ROLES_CON_SIDEBAR.includes(rol);
+  const sidebarAbierta = sidebarElegida ?? rol !== "transportista";
 
   return (
     <div className="app">
@@ -31,7 +34,7 @@ export default function App() {
             <button
               type="button"
               className="boton-toggle-barra"
-              onClick={() => setSidebarAbierta((v) => !v)}
+              onClick={() => setSidebarElegida(!sidebarAbierta)}
               aria-label={sidebarAbierta ? "Ocultar menú" : "Mostrar menú"}
               title={sidebarAbierta ? "Ocultar menú" : "Mostrar menú"}
             >

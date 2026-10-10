@@ -3,8 +3,8 @@ import { etiquetaEvidencia, reglaEvidencia } from "../../utils/etiquetasEvidenci
 
 // `tipo` (y opcionalmente `subcategoria`, el motivo elegido) definen cuántas fotos se permiten
 // (ver reglaEvidencia en etiquetasEvidencia.js): por defecto la mayoría pide exactamente 1 y
-// "foto_4_lados_bulto"/"foto_4_lados_caja" exactamente 4; Avería tiene excepciones (6 exactas
-// para bulto/caja y de 1 hasta 4 para la foto del producto).
+// "foto_4_lados_bulto"/"foto_4_lados_caja" exactamente 6 (los 6 lados del bulto); Avería tiene una
+// excepción: la foto del producto admite de 1 hasta 4.
 // Nunca se permite subir de más (el botón "+" desaparece al llegar al máximo) y
 // logicaReclamo.js exige el mínimo antes de generar el ticket.
 export default function SubidaEvidencia({ tipo, subcategoria, archivos, onCambiar }) {

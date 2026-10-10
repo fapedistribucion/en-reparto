@@ -27,7 +27,7 @@ const ETIQUETAS_CATEGORIA = {
 // `accionExtra2(ticket)`: segundo botón adicional (registrar/editar entrega a transporte), columna
 // fija "Registrar entrega".
 //
-// "Fecha viaje" viene de facturas_data.fecha_viaje, unida por número de factura (ver useFacturasViaje).
+// "Fecha factura" viene de facturas_data.fecha_factura, unida por número de factura (ver useFechasFactura).
 // Las columnas de acción y "Detalle" quedan fijas a la derecha (sticky) para no tener que scrollear
 // hasta el final de la tabla para usarlas.
 export default function TablaObservaciones({
@@ -52,7 +52,7 @@ export default function TablaObservaciones({
           <tr>
             <th>Fecha creación</th>
             <th>N° Ticket</th>
-            <th>Fecha viaje</th>
+            <th>Fecha factura</th>
             {mostrarTransporte && <th>Transporte</th>}
             <th>Estado</th>
             <th>Factura</th>
@@ -92,7 +92,7 @@ export default function TablaObservaciones({
               <tr key={o.id}>
                 <td>{formatearFecha(t?.fecha_creacion)}</td>
                 <td>{t?.codigo_ticket ?? "—"}</td>
-                <td>{formatearFecha(t?.fecha_viaje)}</td>
+                <td>{formatearFecha(t?.fecha_factura)}</td>
                 {mostrarTransporte && <td>{t?.empresa_transporte ?? "—"}</td>}
                 <td>
                   {t?.estado ? (

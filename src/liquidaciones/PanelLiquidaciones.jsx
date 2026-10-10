@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
-import { useFacturasViaje } from "../compartido/useFacturasViaje";
+import { useFechasFactura } from "../compartido/useFechasFactura";
 import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
@@ -64,20 +64,20 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
   );
 
   const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
-  const fechasViaje = useFacturasViaje(facturasVisibles);
+  const fechasFactura = useFechasFactura(facturasVisibles);
 
-  // `fecha_viaje` viene de facturas_data (tabla aparte); se combina una sola vez
+  // `fecha_factura` viene de facturas_data (tabla aparte); se combina una sola vez
   // aquí para que tanto la tabla "Por factura" como "Por producto" la tengan.
-  const ticketsConFechaViaje = useMemo(
-    () => tickets.map((t) => ({ ...t, fecha_viaje: fechasViaje.get(t.factura) ?? null })),
-    [tickets, fechasViaje]
+  const ticketsConFechaFactura = useMemo(
+    () => tickets.map((t) => ({ ...t, fecha_factura: fechasFactura.get(t.factura) ?? null })),
+    [tickets, fechasFactura]
   );
 
   const filtrosActivos = Object.values(filtros).some((v) => v);
 
   const ticketsFiltrados = useMemo(
     () =>
-      ticketsConFechaViaje.filter(
+      ticketsConFechaFactura.filter(
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
@@ -86,16 +86,16 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
       ),
-    [ticketsConFechaViaje, filtros]
+    [ticketsConFechaFactura, filtros]
   );
 
   const observacionesConTicket = useMemo(
     () =>
       observaciones.map((o) => {
-        const t = ticketsConFechaViaje.find((tt) => tt.id === o.ticket_id);
+        const t = ticketsConFechaFactura.find((tt) => tt.id === o.ticket_id);
         return { ...o, ticket: t };
       }),
-    [observaciones, ticketsConFechaViaje]
+    [observaciones, ticketsConFechaFactura]
   );
 
   const observacionesFiltradas = useMemo(
@@ -138,7 +138,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
       exportarCsv("en-reparto-por-producto", [
         { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
         { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
-        { titulo: "Fecha viaje", obtener: (o) => o.ticket?.fecha_viaje },
+        { titulo: "Fecha factura", obtener: (o) => o.ticket?.fecha_factura },
         { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
         { titulo: "Pedido", obtener: (o) => o.ticket?.pedido_entrega },
@@ -162,7 +162,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
       exportarCsv("en-reparto-por-ticket", [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
         { titulo: "N° Ticket", clave: "codigo_ticket" },
-        { titulo: "Fecha viaje", clave: "fecha_viaje" },
+        { titulo: "Fecha factura", clave: "fecha_factura" },
         { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
         { titulo: "Factura", clave: "factura" },

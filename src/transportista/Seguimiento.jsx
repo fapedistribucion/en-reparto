@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTickets } from "../compartido/useTickets";
-import { useFacturasViaje } from "../compartido/useFacturasViaje";
+import { useFechasFactura } from "../compartido/useFechasFactura";
 import TablaTickets from "../compartido/TablaTickets";
 import TicketDetalle from "../compartido/TicketDetalle";
 import BarraHerramientas from "../compartido/BarraHerramientas";
@@ -41,18 +41,18 @@ export default function Seguimiento() {
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
 
   const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
-  const fechasViaje = useFacturasViaje(facturasVisibles);
+  const fechasFactura = useFechasFactura(facturasVisibles);
 
-  const ticketsConFechaViaje = useMemo(
-    () => tickets.map((t) => ({ ...t, fecha_viaje: fechasViaje.get(t.factura) ?? null })),
-    [tickets, fechasViaje]
+  const ticketsConFechaFactura = useMemo(
+    () => tickets.map((t) => ({ ...t, fecha_factura: fechasFactura.get(t.factura) ?? null })),
+    [tickets, fechasFactura]
   );
 
   const filtrosActivos = Object.values(filtros).some((v) => v);
 
   const ticketsFiltrados = useMemo(
     () =>
-      ticketsConFechaViaje.filter(
+      ticketsConFechaFactura.filter(
         (t) =>
           coincideTexto(t.codigo_ticket, filtros.ticket) &&
           coincideTexto(t.factura, filtros.factura) &&
@@ -61,7 +61,7 @@ export default function Seguimiento() {
           (!filtros.estado || t.estado === filtros.estado) &&
           coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
       ),
-    [ticketsConFechaViaje, filtros]
+    [ticketsConFechaFactura, filtros]
   );
 
   function abrirPanelFiltros() {
@@ -86,7 +86,7 @@ export default function Seguimiento() {
       [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
         { titulo: "N° Ticket", clave: "codigo_ticket" },
-        { titulo: "Fecha viaje", clave: "fecha_viaje" },
+        { titulo: "Fecha factura", clave: "fecha_factura" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
         { titulo: "Factura", clave: "factura" },
         { titulo: "Pedido", clave: "pedido_entrega" },

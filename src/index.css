@@ -391,6 +391,12 @@ textarea:focus {
   flex: none;
 }
 
+.casilla-factura-serie {
+  width: 76px;
+  flex: none;
+  text-transform: uppercase;
+}
+
 .casilla-factura-larga {
   width: 100px;
   flex: none;

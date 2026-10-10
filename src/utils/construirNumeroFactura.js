@@ -1,12 +1,13 @@
-// Formato fijo de factura: 01-0FF{2 dígitos}-0{6 dígitos}
-// Ej: los 8 dígitos "01206863" -> "01-0FF01-0206863"
-// El transportista solo digita los 8 dígitos variables; el resto es siempre igual.
+// El transportista digita la serie de 4 caracteres (FF01, FF07, BB01...) y los 6 dígitos del número.
+//   FF01 + 206863 -> "01-0FF01-0206863"
+//   BB01 + 000123 -> "03-0BB01-0000123"   (las BB se guardan y se muestran siempre como 03-0BB...)
+// En el formulario las BB se escriben igual que las FF (01-0 + serie), por eso acá se traduce el prefijo.
 
-export function construirNumeroFactura(ochoDigitos) {
-  const limpio = String(ochoDigitos).replace(/\D/g, "");
-  if (limpio.length !== 8) return null;
+export function construirNumeroFactura(serie, seisDigitos) {
+  const s = String(serie ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const n = String(seisDigitos ?? "").replace(/\D/g, "");
+  if (!/^(FF|BB)\d{2}$/.test(s) || n.length !== 6) return null;
 
-  const primerosDos = limpio.slice(0, 2);
-  const ultimosSeis = limpio.slice(2);
-  return `01-0FF${primerosDos}-0${ultimosSeis}`;
+  const prefijo = s.startsWith("BB") ? "03-0" : "01-0";
+  return `${prefijo}${s}-0${n}`;
 }
