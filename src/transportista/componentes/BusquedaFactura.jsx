@@ -52,13 +52,8 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
       setError(MENSAJE_FACTURA_NO_ENCONTRADA);
       return;
     }
-    // Una factura sin transporte asignado la puede ver cualquier transporte; con transporte, solo el suyo
-    // (la base ya filtra, esta es una segunda barrera por si acaso).
-    if (factura.empresa_transporte && factura.empresa_transporte !== empresaTransporte) {
-      setBuscando(false);
-      setError("Esta factura no corresponde a tu empresa de transporte.");
-      return;
-    }
+    // Qué facturas puede ver este transporte lo decide la base de datos (interruptor `facturas_visibles_para_todos`
+    // en config_app y políticas RLS); si llegó hasta acá, puede reclamarla.
 
     const { data: productos, error: errorProductos } = await supabase
       .from("factura_productos")

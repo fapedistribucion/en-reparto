@@ -11,7 +11,7 @@ import {
   requiereSAC,
   validarReclamo,
 } from "./logicaReclamo";
-import { crearTicket, subirEvidencias, verificarFacturaConIA } from "./servicioReclamo";
+import { crearTicket, subirEvidencias } from "./servicioReclamo";
 import BusquedaFactura from "./componentes/BusquedaFactura";
 import SelectorAlcance from "./componentes/SelectorAlcance";
 import SelectorMotivo from "./componentes/SelectorMotivo";
@@ -126,12 +126,6 @@ export default function NuevoReclamo() {
       const observaciones = derivarObservaciones({ opcion, motivos, motivoTotal, archivosMotivo, tarjetas });
       const numeroFactura = encontrada.factura.factura;
 
-      // Alerta automática: nunca bloquea, solo queda registrada en el ticket
-      const facturaVerificadaIA = await verificarFacturaConIA(
-        archivosFactura[archivosFactura.length - 1],
-        numeroFactura
-      );
-
       const { evidenciasTicket, observacionesPayload } = await subirEvidencias({
         empresa: empresaTransporte,
         archivosFactura,
@@ -141,7 +135,6 @@ export default function NuevoReclamo() {
       const respuesta = await crearTicket({
         factura: numeroFactura,
         alcance,
-        facturaVerificadaIA,
         evidenciasTicket,
         observacionesPayload,
       });
@@ -254,7 +247,7 @@ export default function NuevoReclamo() {
                   {errorEnvio && <p className="mensaje-error">{errorEnvio}</p>}
 
                   <button type="button" onClick={generarTicket} disabled={enviando} className="boton-enviar">
-                    {enviando ? "Verificando y generando ticket..." : "Generar ticket"}
+                    {enviando ? "Generando ticket..." : "Generar ticket"}
                   </button>
                 </>
               )}

@@ -1,27 +1,7 @@
 import { supabase } from "../lib/supabaseClient";
-import { convertirABase64 } from "../utils/convertirABase64";
 
 const BUCKET = "evidencias";
 const SUBIDAS_EN_PARALELO = 3;
-
-// Alerta automática: compara la foto de la factura con el número digitado.
-// true = coincide, false = la IA respondió y no coincide, null = no se pudo verificar.
-export async function verificarFacturaConIA(archivo, numeroFactura) {
-  if (!archivo) return null;
-  try {
-    const imagenBase64 = await convertirABase64(archivo);
-    const respuesta = await fetch("/api/validar-factura", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imagenBase64, numeroFactura }),
-    });
-    if (!respuesta.ok) return null;
-    const resultado = await respuesta.json();
-    return Boolean(resultado.coincide);
-  } catch {
-    return null;
-  }
-}
 
 async function enPaquetes(items, tamano, fn) {
   for (let i = 0; i < items.length; i += tamano) {
@@ -70,11 +50,11 @@ export async function subirEvidencias({ empresa, archivosFactura, observaciones 
 }
 
 // Crea ticket + observaciones + adjuntos en una sola transacción (función de base de datos).
-export async function crearTicket({ factura, alcance, facturaVerificadaIA, evidenciasTicket, observacionesPayload }) {
+export async function crearTicket({ factura, alcance, evidenciasTicket, observacionesPayload }) {
   const { data, error } = await supabase.rpc("crear_ticket", {
     p_factura: factura,
     p_alcance: alcance,
-    p_factura_verificada_ia: facturaVerificadaIA,
+    p_factura_verificada_ia: null, // la verificación automática con OCR se retiró; la columna queda vacía
     p_evidencias_ticket: evidenciasTicket,
     p_observaciones: observacionesPayload,
   });

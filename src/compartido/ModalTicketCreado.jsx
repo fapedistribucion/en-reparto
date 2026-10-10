@@ -1,4 +1,4 @@
-import { TELEFONO_SAC } from "../config";
+import { TELEFONO_QTA } from "../config";
 
 export default function ModalTicketCreado({ codigo, requiereSAC, onCerrar }) {
   return (
@@ -11,7 +11,7 @@ export default function ModalTicketCreado({ codigo, requiereSAC, onCerrar }) {
         </p>
         {requiereSAC && (
           <p className="modal-ticket-aviso">
-            Este reclamo requiere que te comuniques con SAC{TELEFONO_SAC ? ` al ${TELEFONO_SAC}` : ""} para
+            Este reclamo requiere que te comuniques con QTA{TELEFONO_QTA ? ` al ${TELEFONO_QTA}` : ""} para
             coordinar el caso.
           </p>
         )}
