@@ -1029,20 +1029,46 @@ textarea:focus {
   position: relative;
 }
 
-.lista-productos {
+/* Botón que se ve como un selector: "Seleccionar producto" + flecha */
+.boton-selector-producto {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--texto-secundario);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.boton-selector-producto[aria-expanded="true"] {
+  border-color: var(--acento);
+}
+
+.panel-productos {
   position: absolute;
   z-index: 20;
   left: 0;
   right: 0;
   margin: 4px 0 0;
-  padding: 4px;
-  list-style: none;
-  max-height: 280px;
-  overflow-y: auto;
+  padding: 8px;
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 8px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.lista-productos {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .lista-productos button {

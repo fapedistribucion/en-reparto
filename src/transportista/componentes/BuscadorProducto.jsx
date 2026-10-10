@@ -7,17 +7,36 @@ function normalizar(texto) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-// Desplegable con búsqueda por código, nombre o posición.
+// Desplegable para elegir un producto de la factura.
+// Cerrado se ve como un selector ("Seleccionar producto" con una flecha). Al tocarlo se despliega
+// un panel con el campo "Buscar por código o nombre del producto" y la lista; en celular el
+// teclado NO se abre solo: recién aparece al tocar el campo de búsqueda. En computador el campo
+// de búsqueda queda enfocado de una vez.
 // Muestra la posición para poder distinguir el mismo código en dos líneas de la factura.
 // (El lote se retiró por ahora: la nueva fuente de datos no lo trae.)
+const esTactil = () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+
+function Flecha({ arriba }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points={arriba ? "6 15 12 9 18 15" : "6 9 12 15 18 9"} />
+    </svg>
+  );
+}
+
 export default function BuscadorProducto({ productos, seleccionado, onSeleccionar, onCambiar }) {
   const [texto, setTexto] = useState("");
   const [abierto, setAbierto] = useState(false);
   const contenedor = useRef(null);
 
+  function cerrar() {
+    setAbierto(false);
+    setTexto("");
+  }
+
   useEffect(() => {
     function cerrarAlTocarFuera(e) {
-      if (contenedor.current && !contenedor.current.contains(e.target)) setAbierto(false);
+      if (contenedor.current && !contenedor.current.contains(e.target)) cerrar();
     }
     document.addEventListener("pointerdown", cerrarAlTocarFuera);
     return () => document.removeEventListener("pointerdown", cerrarAlTocarFuera);
@@ -36,8 +55,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
 
   function elegir(producto) {
     onSeleccionar(producto);
-    setTexto("");
-    setAbierto(false);
+    cerrar();
   }
 
   function teclado(e) {
@@ -45,7 +63,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
       e.preventDefault();
       if (resultados.length > 0) elegir(resultados[0]);
     }
-    if (e.key === "Escape") setAbierto(false);
+    if (e.key === "Escape") cerrar();
   }
 
   if (seleccionado) {
@@ -56,9 +74,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
             Pos. {seleccionado.posicion} · {seleccionado.codigo_producto}
           </strong>
           <span>{seleccionado.nombre_producto}</span>
-          <span className="dato-menor">
-            Cantidad: {seleccionado.cantidad}
-          </span>
+          <span className="dato-menor">Cantidad: {seleccionado.cantidad}</span>
         </div>
         <button type="button" onClick={onCambiar}>
           Cambiar
@@ -69,40 +85,47 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
 
   return (
     <div className="buscador-producto" ref={contenedor}>
-      <input
-        type="text"
-        inputMode="search"
-        autoComplete="off"
-        placeholder="Buscar por código o nombre del producto"
-        value={texto}
-        onChange={(e) => {
-          setTexto(e.target.value);
-          setAbierto(true);
-        }}
-        onFocus={() => setAbierto(true)}
-        onKeyDown={teclado}
-      />
+      <button
+        type="button"
+        className="boton-selector-producto"
+        aria-haspopup="listbox"
+        aria-expanded={abierto}
+        onClick={() => (abierto ? cerrar() : setAbierto(true))}
+      >
+        <span>Seleccionar producto</span>
+        <Flecha arriba={abierto} />
+      </button>
 
       {abierto && (
-        <ul className="lista-productos">
-          {resultados.length === 0 ? (
-            <li className="sin-resultados">Ningún producto de esta factura coincide</li>
-          ) : (
-            resultados.map((p) => (
-              <li key={p.posicion}>
-                <button type="button" onClick={() => elegir(p)}>
-                  <strong>
-                    Pos. {p.posicion} · {p.codigo_producto}
-                  </strong>
-                  <span>{p.nombre_producto}</span>
-                  <span className="dato-menor">
-                    Cantidad: {p.cantidad}
-                  </span>
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
+        <div className="panel-productos">
+          <input
+            type="text"
+            inputMode="search"
+            autoComplete="off"
+            autoFocus={!esTactil()}
+            placeholder="Buscar por código o nombre del producto"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onKeyDown={teclado}
+          />
+          <ul className="lista-productos">
+            {resultados.length === 0 ? (
+              <li className="sin-resultados">Ningún producto de esta factura coincide</li>
+            ) : (
+              resultados.map((p) => (
+                <li key={p.posicion}>
+                  <button type="button" onClick={() => elegir(p)}>
+                    <strong>
+                      Pos. {p.posicion} · {p.codigo_producto}
+                    </strong>
+                    <span>{p.nombre_producto}</span>
+                    <span className="dato-menor">Cantidad: {p.cantidad}</span>
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
       )}
     </div>
   );
