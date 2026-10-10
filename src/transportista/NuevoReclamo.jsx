@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useMotivos } from "./useMotivos";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
-import { etiquetaAlcance } from "../utils/alcance";
+import { esMotivoSinAlcance, etiquetaAlcance } from "../utils/alcance";
 import {
+  PREFIJO_SIN_ALCANCE,
   derivarObservaciones,
   evidenciasDe,
   interpretarOpcion,
@@ -36,10 +37,14 @@ export default function NuevoReclamo() {
   const [errorEnvio, setErrorEnvio] = useState("");
   const [resultado, setResultado] = useState(null); // { codigo, requiereSAC }
 
-  const { alcance, motivoFijo } = interpretarOpcion(opcion);
+  const { alcance, motivoFijo, seleccionada } = interpretarOpcion(opcion);
 
-  // Motivos que el transportista puede elegir a mano (los que fuerzan un alcance, como Local cerrado, no)
-  const motivosSeleccionables = useMemo(() => motivos.filter((m) => !m.alcance_forzado), [motivos]);
+  // Motivos que el transportista puede elegir a mano dentro de un rechazo (no los que fuerzan un alcance,
+  // ni los que tienen su propia opción en el formulario, como Sobrante)
+  const motivosSeleccionables = useMemo(
+    () => motivos.filter((m) => !m.alcance_forzado && !esMotivoSinAlcance(m.subcategoria)),
+    [motivos]
+  );
 
   const opciones = useMemo(() => {
     const forzadas = motivos
@@ -49,9 +54,18 @@ export default function NuevoReclamo() {
         titulo: `${etiquetaMotivo(m.subcategoria)} - ${etiquetaAlcance(m.alcance_forzado)}`,
         ayuda: "La factura se atenderá otro día",
       }));
+    // Opciones propias sin alcance (Sobrante): solo aparecen si el motivo existe y está activo
+    const sinAlcance = motivos
+      .filter((m) => esMotivoSinAlcance(m.subcategoria))
+      .map((m) => ({
+        clave: `${PREFIJO_SIN_ALCANCE}:${m.subcategoria}`,
+        titulo: etiquetaMotivo(m.subcategoria),
+        ayuda: "Llegó producto de más",
+      }));
     return [
       { clave: "RECHAZO_TOTAL", titulo: "Rechazo total", ayuda: "El cliente rechaza toda la factura" },
       { clave: "RECHAZO_PARCIAL", titulo: "Rechazo parcial", ayuda: "El cliente rechaza solo algunos productos" },
+      ...sinAlcance,
       ...forzadas,
     ];
   }, [motivos]);
@@ -192,7 +206,7 @@ export default function NuevoReclamo() {
                 </div>
               )}
 
-              {alcance && alcance !== "RECHAZO_PARCIAL" && evidenciasMotivo.length > 0 && (
+              {seleccionada && alcance !== "RECHAZO_PARCIAL" && evidenciasMotivo.length > 0 && (
                 <div className="seccion-reclamo">
                   <p className="etiqueta-seccion">Evidencia</p>
                   {evidenciasMotivo.map((tipo) => (
@@ -230,7 +244,7 @@ export default function NuevoReclamo() {
                 </div>
               )}
 
-              {alcance && (
+              {seleccionada && (
                 <>
                   <div className="seccion-reclamo">
                     <p className="etiqueta-seccion">Factura</p>

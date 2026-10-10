@@ -7,6 +7,7 @@ import {
   derivarObservaciones,
   validarProductoAgregado,
 } from "../transportista/logicaReclamo";
+import { esMotivoSinAlcance } from "../utils/alcance";
 import { agregarProductoSAC } from "./servicioAgregarProducto";
 
 // Solo SAC, solo rechazo parcial y solo en EN_RUTA / EN_LI (GESTION LI): el que decide si se
@@ -37,7 +38,7 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
       const [prod, obs] = await Promise.all([
         supabase
           .from("factura_productos")
-          .select("posicion, codigo_producto, nombre_producto, cantidad, lote")
+          .select("posicion, codigo_producto, nombre_producto, cantidad")
           .eq("factura", ticket.factura)
           .order("posicion"),
         // Todo lo ya observado del ticket (de cualquier motivo) cuenta para el tope de cantidad.
@@ -58,7 +59,10 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
     };
   }, [ticket.id, ticket.factura]);
 
-  const motivosSeleccionables = useMemo(() => motivos.filter((m) => !m.alcance_forzado), [motivos]);
+  const motivosSeleccionables = useMemo(
+    () => motivos.filter((m) => !m.alcance_forzado && !esMotivoSinAlcance(m.subcategoria)),
+    [motivos]
+  );
   const cantidadesPrevias = useMemo(() => cantidadesPreviasPorPosicion(observadas), [observadas]);
 
   async function agregar() {

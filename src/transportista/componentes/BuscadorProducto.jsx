@@ -7,8 +7,9 @@ function normalizar(texto) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-// Desplegable con búsqueda por código, nombre, lote o posición.
-// Muestra posición y lote para poder distinguir el mismo código en dos líneas de la factura.
+// Desplegable con búsqueda por código, nombre o posición.
+// Muestra la posición para poder distinguir el mismo código en dos líneas de la factura.
+// (El lote se retiró por ahora: la nueva fuente de datos no lo trae.)
 export default function BuscadorProducto({ productos, seleccionado, onSeleccionar, onCambiar }) {
   const [texto, setTexto] = useState("");
   const [abierto, setAbierto] = useState(false);
@@ -29,7 +30,6 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
       (p) =>
         normalizar(p.codigo_producto).includes(q) ||
         normalizar(p.nombre_producto).includes(q) ||
-        normalizar(p.lote).includes(q) ||
         String(p.posicion) === q
     );
   }, [productos, texto]);
@@ -57,7 +57,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
           </strong>
           <span>{seleccionado.nombre_producto}</span>
           <span className="dato-menor">
-            Lote {seleccionado.lote ?? "—"} · Cantidad: {seleccionado.cantidad}
+            Cantidad: {seleccionado.cantidad}
           </span>
         </div>
         <button type="button" onClick={onCambiar}>
@@ -96,7 +96,7 @@ export default function BuscadorProducto({ productos, seleccionado, onSelecciona
                   </strong>
                   <span>{p.nombre_producto}</span>
                   <span className="dato-menor">
-                    Lote {p.lote ?? "—"} · Cantidad: {p.cantidad}
+                    Cantidad: {p.cantidad}
                   </span>
                 </button>
               </li>

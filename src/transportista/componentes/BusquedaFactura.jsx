@@ -62,7 +62,7 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
 
     const { data: productos, error: errorProductos } = await supabase
       .from("factura_productos")
-      .select("posicion, codigo_producto, nombre_producto, cantidad, lote")
+      .select("posicion, codigo_producto, nombre_producto, cantidad")
       .eq("factura", numeroCompleto)
       .order("posicion");
 

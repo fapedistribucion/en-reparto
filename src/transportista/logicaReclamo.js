@@ -2,17 +2,22 @@
 
 import { etiquetaEvidencia, reglaEvidencia } from "../utils/etiquetasEvidencia.js";
 
+// Prefijo de la opción "motivo sin alcance" (ej. "SIN_ALCANCE:SOBRANTE"): el ticket no lleva alcance.
+export const PREFIJO_SIN_ALCANCE = "SIN_ALCANCE";
+
 // La "opción" que elige el transportista puede ser:
-//   "RECHAZO_TOTAL" | "RECHAZO_PARCIAL" | "<alcance>:<motivo>" (si algún motivo
-//   viene con alcance_forzado en config_subcategorias; hoy ningún motivo lo usa,
-//   pero el mecanismo queda listo por si se necesita a futuro)
+//   "RECHAZO_TOTAL" | "RECHAZO_PARCIAL" | "SIN_ALCANCE:<motivo>" (Sobrante: motivo propio, sin alcance)
+//   | "<alcance>:<motivo>" (si algún motivo viene con alcance_forzado en config_subcategorias;
+//   hoy ningún motivo lo usa, pero el mecanismo queda listo por si se necesita a futuro)
+// `seleccionada` es true apenas hay una opción elegida (aunque no tenga alcance).
 export function interpretarOpcion(opcion) {
-  if (!opcion) return { alcance: null, motivoFijo: null };
+  if (!opcion) return { alcance: null, motivoFijo: null, seleccionada: false };
   if (opcion.includes(":")) {
     const [alcance, motivoFijo] = opcion.split(":");
-    return { alcance, motivoFijo };
+    if (alcance === PREFIJO_SIN_ALCANCE) return { alcance: null, motivoFijo, seleccionada: true };
+    return { alcance, motivoFijo, seleccionada: true };
   }
-  return { alcance: opcion, motivoFijo: null };
+  return { alcance: opcion, motivoFijo: null, seleccionada: true };
 }
 
 export function evidenciasDe(motivos, subcategoria) {
@@ -83,8 +88,8 @@ export function validarReclamo({
   cantidadesPrevias = new Map(),
   exigirFactura = true,
 }) {
-  const { alcance, motivoFijo } = interpretarOpcion(opcion);
-  if (!alcance) return "Indica qué ocurrió con la entrega.";
+  const { alcance, motivoFijo, seleccionada } = interpretarOpcion(opcion);
+  if (!seleccionada) return "Indica qué ocurrió con la entrega.";
 
   if (alcance === "RECHAZO_PARCIAL") {
     if (tarjetas.length === 0) return "Agrega al menos un producto.";
