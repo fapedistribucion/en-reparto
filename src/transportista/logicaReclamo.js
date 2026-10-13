@@ -20,6 +20,13 @@ export function interpretarOpcion(opcion) {
   return { alcance: opcion, motivoFijo: null, seleccionada: true };
 }
 
+// ¿La opción se llena con tarjetas de producto? Rechazo parcial (cada tarjeta con su motivo) y
+// Sobrante (cada tarjeta con el motivo fijo SOBRANTE, sin selector de motivo).
+export function usaTarjetas(opcion) {
+  const { alcance, motivoFijo, seleccionada } = interpretarOpcion(opcion);
+  return alcance === "RECHAZO_PARCIAL" || (seleccionada && alcance === null && Boolean(motivoFijo));
+}
+
 export function evidenciasDe(motivos, subcategoria) {
   return motivos.find((m) => m.subcategoria === subcategoria)?.evidencias_requeridas ?? [];
 }
@@ -50,16 +57,20 @@ function soloRequeridas(motivos, subcategoria, archivos) {
 }
 
 export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMotivo, tarjetas }) {
-  const { alcance, motivoFijo } = interpretarOpcion(opcion);
+  const { motivoFijo } = interpretarOpcion(opcion);
 
-  if (alcance === "RECHAZO_PARCIAL") {
-    return tarjetas.map((t) => ({
-      subcategoria: t.subcategoria,
-      posicion: t.posicion,
-      cantidad_observada: Number(t.cantidad),
-      numero_bulto: t.bulto.trim(),
-      archivos: soloRequeridas(motivos, t.subcategoria, t.archivos),
-    }));
+  if (usaTarjetas(opcion)) {
+    // En Sobrante el motivo es el de la opción (no se elige por tarjeta)
+    return tarjetas.map((t) => {
+      const subcategoria = motivoFijo ?? t.subcategoria;
+      return {
+        subcategoria,
+        posicion: t.posicion,
+        cantidad_observada: Number(t.cantidad),
+        numero_bulto: t.bulto.trim(),
+        archivos: soloRequeridas(motivos, subcategoria, t.archivos),
+      };
+    });
   }
 
   const subcategoria = motivoFijo ?? motivoTotal;
@@ -88,10 +99,10 @@ export function validarReclamo({
   cantidadesPrevias = new Map(),
   exigirFactura = true,
 }) {
-  const { alcance, motivoFijo, seleccionada } = interpretarOpcion(opcion);
+  const { motivoFijo, seleccionada } = interpretarOpcion(opcion);
   if (!seleccionada) return "Indica qué ocurrió con la entrega.";
 
-  if (alcance === "RECHAZO_PARCIAL") {
+  if (usaTarjetas(opcion)) {
     if (tarjetas.length === 0) return "Agrega al menos un producto.";
 
     const acumulado = new Map();
@@ -102,25 +113,29 @@ export function validarReclamo({
       if (t.posicion == null) return `Producto ${n}: selecciona el producto.`;
       const producto = productos.find((p) => p.posicion === t.posicion);
       if (!producto) return `Producto ${n}: el producto ya no existe en esta factura.`;
-      if (!t.subcategoria) return `Producto ${n}: selecciona el motivo.`;
+      const subcategoria = motivoFijo ?? t.subcategoria;
+      if (!subcategoria) return `Producto ${n}: selecciona el motivo.`;
 
       const cantidad = Number(t.cantidad);
       if (!Number.isFinite(cantidad) || cantidad <= 0) return `Producto ${n}: indica la cantidad observada.`;
       // Un mismo producto puede tener varios motivos, pero entre todos no pueden superar lo facturado.
-      const previo = (cantidadesPrevias.get(t.posicion) ?? 0) + (acumulado.get(t.posicion) ?? 0);
-      const total = previo + cantidad;
-      if (total > Number(producto.cantidad)) {
-        return previo > 0
-          ? `Producto ${n}: entre todos los motivos de este producto superan lo facturado (${producto.cantidad}); ya hay ${previo} en otros motivos, quedan ${Math.max(0, producto.cantidad - previo)}.`
-          : `Producto ${n}: la cantidad observada supera lo facturado (${producto.cantidad}).`;
+      // Sobrante no tiene tope: es producto que llegó de más que lo facturado.
+      if (!motivoFijo) {
+        const previo = (cantidadesPrevias.get(t.posicion) ?? 0) + (acumulado.get(t.posicion) ?? 0);
+        const total = previo + cantidad;
+        if (total > Number(producto.cantidad)) {
+          return previo > 0
+            ? `Producto ${n}: entre todos los motivos de este producto superan lo facturado (${producto.cantidad}); ya hay ${previo} en otros motivos, quedan ${Math.max(0, producto.cantidad - previo)}.`
+            : `Producto ${n}: la cantidad observada supera lo facturado (${producto.cantidad}).`;
+        }
+        acumulado.set(t.posicion, total);
       }
-      acumulado.set(t.posicion, total);
 
       if (!t.bulto.trim()) return `Producto ${n}: indica el número de bulto.`;
 
-      const falta = faltantes(motivos, t.subcategoria, t.archivos);
+      const falta = faltantes(motivos, subcategoria, t.archivos);
       if (falta.length) {
-        return `Producto ${n}: falta subir ${falta.map((tipo) => descripcionFaltante(tipo, t.subcategoria, t.archivos)).join(", ")}.`;
+        return `Producto ${n}: falta subir ${falta.map((tipo) => descripcionFaltante(tipo, subcategoria, t.archivos)).join(", ")}.`;
       }
     }
   } else {

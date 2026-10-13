@@ -105,8 +105,10 @@ export function textoAlcance(ticket) {
 
 // Cantidad de productos distintos observados en el ticket (columna "SKU
 // observados"). Solo aplica a rechazo parcial: en rechazo total/reeditado la
-// observación es de la factura completa, no de productos puntuales.
+// observación es de la factura completa, no de productos puntuales. Sobrante
+// (sin alcance) también registra productos, así que también cuenta.
 export function textoSkuObservados(ticket) {
-  if (ticket.alcance_reclamo !== "RECHAZO_PARCIAL") return "—";
+  const sinAlcance = ticket.alcance_reclamo == null;
+  if (ticket.alcance_reclamo !== "RECHAZO_PARCIAL" && !sinAlcance) return "—";
   return ticket.n_observaciones ?? "—";
 }

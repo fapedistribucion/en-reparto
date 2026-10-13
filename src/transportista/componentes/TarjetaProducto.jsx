@@ -9,17 +9,20 @@ export default function TarjetaProducto({
   productos,
   motivosSeleccionables,
   motivos,
+  motivoFijo = null, // Sobrante: el motivo viene de la opción, no se elige en la tarjeta
   puedeQuitar,
   cantidadOcupada = 0,
   onCambiar,
   onQuitar,
 }) {
   const producto = productos.find((p) => p.posicion === tarjeta.posicion) ?? null;
-  const requeridas = evidenciasDe(motivos, tarjeta.subcategoria);
+  const subcategoria = motivoFijo ?? tarjeta.subcategoria;
+  const requeridas = evidenciasDe(motivos, subcategoria);
   // `cantidadOcupada`: lo que ya tomaron otros motivos/tarjetas del MISMO producto (un producto
   // puede tener varios motivos, pero entre todos no pueden superar lo facturado).
   const disponible = producto ? Math.max(0, Number(producto.cantidad) - cantidadOcupada) : 0;
-  const excede = producto && Number(tarjeta.cantidad) > disponible;
+  // Con motivo fijo (Sobrante) la cantidad no tiene tope: es lo que llegó de más
+  const excede = !motivoFijo && producto && Number(tarjeta.cantidad) > disponible;
 
   return (
     <div className="tarjeta-producto">
@@ -42,31 +45,39 @@ export default function TarjetaProducto({
       {producto && (
         <>
           <div className="bloque-formulario">
-            <label htmlFor={`motivo-${tarjeta.uid}`}>Motivo</label>
-            <SelectorMotivo
-              id={`motivo-${tarjeta.uid}`}
-              motivos={motivosSeleccionables}
-              valor={tarjeta.subcategoria}
-              onCambiar={(valor) => onCambiar({ ...tarjeta, subcategoria: valor })}
-            />
+            {!motivoFijo && (
+              <>
+                <label htmlFor={`motivo-${tarjeta.uid}`}>Motivo</label>
+                <SelectorMotivo
+                  id={`motivo-${tarjeta.uid}`}
+                  motivos={motivosSeleccionables}
+                  valor={tarjeta.subcategoria}
+                  onCambiar={(valor) => onCambiar({ ...tarjeta, subcategoria: valor })}
+                />
+              </>
+            )}
 
             <div className="fila-dos">
               <div>
-                <label htmlFor={`cantidad-${tarjeta.uid}`}>Cantidad observada</label>
+                <label htmlFor={`cantidad-${tarjeta.uid}`}>
+                  {motivoFijo ? "Cantidad sobrante" : "Cantidad observada"}
+                </label>
                 <input
                   id={`cantidad-${tarjeta.uid}`}
                   type="number"
                   inputMode="numeric"
                   min="1"
-                  max={disponible}
+                  max={motivoFijo ? undefined : disponible}
                   step="1"
                   value={tarjeta.cantidad}
                   onChange={(e) => onCambiar({ ...tarjeta, cantidad: e.target.value })}
                 />
                 <p className={excede ? "mensaje-error" : "dato-menor"}>
-                  {cantidadOcupada > 0
-                    ? `Disponible: ${disponible} de ${producto.cantidad} (${cantidadOcupada} ya en otro motivo)`
-                    : `Disponible: ${disponible} de ${producto.cantidad}`}
+                  {motivoFijo
+                    ? `Facturado: ${producto.cantidad}`
+                    : cantidadOcupada > 0
+                      ? `Disponible: ${disponible} de ${producto.cantidad} (${cantidadOcupada} ya en otro motivo)`
+                      : `Disponible: ${disponible} de ${producto.cantidad}`}
                 </p>
               </div>
               <div>
@@ -86,7 +97,7 @@ export default function TarjetaProducto({
             <SubidaEvidencia
               key={tipo}
               tipo={tipo}
-              subcategoria={tarjeta.subcategoria}
+              subcategoria={subcategoria}
               archivos={tarjeta.archivos[tipo] ?? []}
               onCambiar={(archivos) =>
                 onCambiar({ ...tarjeta, archivos: { ...tarjeta.archivos, [tipo]: archivos } })

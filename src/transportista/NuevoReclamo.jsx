@@ -9,6 +9,7 @@ import {
   evidenciasDe,
   interpretarOpcion,
   requiereSAC,
+  usaTarjetas,
   validarReclamo,
 } from "./logicaReclamo";
 import { crearTicket, subirEvidencias } from "./servicioReclamo";
@@ -70,6 +71,7 @@ export default function NuevoReclamo() {
     ];
   }, [motivos]);
 
+  const conTarjetas = usaTarjetas(opcion); // Rechazo parcial o Sobrante
   const motivoActual = motivoFijo ?? motivoTotal;
   const evidenciasMotivo = motivoActual ? evidenciasDe(motivos, motivoActual) : [];
 
@@ -86,6 +88,8 @@ export default function NuevoReclamo() {
   }
 
   function elegirOpcion(clave) {
+    // Al cambiar entre Parcial y Sobrante se vuelve a empezar con una tarjeta limpia
+    if (clave !== opcion) setTarjetas([nuevaTarjeta()]);
     setOpcion(clave);
     setMotivoTotal("");
     setArchivosMotivo({});
@@ -199,7 +203,7 @@ export default function NuevoReclamo() {
                 </div>
               )}
 
-              {seleccionada && alcance !== "RECHAZO_PARCIAL" && evidenciasMotivo.length > 0 && (
+              {seleccionada && !conTarjetas && evidenciasMotivo.length > 0 && (
                 <div className="seccion-reclamo">
                   <p className="etiqueta-seccion">Evidencia</p>
                   {evidenciasMotivo.map((tipo) => (
@@ -214,9 +218,11 @@ export default function NuevoReclamo() {
                 </div>
               )}
 
-              {alcance === "RECHAZO_PARCIAL" && (
+              {conTarjetas && (
                 <div className="seccion-reclamo">
-                  <p className="etiqueta-seccion">Productos con observación</p>
+                  <p className="etiqueta-seccion">
+                    {motivoFijo ? `Productos con ${etiquetaMotivo(motivoFijo).toLowerCase()}` : "Productos con observación"}
+                  </p>
                   {tarjetas.map((t, i) => (
                     <TarjetaProducto
                       key={t.uid}
@@ -225,6 +231,7 @@ export default function NuevoReclamo() {
                       productos={encontrada.productos}
                       motivosSeleccionables={motivosSeleccionables}
                       motivos={motivos}
+                      motivoFijo={motivoFijo}
                       puedeQuitar={tarjetas.length > 1}
                       cantidadOcupada={cantidadOcupadaPorOtras(t)}
                       onCambiar={(nueva) => actualizarTarjeta(t.uid, nueva)}
