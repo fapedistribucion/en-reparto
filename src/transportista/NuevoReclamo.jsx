@@ -5,6 +5,7 @@ import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { esMotivoSinAlcance, etiquetaAlcance } from "../utils/alcance";
 import {
   PREFIJO_SIN_ALCANCE,
+  MAX_OBSERVACION,
   derivarObservaciones,
   evidenciasDe,
   interpretarOpcion,
@@ -32,6 +33,7 @@ export default function NuevoReclamo() {
   const [opcion, setOpcion] = useState("");
   const [motivoTotal, setMotivoTotal] = useState("");
   const [archivosMotivo, setArchivosMotivo] = useState({});
+  const [observacionTotal, setObservacionTotal] = useState("");
   const [tarjetas, setTarjetas] = useState(() => [nuevaTarjeta()]);
   const [archivosFactura, setArchivosFactura] = useState([]);
   const [enviando, setEnviando] = useState(false);
@@ -45,6 +47,11 @@ export default function NuevoReclamo() {
   const motivosSeleccionables = useMemo(
     () => motivos.filter((m) => !m.alcance_forzado && !esMotivoSinAlcance(m.subcategoria)),
     [motivos]
+  );
+  // En rechazo parcial / tarjetas no se pueden elegir los motivos que solo aplican a la factura completa
+  const motivosParaTarjetas = useMemo(
+    () => motivosSeleccionables.filter((m) => !m.solo_rechazo_total),
+    [motivosSeleccionables]
   );
 
   const opciones = useMemo(() => {
@@ -74,12 +81,14 @@ export default function NuevoReclamo() {
   const conTarjetas = usaTarjetas(opcion); // Rechazo parcial o Sobrante
   const motivoActual = motivoFijo ?? motivoTotal;
   const evidenciasMotivo = motivoActual ? evidenciasDe(motivos, motivoActual) : [];
+  const pideObservacion = !conTarjetas && !!motivos.find((m) => m.subcategoria === motivoActual)?.pide_observacion;
 
   function reiniciarTodo() {
     setEncontrada(null);
     setOpcion("");
     setMotivoTotal("");
     setArchivosMotivo({});
+    setObservacionTotal("");
     setTarjetas([nuevaTarjeta()]);
     setArchivosFactura([]);
     setEnviando(false);
@@ -93,6 +102,7 @@ export default function NuevoReclamo() {
     setOpcion(clave);
     setMotivoTotal("");
     setArchivosMotivo({});
+    setObservacionTotal("");
     setErrorEnvio("");
   }
 
@@ -100,11 +110,18 @@ export default function NuevoReclamo() {
     setTarjetas((prev) => prev.map((t) => (t.uid === uid ? nueva : t)));
   }
 
-  // Cantidad que ya tomaron las OTRAS tarjetas del mismo producto (mismo motivo distinto o no).
+  // Cantidad que ya tomaron las OTRAS tarjetas del mismo producto con el MISMO motivo.
+  // El tope es por motivo: el mismo producto puede tener varios motivos y no se suman entre sí.
   function cantidadOcupadaPorOtras(tarjeta) {
     if (tarjeta.posicion == null) return 0;
+    const motivo = motivoFijo ?? tarjeta.subcategoria;
     return tarjetas
-      .filter((x) => x.uid !== tarjeta.uid && x.posicion === tarjeta.posicion)
+      .filter(
+        (x) =>
+          x.uid !== tarjeta.uid &&
+          x.posicion === tarjeta.posicion &&
+          (motivoFijo ?? x.subcategoria) === motivo
+      )
       .reduce((suma, x) => suma + (Number.isFinite(Number(x.cantidad)) ? Number(x.cantidad) : 0), 0);
   }
 
@@ -116,6 +133,7 @@ export default function NuevoReclamo() {
       motivos,
       motivoTotal,
       archivosMotivo,
+      observacionTotal,
       tarjetas,
       productos: encontrada.productos,
       archivosFactura,
@@ -127,7 +145,7 @@ export default function NuevoReclamo() {
 
     setEnviando(true);
     try {
-      const observaciones = derivarObservaciones({ opcion, motivos, motivoTotal, archivosMotivo, tarjetas });
+      const observaciones = derivarObservaciones({ opcion, motivos, motivoTotal, archivosMotivo, observacionTotal, tarjetas });
       const numeroFactura = encontrada.factura.factura;
 
       const { evidenciasTicket, observacionesPayload } = await subirEvidencias({
@@ -198,8 +216,24 @@ export default function NuevoReclamo() {
                     onCambiar={(valor) => {
                       setMotivoTotal(valor);
                       setArchivosMotivo({});
+                      setObservacionTotal("");
                     }}
                   />
+                </div>
+              )}
+
+              {seleccionada && !conTarjetas && pideObservacion && (
+                <div className="seccion-reclamo bloque-formulario">
+                  <label htmlFor="observacion-total">Observación</label>
+                  <textarea
+                    id="observacion-total"
+                    rows={3}
+                    maxLength={MAX_OBSERVACION}
+                    placeholder="Escribe la observación"
+                    value={observacionTotal}
+                    onChange={(e) => setObservacionTotal(e.target.value)}
+                  />
+                  <p className="dato-menor">{observacionTotal.length}/{MAX_OBSERVACION}</p>
                 </div>
               )}
 
@@ -229,7 +263,7 @@ export default function NuevoReclamo() {
                       indice={i}
                       tarjeta={t}
                       productos={encontrada.productos}
-                      motivosSeleccionables={motivosSeleccionables}
+                      motivosSeleccionables={motivosParaTarjetas}
                       motivos={motivos}
                       motivoFijo={motivoFijo}
                       puedeQuitar={tarjetas.length > 1}

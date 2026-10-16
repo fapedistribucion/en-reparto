@@ -10,6 +10,9 @@ const ETIQUETAS = {
   DIFERENCIA_PRECIO: "Diferencia de precio",
   ERROR_PRESENTACION: "Error de presentación",
   PRODUCTOS_NO_SOLICITADOS: "Productos no solicitados",
+  ERROR_DIRECCION: "Error de dirección",
+  FALTANTE_DOCUMENTACION: "Faltante de documentación",
+  PEDIDO_NO_SOLICITADO: "Pedido no solicitado",
 };
 
 function titulo(valor) {

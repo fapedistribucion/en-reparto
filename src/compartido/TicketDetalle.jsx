@@ -163,6 +163,12 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                         <p className="dato-menor">Toda la factura</p>
                       ))}
 
+                    {o.observacion && (
+                      <p className="obs-card-linea">
+                        <strong>Observación:</strong> {o.observacion}
+                      </p>
+                    )}
+
                     {(o.nota_credito || ticket.fecha_entrega_li) && (
                       <p className="obs-card-linea">Nota de crédito: {o.nota_credito ?? "Pendiente"}</p>
                     )}

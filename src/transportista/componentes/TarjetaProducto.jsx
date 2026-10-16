@@ -1,7 +1,7 @@
 import BuscadorProducto from "./BuscadorProducto";
 import SelectorMotivo from "./SelectorMotivo";
 import SubidaEvidencia from "./SubidaEvidencia";
-import { evidenciasDe } from "../logicaReclamo";
+import { LARGO_BULTO, evidenciasDe, limpiarBulto, limpiarCantidad } from "../logicaReclamo";
 
 export default function TarjetaProducto({
   indice,
@@ -18,8 +18,8 @@ export default function TarjetaProducto({
   const producto = productos.find((p) => p.posicion === tarjeta.posicion) ?? null;
   const subcategoria = motivoFijo ?? tarjeta.subcategoria;
   const requeridas = evidenciasDe(motivos, subcategoria);
-  // `cantidadOcupada`: lo que ya tomaron otros motivos/tarjetas del MISMO producto (un producto
-  // puede tener varios motivos, pero entre todos no pueden superar lo facturado).
+  // `cantidadOcupada`: lo que ya registraron otras tarjetas del MISMO producto con el MISMO motivo.
+  // El tope es por motivo: un producto puede tener varios motivos y la suma entre motivos no se limita.
   const disponible = producto ? Math.max(0, Number(producto.cantidad) - cantidadOcupada) : 0;
   // Con motivo fijo (Sobrante) la cantidad no tiene tope: es lo que llegó de más
   const excede = !motivoFijo && producto && Number(tarjeta.cantidad) > disponible;
@@ -64,20 +64,19 @@ export default function TarjetaProducto({
                 </label>
                 <input
                   id={`cantidad-${tarjeta.uid}`}
-                  type="number"
+                  type="text"
                   inputMode="numeric"
-                  min="1"
-                  max={motivoFijo ? undefined : disponible}
-                  step="1"
+                  pattern="[0-9]*"
+                  autoComplete="off"
                   value={tarjeta.cantidad}
-                  onChange={(e) => onCambiar({ ...tarjeta, cantidad: e.target.value })}
+                  onChange={(e) => onCambiar({ ...tarjeta, cantidad: limpiarCantidad(e.target.value) })}
                 />
                 <p className={excede ? "mensaje-error" : "dato-menor"}>
                   {motivoFijo
                     ? `Facturado: ${producto.cantidad}`
                     : cantidadOcupada > 0
-                      ? `Disponible: ${disponible} de ${producto.cantidad} (${cantidadOcupada} ya en otro motivo)`
-                      : `Disponible: ${disponible} de ${producto.cantidad}`}
+                      ? `Facturado: ${producto.cantidad} (${cantidadOcupada} ya registrado(s) con este motivo)`
+                      : `Facturado: ${producto.cantidad}`}
                 </p>
               </div>
               <div>
@@ -85,10 +84,16 @@ export default function TarjetaProducto({
                 <input
                   id={`bulto-${tarjeta.uid}`}
                   type="text"
-                  placeholder="BANSA..."
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  maxLength={LARGO_BULTO}
+                  placeholder={`${LARGO_BULTO} letras o números`}
                   value={tarjeta.bulto}
-                  onChange={(e) => onCambiar({ ...tarjeta, bulto: e.target.value })}
+                  onChange={(e) => onCambiar({ ...tarjeta, bulto: limpiarBulto(e.target.value) })}
                 />
+                <p className={tarjeta.bulto.length > 0 && tarjeta.bulto.length < LARGO_BULTO ? "mensaje-error" : "dato-menor"}>
+                  {tarjeta.bulto.length}/{LARGO_BULTO} caracteres
+                </p>
               </div>
             </div>
           </div>

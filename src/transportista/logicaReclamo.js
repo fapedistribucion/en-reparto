@@ -1,6 +1,36 @@
 // Lógica pura del formulario de reclamo (sin React ni Supabase), para poder probarla aislada.
 
 import { etiquetaEvidencia, reglaEvidencia } from "../utils/etiquetasEvidencia.js";
+import { etiquetaMotivo } from "../utils/etiquetasMotivo.js";
+
+// Formato del N° de bulto: exactamente 15 caracteres, letras o números.
+export const LARGO_BULTO = 15;
+export const MAX_OBSERVACION = 500;
+
+// Deja solo letras y números (máx. 15, en mayúsculas): lo que se escribe o pega en el campo de bulto.
+export function limpiarBulto(texto) {
+  return String(texto ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, LARGO_BULTO).toUpperCase();
+}
+
+// Deja solo dígitos: lo que se escribe o pega en el campo de cantidad.
+export function limpiarCantidad(texto) {
+  return String(texto ?? "").replace(/\D/g, "").slice(0, 7);
+}
+
+export function bultoValido(texto) {
+  return new RegExp(`^[A-Za-z0-9]{${LARGO_BULTO}}$`).test(String(texto ?? "").trim());
+}
+
+// El tope de cantidad es POR MOTIVO: un mismo producto puede tener varios motivos y la suma entre
+// motivos no se limita (una misma unidad puede tener 2 motivos). Solo cuenta lo ya registrado con el
+// MISMO motivo para el mismo producto.
+export function claveProductoMotivo(posicion, subcategoria) {
+  return `${posicion}|${subcategoria}`;
+}
+
+export function motivoDe(motivos, subcategoria) {
+  return motivos.find((m) => m.subcategoria === subcategoria) ?? null;
+}
 
 // Prefijo de la opción "motivo sin alcance" (ej. "SIN_ALCANCE:SOBRANTE"): el ticket no lleva alcance.
 export const PREFIJO_SIN_ALCANCE = "SIN_ALCANCE";
@@ -56,7 +86,7 @@ function soloRequeridas(motivos, subcategoria, archivos) {
   return Object.fromEntries(requeridas.map((tipo) => [tipo, archivos?.[tipo] ?? []]));
 }
 
-export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMotivo, tarjetas }) {
+export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMotivo, tarjetas, observacionTotal = "" }) {
   const { motivoFijo } = interpretarOpcion(opcion);
 
   if (usaTarjetas(opcion)) {
@@ -68,6 +98,7 @@ export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMot
         posicion: t.posicion,
         cantidad_observada: Number(t.cantidad),
         numero_bulto: t.bulto.trim(),
+        observacion: null,
         archivos: soloRequeridas(motivos, subcategoria, t.archivos),
       };
     });
@@ -80,13 +111,14 @@ export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMot
       posicion: null,
       cantidad_observada: null,
       numero_bulto: null,
+      observacion: motivoDe(motivos, subcategoria)?.pide_observacion ? String(observacionTotal ?? "").trim() : null,
       archivos: soloRequeridas(motivos, subcategoria, archivosMotivo),
     },
   ];
 }
 
 // Devuelve el primer problema encontrado (texto para el usuario) o null si todo está bien.
-// `cantidadesPrevias` (Map posicion -> cantidad ya observada en el ticket) y `exigirFactura=false`
+// `cantidadesPrevias` (Map claveProductoMotivo -> cantidad ya observada en el ticket) y `exigirFactura=false`
 // los usa SAC al agregar un producto a un ticket que ya existe (ver validarProductoAgregado).
 export function validarReclamo({
   opcion,
@@ -96,6 +128,7 @@ export function validarReclamo({
   tarjetas,
   productos,
   archivosFactura,
+  observacionTotal = "",
   cantidadesPrevias = new Map(),
   exigirFactura = true,
 }) {
@@ -116,22 +149,33 @@ export function validarReclamo({
       const subcategoria = motivoFijo ?? t.subcategoria;
       if (!subcategoria) return `Producto ${n}: selecciona el motivo.`;
 
-      const cantidad = Number(t.cantidad);
-      if (!Number.isFinite(cantidad) || cantidad <= 0) return `Producto ${n}: indica la cantidad observada.`;
-      // Un mismo producto puede tener varios motivos, pero entre todos no pueden superar lo facturado.
+      if (motivoDe(motivos, subcategoria)?.solo_rechazo_total) {
+        return `Producto ${n}: el motivo ${etiquetaMotivo(subcategoria)} solo se usa en un rechazo total.`;
+      }
+
+      const textoCantidad = String(t.cantidad ?? "").trim();
+      if (!/^\d+$/.test(textoCantidad) || Number(textoCantidad) <= 0) {
+        return `Producto ${n}: la cantidad observada debe ser un número entero mayor que 0.`;
+      }
+      const cantidad = Number(textoCantidad);
+      // El tope es por motivo: la cantidad observada no puede superar lo facturado dentro del mismo
+      // motivo. Un mismo producto sí puede tener varios motivos (cada uno con su cantidad).
       // Sobrante no tiene tope: es producto que llegó de más que lo facturado.
       if (!motivoFijo) {
-        const previo = (cantidadesPrevias.get(t.posicion) ?? 0) + (acumulado.get(t.posicion) ?? 0);
+        const clave = claveProductoMotivo(t.posicion, subcategoria);
+        const previo = (cantidadesPrevias.get(clave) ?? 0) + (acumulado.get(clave) ?? 0);
         const total = previo + cantidad;
         if (total > Number(producto.cantidad)) {
           return previo > 0
-            ? `Producto ${n}: entre todos los motivos de este producto superan lo facturado (${producto.cantidad}); ya hay ${previo} en otros motivos, quedan ${Math.max(0, producto.cantidad - previo)}.`
+            ? `Producto ${n}: con el motivo ${etiquetaMotivo(subcategoria)} ya hay ${previo} registrado(s); entre todos superan lo facturado (${producto.cantidad}).`
             : `Producto ${n}: la cantidad observada supera lo facturado (${producto.cantidad}).`;
         }
-        acumulado.set(t.posicion, total);
+        acumulado.set(clave, total);
       }
 
-      if (!t.bulto.trim()) return `Producto ${n}: indica el número de bulto.`;
+      if (!bultoValido(t.bulto)) {
+        return `Producto ${n}: el N° de bulto debe tener exactamente ${LARGO_BULTO} caracteres (letras o números).`;
+      }
 
       const falta = faltantes(motivos, subcategoria, t.archivos);
       if (falta.length) {
@@ -141,6 +185,11 @@ export function validarReclamo({
   } else {
     const subcategoria = motivoFijo ?? motivoTotal;
     if (!subcategoria) return "Selecciona el motivo.";
+    if (motivoDe(motivos, subcategoria)?.pide_observacion) {
+      const texto = String(observacionTotal ?? "").trim();
+      if (!texto) return "Escribe la observación.";
+      if (texto.length > MAX_OBSERVACION) return `La observación no puede superar los ${MAX_OBSERVACION} caracteres.`;
+    }
     const falta = faltantes(motivos, subcategoria, archivosMotivo);
     if (falta.length) {
       return `Falta subir ${falta.map((tipo) => descripcionFaltante(tipo, subcategoria, archivosMotivo)).join(", ")}.`;
@@ -165,12 +214,14 @@ export function validarProductoAgregado({ tarjeta, motivos, productos, cantidade
   });
 }
 
-// Suma de cantidad_observada por posición de las observaciones ya registradas en el ticket.
-export function cantidadesPreviasPorPosicion(observaciones) {
+// Suma de cantidad_observada por (producto, motivo) de las observaciones ya registradas en el ticket.
+// La clave es claveProductoMotivo(posicion, subcategoria).
+export function cantidadesPreviasPorMotivo(observaciones) {
   const mapa = new Map();
   (observaciones ?? []).forEach((o) => {
     if (o.posicion == null) return;
-    mapa.set(o.posicion, (mapa.get(o.posicion) ?? 0) + Number(o.cantidad_observada ?? 0));
+    const clave = claveProductoMotivo(o.posicion, o.subcategoria);
+    mapa.set(clave, (mapa.get(clave) ?? 0) + Number(o.cantidad_observada ?? 0));
   });
   return mapa;
 }

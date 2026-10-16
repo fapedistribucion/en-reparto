@@ -110,7 +110,10 @@ export default function TablaObservaciones({
                 <td>{o.posicion ?? "—"}</td>
                 <td>{o.codigo_producto ? o.nombre_producto : "Toda la factura"}</td>
                 <td>{o.codigo_producto ? formatearPrecio(o.precio_unitario) : "—"}</td>
-                <td>{etiquetaMotivo(o.subcategoria)}</td>
+                <td>
+                  {etiquetaMotivo(o.subcategoria)}
+                  {o.observacion && <span className="dato-menor" title={o.observacion}> · {o.observacion}</span>}
+                </td>
                 <td>{ETIQUETAS_CATEGORIA[o.categoria] ?? o.categoria}</td>
                 <td>
                   {o.respuesta_vendedor ? (

@@ -11,7 +11,7 @@ export function useMotivos() {
   useEffect(() => {
     supabase
       .from("config_subcategorias")
-      .select("subcategoria, categoria, evidencias_requeridas, alcance_forzado")
+      .select("subcategoria, categoria, evidencias_requeridas, alcance_forzado, pide_observacion, solo_rechazo_total")
       .eq("activo", true)
       .then(({ data, error: errorConsulta }) => {
         if (errorConsulta) setError(errorConsulta.message);

@@ -3,7 +3,8 @@ import { supabase } from "../lib/supabaseClient";
 import { useMotivos } from "../transportista/useMotivos";
 import TarjetaProducto from "../transportista/componentes/TarjetaProducto";
 import {
-  cantidadesPreviasPorPosicion,
+  cantidadesPreviasPorMotivo,
+  claveProductoMotivo,
   derivarObservaciones,
   validarProductoAgregado,
 } from "../transportista/logicaReclamo";
@@ -41,8 +42,8 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
           .select("posicion, codigo_producto, nombre_producto, cantidad")
           .eq("factura", ticket.factura)
           .order("posicion"),
-        // Todo lo ya observado del ticket (de cualquier motivo) cuenta para el tope de cantidad.
-        supabase.from("ticket_observaciones").select("posicion, cantidad_observada").eq("ticket_id", ticket.id),
+        // Lo ya observado del ticket cuenta para el tope de cantidad de cada motivo.
+        supabase.from("ticket_observaciones").select("posicion, subcategoria, cantidad_observada").eq("ticket_id", ticket.id),
       ]);
       if (cancelado) return;
       if (prod.error || obs.error) {
@@ -60,10 +61,13 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
   }, [ticket.id, ticket.factura]);
 
   const motivosSeleccionables = useMemo(
-    () => motivos.filter((m) => !m.alcance_forzado && !esMotivoSinAlcance(m.subcategoria)),
+    () =>
+      motivos.filter(
+        (m) => !m.alcance_forzado && !esMotivoSinAlcance(m.subcategoria) && !m.solo_rechazo_total
+      ),
     [motivos]
   );
-  const cantidadesPrevias = useMemo(() => cantidadesPreviasPorPosicion(observadas), [observadas]);
+  const cantidadesPrevias = useMemo(() => cantidadesPreviasPorMotivo(observadas), [observadas]);
 
   async function agregar() {
     setErrorEnvio("");
@@ -109,7 +113,11 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
             motivosSeleccionables={motivosSeleccionables}
             motivos={motivos}
             puedeQuitar={false}
-            cantidadOcupada={tarjeta.posicion != null ? cantidadesPrevias.get(tarjeta.posicion) ?? 0 : 0}
+            cantidadOcupada={
+              tarjeta.posicion != null && tarjeta.subcategoria
+                ? cantidadesPrevias.get(claveProductoMotivo(tarjeta.posicion, tarjeta.subcategoria)) ?? 0
+                : 0
+            }
             onCambiar={setTarjeta}
             onQuitar={() => {}}
           />

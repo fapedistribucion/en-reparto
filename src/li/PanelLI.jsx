@@ -194,6 +194,7 @@ export default function PanelLI({ sidebarAbierta }) {
         { titulo: "Bulto", clave: "numero_bulto" },
         { titulo: "Cant. Reclamada", clave: "cantidad_observada" },
         { titulo: "Cant. Total", clave: "cantidad_facturada" },
+        { titulo: "Observación", clave: "observacion" },
         { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
         { titulo: "Entrega a transporte", obtener: (o) => textoEntregaTransporte(o.ticket) },
         { titulo: "Motivo retención", obtener: (o) => textoMotivoRetencion(o.ticket) },

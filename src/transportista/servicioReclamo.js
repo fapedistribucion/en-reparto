@@ -35,6 +35,7 @@ export async function subirEvidencias({ empresa, archivosFactura, observaciones 
       posicion: obs.posicion,
       cantidad_observada: obs.cantidad_observada,
       numero_bulto: obs.numero_bulto,
+      observacion: obs.observacion ?? null,
       evidencias,
     };
   });
