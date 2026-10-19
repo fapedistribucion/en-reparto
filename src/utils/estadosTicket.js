@@ -70,7 +70,10 @@ export function textoNotaCredito(ticket) {
 // navegador/locale (que puede dar año de 2 dígitos u otro orden según el dispositivo).
 export function formatearFecha(valor, conHora = false) {
   if (!valor) return "—";
-  const fecha = new Date(valor);
+  // Una fecha sin hora ("2026-10-17", como fecha_factura) se lee como medianoche UTC y en Perú
+  // (UTC-5) se mostraba un día antes. Se construye con la fecha local para que salga el día correcto.
+  const soloFecha = typeof valor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(valor);
+  const fecha = soloFecha ? new Date(`${valor}T00:00:00`) : new Date(valor);
   const dia = String(fecha.getDate()).padStart(2, "0");
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   const anio = fecha.getFullYear();
