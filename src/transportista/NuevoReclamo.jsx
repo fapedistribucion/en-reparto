@@ -9,7 +9,6 @@ import {
   derivarObservaciones,
   evidenciasDe,
   interpretarOpcion,
-  requiereSAC,
   usaTarjetas,
   validarReclamo,
 } from "./logicaReclamo";
@@ -38,7 +37,7 @@ export default function NuevoReclamo() {
   const [archivosFactura, setArchivosFactura] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
-  const [resultado, setResultado] = useState(null); // { codigo, requiereSAC }
+  const [resultado, setResultado] = useState(null); // { codigo (null si queda pendiente de SAC), factura }
 
   const { alcance, motivoFijo, seleccionada } = interpretarOpcion(opcion);
 
@@ -161,7 +160,7 @@ export default function NuevoReclamo() {
         observacionesPayload,
       });
 
-      setResultado({ codigo: respuesta.codigo_ticket, requiereSAC: requiereSAC(observaciones, motivos) });
+      setResultado({ codigo: respuesta.codigo_ticket ?? null, factura: numeroFactura });
     } catch (error) {
       setErrorEnvio(error.message);
     } finally {
@@ -298,7 +297,7 @@ export default function NuevoReclamo() {
       )}
 
       {resultado && (
-        <ModalTicketCreado codigo={resultado.codigo} requiereSAC={resultado.requiereSAC} onCerrar={reiniciarTodo} />
+        <ModalTicketCreado codigo={resultado.codigo} factura={resultado.factura} onCerrar={reiniciarTodo} />
       )}
     </div>
   );

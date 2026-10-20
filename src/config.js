@@ -5,9 +5,9 @@ export const CONTACTO_DATOS = {
   telefono: "920799198",
 };
 
-// Teléfono de QTA para los casos No Logísticos (pendiente de definir).
-// Mientras esté vacío, el aviso se muestra sin número.
-export const TELEFONO_QTA = "";
+// Teléfono de SAC: el transportista debe llamar aquí en los casos No logísticos y Faltante
+// para que SAC atienda el caso, lo apruebe y le brinde el número de ticket.
+export const TELEFONO_SAC = "016199010";
 
 export const MENSAJE_FACTURA_NO_ENCONTRADA =
   `Factura no encontrada, colocar bien el número de factura, si el problema persiste comunicarse con ${CONTACTO_DATOS.nombre} - ${CONTACTO_DATOS.telefono}`;

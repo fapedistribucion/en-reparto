@@ -9,6 +9,7 @@ import TablaObservaciones from "../compartido/TablaObservaciones";
 import TicketDetalle from "../compartido/TicketDetalle";
 import ConfirmModal from "../compartido/ConfirmModal";
 import ValidarObservacion from "./ValidarObservacion";
+import AprobarTicketSAC from "./AprobarTicketSAC";
 import AgregarProductoSAC, { puedeAgregarProducto } from "./AgregarProductoSAC";
 import { invalidarDetalle } from "../compartido/cargaDetalle";
 import BarraHerramientas from "../compartido/BarraHerramientas";
@@ -17,6 +18,7 @@ import DashboardTickets from "../compartido/DashboardTickets";
 import { IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
 import {
   ETIQUETAS_ESTADO,
+  textoCodigoTicket,
   textoAlcance,
   textoSkuObservados,
   etiquetaRespuestaVendedor,
@@ -63,6 +65,7 @@ export default function PanelSAC({ sidebarAbierta }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [confirmarAnulacion, setConfirmarAnulacion] = useState(false);
+  const [ticketAprobado, setTicketAprobado] = useState(null); // código recién generado (popup para dárselo al transportista)
   const [anulando, setAnulando] = useState(false); // muestra el campo de motivo recién al elegir "Anular ticket"
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
@@ -164,7 +167,7 @@ export default function PanelSAC({ sidebarAbierta }) {
     if (pestana === "sku") {
       exportarCsv("en-reparto-por-producto", [
         { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
-        { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
+        { titulo: "N° Ticket", obtener: (o) => textoCodigoTicket(o.ticket) },
         { titulo: "Fecha factura", obtener: (o) => o.ticket?.fecha_factura },
         { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
@@ -189,7 +192,7 @@ export default function PanelSAC({ sidebarAbierta }) {
     } else {
       exportarCsv("en-reparto-por-ticket", [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
-        { titulo: "N° Ticket", clave: "codigo_ticket" },
+        { titulo: "N° Ticket", obtener: (t) => textoCodigoTicket(t) },
         { titulo: "Fecha factura", clave: "fecha_factura" },
         { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
@@ -298,7 +301,9 @@ export default function PanelSAC({ sidebarAbierta }) {
             setSeleccionadoId(null);
             setObservacionFocoId(null);
           }}
-          renderAccionObservacion={(obs, recargarDetalle) => (
+          renderAccionObservacion={(obs, recargarDetalle) =>
+            // En un ticket por aprobar la respuesta del vendedor se confirma junto con "Aprobar".
+            seleccionado.estado === "POR_APROBAR" ? null : (
             <ValidarObservacion
               observacion={obs}
               onHecho={() => {
@@ -307,13 +312,27 @@ export default function PanelSAC({ sidebarAbierta }) {
                 recargarObs();
               }}
             />
-          )}
+            )
+          }
           acciones={(recargarDetalle) => {
             const puedeAgregar = puedeAgregarProducto(seleccionado);
-            const puedeAnular = seleccionado.estado === "EN_RUTA";
+            const porAprobar = seleccionado.estado === "POR_APROBAR";
+            const puedeAnular = seleccionado.estado === "EN_RUTA" || porAprobar;
             if (!puedeAgregar && !puedeAnular) return null;
             return (
               <>
+                {porAprobar && (
+                  <AprobarTicketSAC
+                    ticket={seleccionado}
+                    onAprobado={(codigo) => {
+                      invalidarDetalle(seleccionado.id);
+                      recargarDetalle();
+                      recargar();
+                      recargarObs();
+                      setTicketAprobado(codigo);
+                    }}
+                  />
+                )}
                 <p className="panel-detalle-titulo-seccion">Acciones</p>
                 <div className="acciones-sac">
                   {puedeAgregar && (
@@ -337,13 +356,13 @@ export default function PanelSAC({ sidebarAbierta }) {
                       }}
                       disabled={anulando || guardando}
                     >
-                      Anular ticket
+                      {porAprobar ? "Rechazar" : "Anular ticket"}
                     </button>
                   )}
                 </div>
                 {puedeAnular && anulando && (
                   <div className="accion-rol">
-                    <label htmlFor="motivoAnulacion">Motivo de anulación</label>
+                    <label htmlFor="motivoAnulacion">{porAprobar ? "Motivo del rechazo" : "Motivo de anulación"}</label>
                     <input
                       id="motivoAnulacion"
                       type="text"
@@ -357,7 +376,7 @@ export default function PanelSAC({ sidebarAbierta }) {
                         Cancelar
                       </button>
                       <button type="button" className="boton-peligro" onClick={pedirConfirmarAnulacion} disabled={guardando}>
-                        Confirmar anulación
+                        {porAprobar ? "Confirmar rechazo" : "Confirmar anulación"}
                       </button>
                     </div>
                   </div>
@@ -370,12 +389,31 @@ export default function PanelSAC({ sidebarAbierta }) {
 
       {confirmarAnulacion && seleccionado && (
         <ConfirmModal
-          mensaje={`¿Anular el ticket ${seleccionado.codigo_ticket}? Esta acción no se puede deshacer.`}
+          mensaje={
+            seleccionado.estado === "POR_APROBAR"
+              ? "¿Rechazar este reclamo? No se generará número de ticket y la acción no se puede deshacer."
+              : `¿Anular el ticket ${textoCodigoTicket(seleccionado)}? Esta acción no se puede deshacer.`
+          }
           onConfirmar={anularTicket}
           onCancelar={() => setConfirmarAnulacion(false)}
           cargando={guardando}
-          textoConfirmar="Anular"
+          textoConfirmar={seleccionado.estado === "POR_APROBAR" ? "Rechazar" : "Anular"}
         />
+      )}
+
+      {ticketAprobado && (
+        <div className="fondo-modal">
+          <div className="modal-ticket">
+            <p className="modal-ticket-titulo">Ticket aprobado</p>
+            <p className="modal-ticket-codigo">{ticketAprobado}</p>
+            <p className="modal-ticket-ayuda">
+              Bríndale este número de ticket al transportista. Ya quedó asignado al caso en todas las vistas.
+            </p>
+            <button type="button" onClick={() => setTicketAprobado(null)}>
+              Entendido
+            </button>
+          </div>
+        </div>
       )}
     </LayoutLateral>
   );

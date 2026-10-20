@@ -11,6 +11,7 @@ import DashboardTickets from "../compartido/DashboardTickets";
 import { IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
 import {
   ETIQUETAS_ESTADO,
+  textoCodigoTicket,
   textoAlcance,
   textoSkuObservados,
   etiquetaRespuestaVendedor,
@@ -137,7 +138,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
     if (pestana === "sku") {
       exportarCsv("en-reparto-por-producto", [
         { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
-        { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
+        { titulo: "N° Ticket", obtener: (o) => textoCodigoTicket(o.ticket) },
         { titulo: "Fecha factura", obtener: (o) => o.ticket?.fecha_factura },
         { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
@@ -162,7 +163,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
     } else {
       exportarCsv("en-reparto-por-ticket", [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
-        { titulo: "N° Ticket", clave: "codigo_ticket" },
+        { titulo: "N° Ticket", obtener: (t) => textoCodigoTicket(t) },
         { titulo: "Fecha factura", clave: "fecha_factura" },
         { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },

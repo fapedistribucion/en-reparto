@@ -9,6 +9,7 @@ import {
   validarProductoAgregado,
 } from "../transportista/logicaReclamo";
 import { esMotivoSinAlcance } from "../utils/alcance";
+import { textoCodigoTicket } from "../utils/estadosTicket";
 import { agregarProductoSAC } from "./servicioAgregarProducto";
 
 // Solo SAC, solo rechazo parcial y solo en EN_RUTA / EN_LI (GESTION LI): el que decide si se
@@ -98,7 +99,7 @@ function FormularioAgregar({ ticket, onCerrar, onAgregado }) {
   return (
     <div className="fondo-modal" onClick={enviando ? undefined : onCerrar}>
       <div className="panel-detalle" onClick={(e) => e.stopPropagation()}>
-        <p className="panel-detalle-titulo-seccion">Agregar producto al ticket {ticket.codigo_ticket}</p>
+        <p className="panel-detalle-titulo-seccion">Agregar producto al ticket {textoCodigoTicket(ticket)}</p>
         <p className="dato-menor">Factura {ticket.factura}</p>
 
         {cargando ? (

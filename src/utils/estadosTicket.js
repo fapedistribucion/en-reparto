@@ -1,11 +1,18 @@
 import { etiquetaAlcance } from "./alcance";
 
 export const ETIQUETAS_ESTADO = {
+  POR_APROBAR: "POR APROBAR",
   EN_RUTA: "EN RUTA",
   EN_LI: "GESTION LI",
   SOLUCIONADO: "SOLUCIONADO",
   ANULADO: "ANULADO",
 };
+
+// Número de ticket para mostrar: los casos No logísticos y Faltante no tienen código hasta que
+// SAC los aprueba (estado POR_APROBAR); mientras tanto se ve "Sin ticket" en todas las vistas.
+export function textoCodigoTicket(ticket) {
+  return ticket?.codigo_ticket ?? "Sin ticket";
+}
 
 // `respuesta_vendedor` (ticket_observaciones): NO_APLICA para Logístico (nunca
 // requiere contactar al vendedor), CONTESTO/NO_CONTESTO para No logístico una vez

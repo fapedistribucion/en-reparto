@@ -16,6 +16,7 @@ import DashboardTickets from "../compartido/DashboardTickets";
 import { IconoCheck, IconoCamion, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
 import {
   ETIQUETAS_ESTADO,
+  textoCodigoTicket,
   textoAlcance,
   textoSkuObservados,
   etiquetaRespuestaVendedor,
@@ -178,7 +179,7 @@ export default function PanelLI({ sidebarAbierta }) {
     if (pestana === "sku") {
       exportarCsv("en-reparto-por-producto", [
         { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
-        { titulo: "N° Ticket", obtener: (o) => o.ticket?.codigo_ticket },
+        { titulo: "N° Ticket", obtener: (o) => textoCodigoTicket(o.ticket) },
         { titulo: "Fecha factura", obtener: (o) => o.ticket?.fecha_factura },
         { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
         { titulo: "Factura", obtener: (o) => o.ticket?.factura },
@@ -203,7 +204,7 @@ export default function PanelLI({ sidebarAbierta }) {
     } else {
       exportarCsv("en-reparto-por-ticket", [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
-        { titulo: "N° Ticket", clave: "codigo_ticket" },
+        { titulo: "N° Ticket", obtener: (t) => textoCodigoTicket(t) },
         { titulo: "Fecha factura", clave: "fecha_factura" },
         { titulo: "Transporte", clave: "empresa_transporte" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
@@ -294,7 +295,7 @@ export default function PanelLI({ sidebarAbierta }) {
     if (conNC > 0) {
       return `Atención: ${conNC} de ${observacionesDelTicket.length} productos de este ticket ya tienen NC y no se modificarán. La NC "${nc}" se asignará solo a los ${pendientesNC.length} productos pendientes y el ticket pasará a Solucionado. ¿Continuar?`;
     }
-    return `¿Registrar la NC "${nc}" para los ${pendientesNC.length} productos del ticket ${seleccionado.codigo_ticket}? El ticket pasará a Solucionado.`;
+    return `¿Registrar la NC "${nc}" para los ${pendientesNC.length} productos del ticket ${textoCodigoTicket(seleccionado)}? El ticket pasará a Solucionado.`;
   }
 
   // La NC se guarda con la función registrar_nc_li: valida el rol y que el ticket esté en GESTION LI,

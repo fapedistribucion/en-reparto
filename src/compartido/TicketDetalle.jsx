@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { cargarDetalle, leerDetalleEnCache } from "./cargaDetalle";
 import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
-import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance, textoCodigoTicket } from "../utils/estadosTicket";
 
 function Galeria({ fotos, subcategoria, onAmpliar }) {
   if (fotos.length === 0) return null;
@@ -84,7 +84,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
       <div className="panel-detalle" onClick={(e) => e.stopPropagation()}>
         <div className="panel-detalle-encabezado">
           <div>
-            <p className="panel-detalle-codigo">{ticket.codigo_ticket}</p>
+            <p className="panel-detalle-codigo">{textoCodigoTicket(ticket)}</p>
             <p className="panel-detalle-fecha">Creado {formatearFecha(ticket.fecha_creacion, true)}</p>
           </div>
           <span className={`badge-estado badge-estado-${ticket.estado?.toLowerCase()}`}>

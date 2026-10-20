@@ -5,7 +5,7 @@ import TablaTickets from "../compartido/TablaTickets";
 import TicketDetalle from "../compartido/TicketDetalle";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, textoNotaCredito } from "../utils/estadosTicket";
+import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, textoNotaCredito, textoCodigoTicket } from "../utils/estadosTicket";
 import { exportarCsv } from "../utils/exportarCsv";
 
 const FILTROS_VACIOS = { ticket: "", factura: "", pedido: "", transporte: "", estado: "", desde: "", hasta: "" };
@@ -85,7 +85,7 @@ export default function Seguimiento() {
       "en-reparto-seguimiento",
       [
         { titulo: "Fecha creación", clave: "fecha_creacion" },
-        { titulo: "N° Ticket", clave: "codigo_ticket" },
+        { titulo: "N° Ticket", obtener: (t) => textoCodigoTicket(t) },
         { titulo: "Fecha factura", clave: "fecha_factura" },
         { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
         { titulo: "Factura", clave: "factura" },

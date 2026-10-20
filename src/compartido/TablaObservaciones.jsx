@@ -1,6 +1,7 @@
 import { precargarDetalle } from "./cargaDetalle";
 import {
   ETIQUETAS_ESTADO,
+  textoCodigoTicket,
   formatearFecha,
   fechaOPendiente,
   etiquetaRespuestaVendedor,
@@ -91,7 +92,7 @@ export default function TablaObservaciones({
             return (
               <tr key={o.id}>
                 <td>{formatearFecha(t?.fecha_creacion)}</td>
-                <td>{t?.codigo_ticket ?? "—"}</td>
+                <td>{t ? textoCodigoTicket(t) : "—"}</td>
                 <td>{formatearFecha(t?.fecha_factura)}</td>
                 {mostrarTransporte && <td>{t?.empresa_transporte ?? "—"}</td>}
                 <td>

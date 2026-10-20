@@ -1,6 +1,7 @@
 import { precargarDetalle } from "./cargaDetalle";
 import {
   ETIQUETAS_ESTADO,
+  textoCodigoTicket,
   formatearFecha,
   fechaOPendiente,
   textoAlcance,
@@ -77,7 +78,7 @@ export default function TablaTickets({
           {tickets.map((t) => (
             <tr key={t.id}>
               <td>{formatearFecha(t.fecha_creacion)}</td>
-              <td>{t.codigo_ticket}</td>
+              <td>{textoCodigoTicket(t)}</td>
               <td>{formatearFecha(t.fecha_factura)}</td>
               {mostrarTransporte && <td>{t.empresa_transporte}</td>}
               <td>

@@ -6,7 +6,7 @@ import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 // `rol`: "SAC" | "LI" — cambia cuál tarjeta de "acción requerida" se resalta primero.
 export default function DashboardTickets({ tickets, observaciones, rol }) {
   const porEstado = useMemo(() => {
-    const conteo = { EN_RUTA: 0, EN_LI: 0, SOLUCIONADO: 0, ANULADO: 0 };
+    const conteo = { POR_APROBAR: 0, EN_RUTA: 0, EN_LI: 0, SOLUCIONADO: 0, ANULADO: 0 };
     tickets.forEach((t) => {
       if (conteo[t.estado] !== undefined) conteo[t.estado] += 1;
     });
@@ -29,6 +29,11 @@ export default function DashboardTickets({ tickets, observaciones, rol }) {
         <div className="tarjeta-stat tarjeta-stat-total">
           <span className="tarjeta-stat-numero">{tickets.length}</span>
           <span className="tarjeta-stat-etiqueta">Tickets totales</span>
+        </div>
+
+        <div className={`tarjeta-stat ${rol === "SAC" && porEstado.POR_APROBAR > 0 ? "tarjeta-stat-alerta" : ""}`}>
+          <span className="tarjeta-stat-numero">{porEstado.POR_APROBAR}</span>
+          <span className="tarjeta-stat-etiqueta">{ETIQUETAS_ESTADO.POR_APROBAR}</span>
         </div>
 
         <div className={`tarjeta-stat ${rol === "LI" ? "tarjeta-stat-alerta" : ""}`}>
