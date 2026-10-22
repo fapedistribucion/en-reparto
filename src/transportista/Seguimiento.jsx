@@ -1,30 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTickets } from "../compartido/useTickets";
-import { useFechasFactura } from "../compartido/useFechasFactura";
+import { useVistaTickets } from "../compartido/useVistaTickets";
 import TablaTickets from "../compartido/TablaTickets";
 import TicketDetalle from "../compartido/TicketDetalle";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
-import { ETIQUETAS_ESTADO, textoAlcance, textoSkuObservados, textoNotaCredito, textoCodigoTicket } from "../utils/estadosTicket";
-import { exportarCsv } from "../utils/exportarCsv";
-
-const FILTROS_VACIOS = { ticket: "", factura: "", pedido: "", transporte: "", estado: "", desde: "", hasta: "" };
-
-function coincideTexto(valor, filtro) {
-  if (!filtro) return true;
-  return String(valor ?? "")
-    .toLowerCase()
-    .includes(filtro.trim().toLowerCase());
-}
-
-function coincideFecha(fechaIso, desde, hasta) {
-  if (!desde && !hasta) return true;
-  if (!fechaIso) return false;
-  const fecha = new Date(fechaIso);
-  if (desde && fecha < new Date(`${desde}T00:00:00`)) return false;
-  if (hasta && fecha > new Date(`${hasta}T23:59:59`)) return false;
-  return true;
-}
 
 // Vista de seguimiento del transportista: no tiene pestañas (solo la tabla por ticket,
 // no la vista "por producto"), no muestra la columna "Transporte" (todos sus tickets son
@@ -34,71 +14,16 @@ export default function Seguimiento() {
   const { tickets, cargando, error, recargar } = useTickets();
   const [seleccionadoId, setSeleccionadoId] = useState(null);
 
-  const [filtros, setFiltros] = useState(FILTROS_VACIOS);
-  const [borrador, setBorrador] = useState(FILTROS_VACIOS);
-  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
-
+  // Datos de la factura (fecha, región, departamento, centro), filtros, orden por encabezado, conteo y
+  // exportación a Excel: lo mismo que ven los demás roles, sin "Transporte" (todos sus tickets son de su empresa).
+  const vista = useVistaTickets({
+    tickets,
+    pestana: "factura",
+    mostrarTransporte: false,
+    mostrarSkuObservados: true,
+    nombreExportacion: "en-reparto-seguimiento",
+  });
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
-
-  const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
-  const fechasFactura = useFechasFactura(facturasVisibles);
-
-  const ticketsConFechaFactura = useMemo(
-    () => tickets.map((t) => ({ ...t, fecha_factura: fechasFactura.get(t.factura) ?? null })),
-    [tickets, fechasFactura]
-  );
-
-  const filtrosActivos = Object.values(filtros).some((v) => v);
-
-  const ticketsFiltrados = useMemo(
-    () =>
-      ticketsConFechaFactura.filter(
-        (t) =>
-          coincideTexto(t.codigo_ticket, filtros.ticket) &&
-          coincideTexto(t.factura, filtros.factura) &&
-          coincideTexto(t.pedido_entrega, filtros.pedido) &&
-          (!filtros.transporte || t.empresa_transporte === filtros.transporte) &&
-          (!filtros.estado || t.estado === filtros.estado) &&
-          coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
-      ),
-    [ticketsConFechaFactura, filtros]
-  );
-
-  function abrirPanelFiltros() {
-    setBorrador(filtros);
-    setFiltrosAbiertos(true);
-  }
-
-  function aplicarFiltros() {
-    setFiltros(borrador);
-    setFiltrosAbiertos(false);
-  }
-
-  function limpiarFiltros() {
-    setFiltros(FILTROS_VACIOS);
-    setBorrador(FILTROS_VACIOS);
-    setFiltrosAbiertos(false);
-  }
-
-  function exportarVistaActual() {
-    exportarCsv(
-      "en-reparto-seguimiento",
-      [
-        { titulo: "Fecha creación", clave: "fecha_creacion" },
-        { titulo: "N° Ticket", obtener: (t) => textoCodigoTicket(t) },
-        { titulo: "Fecha factura", clave: "fecha_factura" },
-        { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
-        { titulo: "Factura", clave: "factura" },
-        { titulo: "Pedido", clave: "pedido_entrega" },
-        { titulo: "Alcance", obtener: (t) => textoAlcance(t) },
-        { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
-        { titulo: "Cliente", clave: "cliente" },
-        { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
-        { titulo: "Nota de crédito", obtener: (t) => textoNotaCredito(t) },
-      ],
-      ticketsFiltrados
-    );
-  }
 
   if (cargando) return <p>Cargando tickets...</p>;
   if (error) return <p className="mensaje-error">No se pudieron cargar los tickets: {error}</p>;
@@ -108,25 +33,17 @@ export default function Seguimiento() {
       <div className="encabezado-vista">
         <h2 className="titulo-vista">Seguimiento Ticket</h2>
         <BarraHerramientas
-          onExportar={exportarVistaActual}
-          onQuitarFiltros={limpiarFiltros}
+          onExportar={vista.exportarVistaActual}
+          onQuitarFiltros={vista.limpiarFiltros}
           onRefrescar={recargar}
-          onAbrirFiltros={abrirPanelFiltros}
-          filtrosActivos={filtrosActivos}
+          onAbrirFiltros={vista.abrirPanelFiltros}
+          filtrosActivos={vista.filtrosActivos}
         />
       </div>
 
-      <TablaTickets tickets={ticketsFiltrados} onVerDetalle={(t) => setSeleccionadoId(t.id)} mostrarSkuObservados />
+      <TablaTickets tickets={vista.ticketsFiltrados} onVerDetalle={(t) => setSeleccionadoId(t.id)} {...vista.propsTablaFactura} />
 
-      <PanelFiltros
-        abierto={filtrosAbiertos}
-        onCerrar={() => setFiltrosAbiertos(false)}
-        valores={borrador}
-        onCambiar={setBorrador}
-        opcionesTransporte={[]}
-        onBuscar={aplicarFiltros}
-        onLimpiar={limpiarFiltros}
-      />
+      <PanelFiltros {...vista.propsPanelFiltros} />
 
       {seleccionado && <TicketDetalle ticket={seleccionado} onCerrar={() => setSeleccionadoId(null)} />}
     </div>

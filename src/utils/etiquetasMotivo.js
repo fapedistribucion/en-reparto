@@ -23,3 +23,8 @@ function titulo(valor) {
 export function etiquetaMotivo(subcategoria) {
   return ETIQUETAS[subcategoria] ?? titulo(subcategoria);
 }
+
+// Todos los motivos conocidos, para armar listas de selección (ya con su etiqueta, ordenadas).
+export function etiquetasMotivosConocidos() {
+  return Object.values(ETIQUETAS).sort((a, b) => a.localeCompare(b, "es"));
+}

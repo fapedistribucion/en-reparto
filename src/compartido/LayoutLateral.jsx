@@ -3,6 +3,7 @@
 // sidebar (nav) y el contenido; `abierta` es controlada desde afuera.
 // `item.icono`: componente de ícono opcional (ver compartido/iconos.jsx), se dibuja
 // antes de la etiqueta. Si un item no trae ícono, solo se muestra el texto.
+// `item.subetiqueta`: segunda línea más pequeña bajo la etiqueta (ej. "(En desarrollo)"), sin ensanchar el menú.
 export default function LayoutLateral({ items, activo, onCambiar, abierta = true, children }) {
   return (
     <div className={`layout-lateral ${abierta ? "" : "barra-cerrada"}`}>
@@ -17,7 +18,14 @@ export default function LayoutLateral({ items, activo, onCambiar, abierta = true
                 onClick={() => onCambiar(item.clave)}
               >
                 {Icono && <Icono size={18} />}
-                {item.etiqueta}
+                {item.subetiqueta ? (
+                  <span className="etiqueta-doble">
+                    {item.etiqueta}
+                    <small>{item.subetiqueta}</small>
+                  </span>
+                ) : (
+                  item.etiqueta
+                )}
               </button>
             );
           })}

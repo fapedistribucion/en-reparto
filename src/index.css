@@ -330,6 +330,19 @@ textarea:focus {
   flex-shrink: 0;
 }
 
+/* "Dashboard" + "(En desarrollo)" en dos líneas, para no ensanchar el menú */
+.etiqueta-doble {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.etiqueta-doble small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--texto-secundario);
+}
+
 .barra-lateral button:hover {
   background: var(--fondo);
 }
@@ -1786,14 +1799,62 @@ textarea:focus {
   display: none;
 }
 
-.barra-scroll-fija {
+/* Pie fijo: conteo de lo filtrado + barra de scroll horizontal, siempre visibles al pie de la pantalla */
+.pie-fijo {
   position: sticky;
   bottom: 0;
   z-index: 6;
+}
+
+.pie-conteo {
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+
+.barra-scroll-fija {
   height: 16px;
   overflow-x: auto;
   overflow-y: hidden;
   background: var(--fondo);
   border: 1px solid var(--borde);
-  border-radius: 0 0 8px 8px;
+  border-top: none;
+}
+
+/* La tabla y su pie forman un solo bloque: la tabla solo redondea arriba */
+.envoltorio-tabla .contenedor-tabla {
+  border-radius: 10px 10px 0 0;
+}
+
+/* ---------- Orden por encabezado ---------- */
+.tabla-tickets th.th-ordenable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tabla-tickets th.th-ordenable:hover {
+  color: var(--texto);
+  background: #ececea;
+}
+
+.flecha-orden {
+  display: inline-block;
+  width: 12px;
+  margin-left: 4px;
+  font-size: 9px;
+  opacity: 0;
+}
+
+.tabla-tickets th.th-ordenable:hover .flecha-orden {
+  opacity: 0.35;
+}
+
+.tabla-tickets th.th-ordenable .flecha-orden-activa,
+.tabla-tickets th.th-ordenable:hover .flecha-orden-activa {
+  opacity: 1;
+  color: var(--acento);
 }

@@ -1,21 +1,11 @@
 import { precargarDetalle } from "./cargaDetalle";
 import ContenedorTabla from "./ContenedorTabla";
-import {
-  ETIQUETAS_ESTADO,
-  textoCodigoTicket,
-  formatearFecha,
-  fechaOPendiente,
-  textoAlcance,
-  textoSkuObservados,
-  textoEntregaTransporte,
-  textoMotivoRetencion,
-  textoNotaCredito,
-} from "../utils/estadosTicket";
+import EncabezadoOrdenable from "./EncabezadoOrdenable";
+import { contenidoCelda } from "./columnas";
 
-// `mostrarTransporte`: agrega la columna de empresa de transporte (SAC/LI la necesitan; el propio
-// transportista no, ya que en su vista todos los tickets son de su misma empresa).
-// `mostrarSkuObservados`: agrega la columna "SKU observados" (cantidad de productos distintos
-// observados). Solo la usan SAC/LI; para transportista no aporta y se mantiene oculta por defecto.
+// Vista "Por factura": una fila por ticket.
+// `columnas`: definición de columnas (ver columnas.jsx → columnasTickets); la misma sirve para el orden y el Excel.
+// `orden` / `onOrdenar`: orden por clic en el encabezado (ver useOrdenTabla). `pie`: conteo al pie ("25 tickets").
 // `mostrarDetalle`: controla si se muestra la columna fija "Detalle" con el botón "Ver" (y por lo
 // tanto si hace falta `onVerDetalle`). Por defecto true; Liquidaciones la pasa en false porque su
 // vista es de solo lectura, sin el modal de detalle/fotos.
@@ -23,79 +13,58 @@ import {
 // "Confirmar recepción" (solo LI la usa).
 // `accionExtra2(ticket)`: segundo botón adicional (registrar/editar entrega a transporte), en la
 // columna fija "Registrar entrega" (también solo LI).
-// "Fecha factura" viene de facturas_data.fecha_factura, unida por número de factura (ver useFechasFactura);
-// se espera que el ticket ya traiga ese campo combinado.
 // Las columnas de acción y "Detalle" quedan fijas a la derecha (sticky) para no tener que scrollear
 // hasta el final de la tabla para usarlas.
 export default function TablaTickets({
   tickets,
+  columnas,
+  orden,
+  onOrdenar,
+  pie,
   onVerDetalle,
-  mostrarTransporte = false,
-  mostrarSkuObservados = false,
   mostrarDetalle = true,
   accionExtra,
   accionExtra2,
 }) {
   // Con dos columnas de acción, "Confirmar recepción" se fija a la izquierda de "Registrar entrega".
   const claseAccionPrevia = accionExtra2 ? "col-fija-accion col-fija-accion-previa" : "col-fija-accion";
+  const visibles = columnas.filter((c) => !c.soloExcel);
 
   if (tickets.length === 0) {
     return <p>No hay tickets para mostrar.</p>;
   }
 
   return (
-    <ContenedorTabla>
+    <ContenedorTabla pie={pie}>
       <table className="tabla-tickets">
         <thead>
           <tr>
-            <th>Fecha creación</th>
-            <th>N° Ticket</th>
-            <th>Fecha factura</th>
-            {mostrarTransporte && <th>Transporte</th>}
-            <th>Estado</th>
-            <th>Factura</th>
-            <th>Pedido</th>
-            <th>Alcance</th>
-            {mostrarSkuObservados && <th>SKU observados</th>}
-            <th>Cliente</th>
-            <th>Fecha llegada LI</th>
-            <th>Entrega a transporte</th>
-            <th>Motivo retención</th>
-            <th>Nota de crédito</th>
-            {accionExtra && <th className={claseAccionPrevia}>
+            {visibles.map((c) => (
+              <EncabezadoOrdenable key={c.id} columna={c} orden={orden} onOrdenar={onOrdenar} />
+            ))}
+            {accionExtra && (
+              <th className={claseAccionPrevia}>
                 Confirmar
                 <br />
                 recepción
-              </th>}
-            {accionExtra2 && <th className="col-fija-accion">
+              </th>
+            )}
+            {accionExtra2 && (
+              <th className="col-fija-accion">
                 Registrar
                 <br />
                 entrega
-              </th>}
+              </th>
+            )}
             {mostrarDetalle && <th className="col-fija-detalle">Detalle</th>}
           </tr>
         </thead>
         <tbody>
           {tickets.map((t) => (
             <tr key={t.id}>
-              <td>{formatearFecha(t.fecha_creacion)}</td>
-              <td>{textoCodigoTicket(t)}</td>
-              <td>{formatearFecha(t.fecha_factura)}</td>
-              {mostrarTransporte && <td>{t.empresa_transporte}</td>}
-              <td>
-                <span className={`badge-estado badge-estado-${t.estado?.toLowerCase()}`}>
-                  {ETIQUETAS_ESTADO[t.estado] ?? t.estado}
-                </span>
-              </td>
-              <td>{t.factura}</td>
-              <td>{t.pedido_entrega}</td>
-              <td>{textoAlcance(t)}</td>
-              {mostrarSkuObservados && <td>{textoSkuObservados(t)}</td>}
-              <td>{t.cliente}</td>
-              <td>{fechaOPendiente(t.fecha_entrega_li)}</td>
-              <td>{textoEntregaTransporte(t)}</td>
-              <td>{textoMotivoRetencion(t)}</td>
-              <td>{textoNotaCredito(t)}</td>
+              {visibles.map((c) => (
+                <td key={c.id}>{contenidoCelda(c, t)}</td>
+              ))}
               {accionExtra && <td className={claseAccionPrevia}>{accionExtra(t)}</td>}
               {accionExtra2 && <td className="col-fija-accion">{accionExtra2(t)}</td>}
               {mostrarDetalle && (

@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
-import { useFechasFactura } from "../compartido/useFechasFactura";
+import { useVistaTickets } from "../compartido/useVistaTickets";
 import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
@@ -16,43 +16,13 @@ import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
 import { IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
-import {
-  ETIQUETAS_ESTADO,
-  textoCodigoTicket,
-  textoAlcance,
-  textoSkuObservados,
-  etiquetaRespuestaVendedor,
-  formatearPrecio,
-  textoEntregaTransporte,
-  textoMotivoRetencion,
-  textoNotaCredito,
-} from "../utils/estadosTicket";
-import { etiquetaMotivo } from "../utils/etiquetasMotivo";
-import { exportarCsv } from "../utils/exportarCsv";
+import { textoCodigoTicket } from "../utils/estadosTicket";
 
 const PESTANAS = [
   { clave: "factura", etiqueta: "Por factura", icono: IconoSeguimiento },
   { clave: "sku", etiqueta: "Por producto", icono: IconoSeguimiento },
-  { clave: "dashboard", etiqueta: "Dashboard", icono: IconoDashboard },
+  { clave: "dashboard", etiqueta: "Dashboard", subetiqueta: "(En desarrollo)", icono: IconoDashboard },
 ];
-
-const FILTROS_VACIOS = { ticket: "", factura: "", pedido: "", transporte: "", estado: "", desde: "", hasta: "" };
-
-function coincideTexto(valor, filtro) {
-  if (!filtro) return true;
-  return String(valor ?? "")
-    .toLowerCase()
-    .includes(filtro.trim().toLowerCase());
-}
-
-function coincideFecha(fechaIso, desde, hasta) {
-  if (!desde && !hasta) return true;
-  if (!fechaIso) return false;
-  const fecha = new Date(fechaIso);
-  if (desde && fecha < new Date(`${desde}T00:00:00`)) return false;
-  if (hasta && fecha > new Date(`${hasta}T23:59:59`)) return false;
-  return true;
-}
 
 export default function PanelSAC({ sidebarAbierta }) {
   const { tickets, cargando: cargandoTickets, error: errorCarga, recargar } = useTickets();
@@ -68,65 +38,11 @@ export default function PanelSAC({ sidebarAbierta }) {
   const [ticketAprobado, setTicketAprobado] = useState(null); // código recién generado (popup para dárselo al transportista)
   const [anulando, setAnulando] = useState(false); // muestra el campo de motivo recién al elegir "Anular ticket"
 
-  const [filtros, setFiltros] = useState(FILTROS_VACIOS);
-  const [borrador, setBorrador] = useState(FILTROS_VACIOS);
-  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  // Datos de la factura, filtros, orden por encabezado, conteo y exportación a Excel (compartido por todos los roles).
+  const vista = useVistaTickets({ tickets, observaciones, pestana });
+  const { ticketsFiltrados, observacionesFiltradas } = vista;
 
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
-
-  const opcionesTransporte = useMemo(
-    () => [...new Set(tickets.map((t) => t.empresa_transporte).filter(Boolean))].sort(),
-    [tickets]
-  );
-
-  const facturasVisibles = useMemo(() => tickets.map((t) => t.factura), [tickets]);
-  const fechasFactura = useFechasFactura(facturasVisibles);
-
-  // `fecha_factura` viene de facturas_data (tabla aparte); se combina una sola vez
-  // aquí para que tanto la tabla "Por factura" como "Por producto" la tengan.
-  const ticketsConFechaFactura = useMemo(
-    () => tickets.map((t) => ({ ...t, fecha_factura: fechasFactura.get(t.factura) ?? null })),
-    [tickets, fechasFactura]
-  );
-
-  const filtrosActivos = Object.values(filtros).some((v) => v);
-
-  const ticketsFiltrados = useMemo(
-    () =>
-      ticketsConFechaFactura.filter(
-        (t) =>
-          coincideTexto(t.codigo_ticket, filtros.ticket) &&
-          coincideTexto(t.factura, filtros.factura) &&
-          coincideTexto(t.pedido_entrega, filtros.pedido) &&
-          (!filtros.transporte || t.empresa_transporte === filtros.transporte) &&
-          (!filtros.estado || t.estado === filtros.estado) &&
-          coincideFecha(t.fecha_creacion, filtros.desde, filtros.hasta)
-      ),
-    [ticketsConFechaFactura, filtros]
-  );
-
-  const observacionesConTicket = useMemo(
-    () =>
-      observaciones.map((o) => {
-        const t = ticketsConFechaFactura.find((tt) => tt.id === o.ticket_id);
-        return { ...o, ticket: t };
-      }),
-    [observaciones, ticketsConFechaFactura]
-  );
-
-  const observacionesFiltradas = useMemo(
-    () =>
-      observacionesConTicket.filter(
-        (o) =>
-          coincideTexto(o.ticket?.codigo_ticket, filtros.ticket) &&
-          coincideTexto(o.ticket?.factura, filtros.factura) &&
-          coincideTexto(o.ticket?.pedido_entrega, filtros.pedido) &&
-          (!filtros.transporte || o.ticket?.empresa_transporte === filtros.transporte) &&
-          (!filtros.estado || o.ticket?.estado === filtros.estado) &&
-          coincideFecha(o.ticket?.fecha_creacion, filtros.desde, filtros.hasta)
-      ),
-    [observacionesConTicket, filtros]
-  );
 
   function abrirDetalle(ticket, observacionId = null) {
     setSeleccionadoId(ticket.id);
@@ -142,71 +58,9 @@ export default function PanelSAC({ sidebarAbierta }) {
     setError("");
   }
 
-  function abrirPanelFiltros() {
-    setBorrador(filtros);
-    setFiltrosAbiertos(true);
-  }
-
-  function aplicarFiltros() {
-    setFiltros(borrador);
-    setFiltrosAbiertos(false);
-  }
-
-  function limpiarFiltros() {
-    setFiltros(FILTROS_VACIOS);
-    setBorrador(FILTROS_VACIOS);
-    setFiltrosAbiertos(false);
-  }
-
   function refrescarTodo() {
     recargar();
     recargarObs();
-  }
-
-  function exportarVistaActual() {
-    if (pestana === "sku") {
-      exportarCsv("en-reparto-por-producto", [
-        { titulo: "Fecha creación", obtener: (o) => o.ticket?.fecha_creacion },
-        { titulo: "N° Ticket", obtener: (o) => textoCodigoTicket(o.ticket) },
-        { titulo: "Fecha factura", obtener: (o) => o.ticket?.fecha_factura },
-        { titulo: "Transporte", obtener: (o) => o.ticket?.empresa_transporte },
-        { titulo: "Factura", obtener: (o) => o.ticket?.factura },
-        { titulo: "Pedido", obtener: (o) => o.ticket?.pedido_entrega },
-        { titulo: "Cliente", obtener: (o) => o.ticket?.cliente },
-        { titulo: "Cód. Producto", clave: "codigo_producto" },
-        { titulo: "Posición", clave: "posicion" },
-        { titulo: "Producto", clave: "nombre_producto" },
-        { titulo: "Precio Unitario", obtener: (o) => (o.codigo_producto ? formatearPrecio(o.precio_unitario) : "") },
-        { titulo: "Motivo", obtener: (o) => etiquetaMotivo(o.subcategoria) },
-        { titulo: "Categoría", obtener: (o) => (o.categoria === "LOGISTICO" ? "Logístico" : "No logístico") },
-        { titulo: "Respuesta vendedor", obtener: (o) => (o.respuesta_vendedor ? etiquetaRespuestaVendedor(o.respuesta_vendedor) : "") },
-        { titulo: "Bulto", clave: "numero_bulto" },
-        { titulo: "Cant. Reclamada", clave: "cantidad_observada" },
-        { titulo: "Cant. Total", clave: "cantidad_facturada" },
-        { titulo: "Observación", clave: "observacion" },
-        { titulo: "Fecha llegada LI", obtener: (o) => o.ticket?.fecha_entrega_li },
-        { titulo: "Entrega a transporte", obtener: (o) => textoEntregaTransporte(o.ticket) },
-        { titulo: "Motivo retención", obtener: (o) => textoMotivoRetencion(o.ticket) },
-        { titulo: "Nota de Crédito", obtener: (o) => o.nota_credito },
-      ], observacionesFiltradas);
-    } else {
-      exportarCsv("en-reparto-por-ticket", [
-        { titulo: "Fecha creación", clave: "fecha_creacion" },
-        { titulo: "N° Ticket", obtener: (t) => textoCodigoTicket(t) },
-        { titulo: "Fecha factura", clave: "fecha_factura" },
-        { titulo: "Transporte", clave: "empresa_transporte" },
-        { titulo: "Estado", obtener: (t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado },
-        { titulo: "Factura", clave: "factura" },
-        { titulo: "Pedido", clave: "pedido_entrega" },
-        { titulo: "Alcance", obtener: (t) => textoAlcance(t) },
-        { titulo: "SKU observados", obtener: (t) => textoSkuObservados(t) },
-        { titulo: "Cliente", clave: "cliente" },
-        { titulo: "Fecha llegada LI", clave: "fecha_entrega_li" },
-        { titulo: "Entrega a transporte", obtener: (t) => textoEntregaTransporte(t) },
-        { titulo: "Motivo retención", obtener: (t) => textoMotivoRetencion(t) },
-        { titulo: "Nota de crédito", obtener: (t) => textoNotaCredito(t) },
-      ], ticketsFiltrados);
-    }
   }
 
   // El botón "Anular ticket" pide confirmación con nuestro propio popup (ConfirmModal)
@@ -260,38 +114,25 @@ export default function PanelSAC({ sidebarAbierta }) {
       <div className="encabezado-vista">
         <h2 className="titulo-vista">{PESTANAS.find((p) => p.clave === pestana)?.etiqueta}</h2>
         <BarraHerramientas
-          onExportar={pestana !== "dashboard" ? exportarVistaActual : undefined}
-          onQuitarFiltros={limpiarFiltros}
+          onExportar={pestana !== "dashboard" ? vista.exportarVistaActual : undefined}
+          onQuitarFiltros={vista.limpiarFiltros}
           onRefrescar={refrescarTodo}
-          onAbrirFiltros={abrirPanelFiltros}
-          filtrosActivos={filtrosActivos}
+          onAbrirFiltros={vista.abrirPanelFiltros}
+          filtrosActivos={vista.filtrosActivos}
         />
       </div>
 
       {pestana === "factura" && (
-        <TablaTickets
-          tickets={ticketsFiltrados}
-          onVerDetalle={abrirDetalle}
-          mostrarTransporte
-          mostrarSkuObservados
-        />
+        <TablaTickets tickets={ticketsFiltrados} onVerDetalle={abrirDetalle} {...vista.propsTablaFactura} />
       )}
       {pestana === "sku" && (
-        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} mostrarTransporte />
+        <TablaObservaciones observaciones={observacionesFiltradas} onVerTicket={abrirDetalle} {...vista.propsTablaProducto} />
       )}
       {pestana === "dashboard" && (
         <DashboardTickets tickets={ticketsFiltrados} observaciones={observacionesFiltradas} rol="SAC" />
       )}
 
-      <PanelFiltros
-        abierto={filtrosAbiertos}
-        onCerrar={() => setFiltrosAbiertos(false)}
-        valores={borrador}
-        onCambiar={setBorrador}
-        opcionesTransporte={opcionesTransporte}
-        onBuscar={aplicarFiltros}
-        onLimpiar={limpiarFiltros}
-      />
+      <PanelFiltros {...vista.propsPanelFiltros} />
 
       {seleccionado && (
         <TicketDetalle

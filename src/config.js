@@ -21,3 +21,8 @@ export function mensajeTicketExistente(codigo, factura) {
 
 export const MENSAJE_FACTURA_NO_ENCONTRADA =
   `Factura no encontrada, colocar bien el número de factura, si el problema persiste comunicarse con ${CONTACTO_DATOS.nombre} - ${CONTACTO_DATOS.telefono}`;
+
+// Regiones que salen de la tabla config_rutas (ruta -> departamento / región). "Sin región" no es una
+// región: es el valor que se muestra cuando la factura todavía no tiene ruta o su ruta no está en la tabla.
+export const REGIONES = ["LIMA", "NORTE", "SUR", "CENTRO", "ORIENTE"];
+export const SIN_REGION = "Sin región";

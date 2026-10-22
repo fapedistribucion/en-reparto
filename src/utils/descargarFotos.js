@@ -73,7 +73,7 @@ function prefijoTicket(ticket) {
 
 // ---------- Descarga de una foto ----------
 
-function guardarBlob(blob, nombre) {
+export function guardarBlob(blob, nombre) {
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement("a");
   enlace.href = url;

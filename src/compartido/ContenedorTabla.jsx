@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 // registros, la barra nativa queda al fondo). La barra nativa de la tabla se oculta; la de abajo
 // se mantiene sincronizada con ella (también se puede seguir usando Shift + rueda o el gesto del
 // touchpad sobre la tabla).
-export default function ContenedorTabla({ children }) {
+// `pie`: texto de conteo (ej. "25 tickets") que queda fijo al pie, justo encima de la barra de scroll.
+export default function ContenedorTabla({ children, pie }) {
   const refTabla = useRef(null);
   const refBarra = useRef(null);
   const [ancho, setAncho] = useState(0);
@@ -45,14 +46,17 @@ export default function ContenedorTabla({ children }) {
       <div className="contenedor-tabla" ref={refTabla} onScroll={desdeTabla}>
         {children}
       </div>
-      <div
-        className="barra-scroll-fija"
-        ref={refBarra}
-        onScroll={desdeBarra}
-        style={{ display: hayScroll ? "block" : "none" }}
-        aria-hidden="true"
-      >
-        <div style={{ width: ancho, height: 1 }} />
+      <div className="pie-fijo">
+        <div
+          className="barra-scroll-fija"
+          ref={refBarra}
+          onScroll={desdeBarra}
+          style={{ display: hayScroll ? "block" : "none" }}
+          aria-hidden="true"
+        >
+          <div style={{ width: ancho, height: 1 }} />
+        </div>
+        {pie && <div className="pie-conteo">{pie}</div>}
       </div>
     </div>
   );

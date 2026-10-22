@@ -3,8 +3,22 @@ import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
 import CalendarioRango from "./CalendarioRango";
 
 // Panel deslizable (derecha) con los filtros. Controlado desde el panel que lo usa:
-// `valores` = { ticket, factura, pedido, transporte, estado, desde, hasta }
-export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, opcionesTransporte, onBuscar, onLimpiar }) {
+// `valores` = { ticket, factura, pedido, transporte, estado, region, motivo, desde, hasta }
+// `opcionesRegion`: regiones a elegir ("Sin región" solo viene si hay registros sin región).
+// `mostrarMotivo` / `opcionesMotivo`: el filtro de Motivo existe solo en "Por producto"; es una lista
+// desplegable en la que también se puede escribir.
+export default function PanelFiltros({
+  abierto,
+  onCerrar,
+  valores,
+  onCambiar,
+  opcionesTransporte,
+  opcionesRegion = [],
+  mostrarMotivo = false,
+  opcionesMotivo = [],
+  onBuscar,
+  onLimpiar,
+}) {
   if (!abierto) return null;
 
   function cambiar(campo, valor) {
@@ -50,6 +64,18 @@ export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, op
           </label>
 
           <label className="campo-filtro">
+            Región
+            <select value={valores.region} onChange={(e) => cambiar("region", e.target.value)}>
+              <option value="">Todas</option>
+              {opcionesRegion.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="campo-filtro">
             Estado
             <select value={valores.estado} onChange={(e) => cambiar("estado", e.target.value)}>
               <option value="">Todos</option>
@@ -60,6 +86,24 @@ export default function PanelFiltros({ abierto, onCerrar, valores, onCambiar, op
               ))}
             </select>
           </label>
+
+          {mostrarMotivo && (
+            <label className="campo-filtro">
+              Motivo
+              <input
+                type="text"
+                list="opciones-motivo-filtro"
+                value={valores.motivo}
+                onChange={(e) => cambiar("motivo", e.target.value)}
+                autoComplete="off"
+              />
+              <datalist id="opciones-motivo-filtro">
+                {opcionesMotivo.map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
+            </label>
+          )}
 
           <div className="campo-filtro">
             <span>Rango de fecha</span>
