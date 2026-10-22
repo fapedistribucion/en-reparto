@@ -90,6 +90,32 @@ export function formatearFecha(valor, conHora = false) {
   return `${base} ${hora}`;
 }
 
+// Fecha y hora "DD/MM/AAAA HH:MM" (24 horas), siempre en hora de Lima (UTC-5, sin horario de verano), igual
+// que en el Excel exportado. Para columnas como "Fecha actualización de estado".
+export function formatearFechaHora(valor) {
+  if (!valor) return "—";
+  const instante = new Date(valor).getTime();
+  if (Number.isNaN(instante)) return "—";
+  const f = new Date(instante - 5 * 60 * 60 * 1000);
+  const dos = (n) => String(n).padStart(2, "0");
+  return `${dos(f.getUTCDate())}/${dos(f.getUTCMonth() + 1)}/${f.getUTCFullYear()} ${dos(f.getUTCHours())}:${dos(f.getUTCMinutes())}`;
+}
+
+// Lead time de llegada a LI (viene calculado en la base, vista tickets_complemento):
+//   DENTRO   = llegó a LI hasta su fecha límite
+//   FUERA    = llegó después de la fecha límite, o todavía no llegó y la fecha límite ya pasó
+//   EN_PLAZO = todavía no llegó, pero aún está dentro del plazo
+//   vacío    = sin dato (anulado, sin región o sin fecha de factura): se muestra "—"
+export const ETIQUETAS_LEAD_TIME = {
+  DENTRO: "Dentro de fecha",
+  FUERA: "Fuera de fecha",
+  EN_PLAZO: "En plazo",
+};
+
+export function etiquetaLeadTime(valor) {
+  return ETIQUETAS_LEAD_TIME[valor] ?? "—";
+}
+
 // Para columnas donde "vacío" significa que algo todavía no pasó (llegada a LI,
 // nota de crédito): en vez de una raya, un texto explícito.
 export function fechaOPendiente(valor) {

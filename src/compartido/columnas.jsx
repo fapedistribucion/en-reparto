@@ -2,6 +2,8 @@ import {
   ETIQUETAS_ESTADO,
   textoCodigoTicket,
   formatearFecha,
+  formatearFechaHora,
+  etiquetaLeadTime,
   fechaOPendiente,
   textoAlcance,
   textoSkuObservados,
@@ -22,6 +24,7 @@ import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 //   valor    = (fila) => dato crudo (lo que se ordena y se exporta)
 //   render   = (fila) => lo que se ve en la celda (si falta, se muestra el valor según su tipo)
 //   soloExcel = true: la columna va en el Excel pero no en la tabla
+//   envolver  = true: el título del encabezado puede ir en dos líneas (columnas con título muy largo)
 
 const ETIQUETAS_CATEGORIA = {
   LOGISTICO: "Logístico",
@@ -53,6 +56,13 @@ function columnasDelTicket(ticketDe) {
       valor: de((t) => ETIQUETAS_ESTADO[t.estado] ?? t.estado),
       render: (fila) => badgeEstado(ticketDe(fila)),
     },
+    fecha_estado: {
+      id: "fecha_estado",
+      titulo: "Fecha actualización de estado",
+      envolver: true, // el título pasa a dos líneas para no ensanchar tanto la columna
+      tipo: "fechahora",
+      valor: de((t) => t.fecha_estado),
+    },
     factura: { id: "factura", titulo: "Factura", tipo: "texto", valor: de((t) => t.factura) },
     pedido: { id: "pedido", titulo: "Pedido", tipo: "texto", valor: de((t) => t.pedido_entrega) },
     region: { id: "region", titulo: "Región", tipo: "texto", valor: de((t) => t.region ?? "Sin región") },
@@ -65,6 +75,17 @@ function columnasDelTicket(ticketDe) {
       tipo: "fecha",
       valor: de((t) => t.fecha_entrega_li),
       render: (fila) => fechaOPendiente(ticketDe(fila)?.fecha_entrega_li),
+    },
+    fecha_limite_li: { id: "fecha_limite_li", titulo: "Fecha límite LI", tipo: "fecha", valor: de((t) => t.fecha_limite_li) },
+    lead_time_li: {
+      id: "lead_time_li",
+      titulo: "Lead time LI",
+      tipo: "texto",
+      valor: de((t) => (t.lead_time_li ? etiquetaLeadTime(t.lead_time_li) : null)),
+      render: (fila) => {
+        const v = ticketDe(fila)?.lead_time_li;
+        return v ? <span className={`badge-lead badge-lead-${v.toLowerCase()}`}>{etiquetaLeadTime(v)}</span> : "—";
+      },
     },
     entrega_transporte: {
       id: "entrega_transporte",
@@ -92,6 +113,7 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
     c.fecha_factura,
     ...(mostrarTransporte ? [c.transporte] : []),
     c.estado,
+    c.fecha_estado,
     c.factura,
     c.pedido,
     c.region,
@@ -114,6 +136,8 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
       : []),
     c.cliente,
     c.llegada_li,
+    c.fecha_limite_li,
+    c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
     { id: "nota_credito", titulo: "Nota de crédito", tipo: "texto", valor: (t) => textoNotaCredito(t) },
@@ -130,6 +154,7 @@ export function columnasObservaciones({ mostrarTransporte = true } = {}) {
     c.fecha_factura,
     ...(mostrarTransporte ? [c.transporte] : []),
     c.estado,
+    c.fecha_estado,
     c.factura,
     c.pedido,
     c.region,
@@ -198,6 +223,8 @@ export function columnasObservaciones({ mostrarTransporte = true } = {}) {
       valor: (o) => (o.posicion != null ? o.cantidad_facturada : null),
     },
     c.llegada_li,
+    c.fecha_limite_li,
+    c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
     { id: "nota_credito", titulo: "Nota de Crédito", tipo: "texto", valor: (o) => o.nota_credito ?? "Pendiente" },
@@ -209,6 +236,7 @@ export function contenidoCelda(columna, fila) {
   if (columna.render) return columna.render(fila);
   const v = columna.valor(fila);
   if (v === null || v === undefined || v === "") return "—";
-  if (columna.tipo === "fecha" || columna.tipo === "fechahora") return formatearFecha(v, columna.tipo === "fechahora");
+  if (columna.tipo === "fechahora") return formatearFechaHora(v);
+  if (columna.tipo === "fecha") return formatearFecha(v);
   return v;
 }

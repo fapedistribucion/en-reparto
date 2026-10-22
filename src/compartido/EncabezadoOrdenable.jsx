@@ -7,7 +7,7 @@ export default function EncabezadoOrdenable({ columna, orden, onOrdenar }) {
 
   return (
     <th
-      className="th-ordenable"
+      className={`th-ordenable ${columna.envolver ? "th-envuelto" : ""}`}
       aria-sort={sentido}
       tabIndex={0}
       onClick={() => onOrdenar(columna.id)}

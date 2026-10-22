@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useDatosFactura, conDatosFactura } from "./useDatosFactura";
+import { useDatosTicket, conDatosTicket } from "./useDatosTicket";
 import { useOrdenTabla, ordenarFilas } from "./useOrdenTabla";
 import { FILTROS_VACIOS, filtrarTickets, filtrarObservaciones, hayFiltros } from "./filtrosTickets";
 import { columnasTickets, columnasObservaciones } from "./columnas";
@@ -28,8 +29,14 @@ export function useVistaTickets({
   const facturas = useMemo(() => tickets.map((t) => t.factura), [tickets]);
   const { datos: datosFactura, listo: datosListos } = useDatosFactura(facturas);
 
-  // Se combina una sola vez aquí para que "Por factura" y "Por producto" tengan fecha, región, etc.
-  const ticketsEnriquecidos = useMemo(() => tickets.map((t) => conDatosFactura(t, datosFactura)), [tickets, datosFactura]);
+  const ids = useMemo(() => tickets.map((t) => t.id), [tickets]);
+  const datosTicket = useDatosTicket(ids);
+
+  // Se combina una sola vez aquí para que "Por factura" y "Por producto" tengan fecha, región, lead time, etc.
+  const ticketsEnriquecidos = useMemo(
+    () => tickets.map((t) => conDatosTicket(conDatosFactura(t, datosFactura), datosTicket)),
+    [tickets, datosFactura, datosTicket]
+  );
 
   const observacionesConTicket = useMemo(() => {
     const porId = new Map(ticketsEnriquecidos.map((t) => [t.id, t]));

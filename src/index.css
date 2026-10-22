@@ -1858,3 +1858,33 @@ textarea:focus {
   opacity: 1;
   color: var(--acento);
 }
+
+/* ---------- Lead time LI ---------- */
+.badge-lead {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-lead-dentro {
+  background: #e3f4ec;
+  color: #1c7a53;
+}
+
+.badge-lead-fuera {
+  background: #fbe5e3;
+  color: #b3261e;
+}
+
+.badge-lead-en_plazo {
+  background: #fdf0d9;
+  color: #a86b0b;
+}
+
+.tabla-tickets th.th-envuelto {
+  white-space: normal;
+  min-width: 130px;
+  max-width: 160px;
+}
