@@ -1,4 +1,5 @@
 import { precargarDetalle } from "./cargaDetalle";
+import ContenedorTabla from "./ContenedorTabla";
 import {
   ETIQUETAS_ESTADO,
   textoCodigoTicket,
@@ -47,7 +48,7 @@ export default function TablaObservaciones({
   }
 
   return (
-    <div className="contenedor-tabla">
+    <ContenedorTabla>
       <table className="tabla-tickets">
         <thead>
           <tr>
@@ -153,6 +154,6 @@ export default function TablaObservaciones({
           })}
         </tbody>
       </table>
-    </div>
+    </ContenedorTabla>
   );
 }

@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
+import { mensajeTicketExistente } from "../config";
 
 const BUCKET = "evidencias";
 const SUBIDAS_EN_PARALELO = 3;
@@ -61,10 +62,23 @@ export async function crearTicket({ factura, alcance, evidenciasTicket, observac
   });
 
   if (error) {
+    // La base rechaza un 2.º ticket activo para la misma factura: TICKET_EXISTENTE|<código o vacío>|<factura>
+    const existente = /TICKET_EXISTENTE\|([^|]*)\|(.*)$/.exec(error.message);
+    if (existente) {
+      throw new Error(mensajeTicketExistente(existente[1].trim(), existente[2].trim()));
+    }
     if (/row-level security/i.test(error.message)) {
       throw new Error("Esta factura no corresponde a tu empresa de transporte.");
     }
     throw new Error(error.message);
   }
   return data; // { ticket_id, codigo_ticket, observacion_ids }
+}
+
+// ¿La factura ya tiene un ticket que no esté anulado? Devuelve { codigo_ticket, estado, factura } o null.
+// Se consulta al buscar la factura, antes de pedirle al transportista todas las fotos.
+export async function ticketActivoDeFactura(factura) {
+  const { data, error } = await supabase.rpc("ticket_activo_factura", { p_factura: factura });
+  if (error) return null; // si falla la consulta, igual manda la base de datos al crear el ticket
+  return data ?? null;
 }

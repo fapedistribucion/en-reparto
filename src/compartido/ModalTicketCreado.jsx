@@ -1,9 +1,9 @@
-import { TELEFONO_SAC } from "../config";
+import { NOMBRE_SOPORTE, TELEFONO_SOPORTE } from "../config";
 
 // Dos casos:
 //  - Con código: el reclamo es logístico y el ticket ya existe → se muestra el número.
 //  - Sin código (`codigo` null): reclamo No logístico o con Faltante → todavía NO tiene ticket;
-//    el transportista debe llamar a SAC, que atiende el caso, lo aprueba y le da el número.
+//    el transportista debe llamar a Supply Te Ayuda, que atiende el caso, lo aprueba y le da el número.
 export default function ModalTicketCreado({ codigo, factura, onCerrar }) {
   if (!codigo) {
     return (
@@ -11,14 +11,10 @@ export default function ModalTicketCreado({ codigo, factura, onCerrar }) {
         <div className="modal-ticket">
           <p className="modal-ticket-titulo">Reclamo registrado sin ticket</p>
           <p className="modal-ticket-aviso">
-            Para que tu caso sea atendido y se te brinde el número de ticket, comunícate directamente con SAC
-            al <strong>{TELEFONO_SAC}</strong>
-            {factura ? ` e indica la factura ${factura}` : ""}.
+            Llama a {NOMBRE_SOPORTE} al <strong>{TELEFONO_SOPORTE}</strong>
+            {factura ? ` e indica la factura ${factura}` : ""} para recibir tu número de ticket.
           </p>
-          <p className="modal-ticket-ayuda">
-            Cuando SAC apruebe el caso, el número de ticket aparecerá en tu Seguimiento. No entregues los
-            bultos en Logística Inversa hasta tener el ticket.
-          </p>
+          <p className="modal-ticket-ayuda">No entregues los bultos en Logística Inversa hasta tener el ticket.</p>
           <button type="button" onClick={onCerrar}>
             Entendido
           </button>

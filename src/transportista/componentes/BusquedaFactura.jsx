@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { construirNumeroFactura } from "../../utils/construirNumeroFactura";
-import { MENSAJE_FACTURA_NO_ENCONTRADA } from "../../config";
+import { MENSAJE_FACTURA_NO_ENCONTRADA, mensajeTicketExistente } from "../../config";
+import { ticketActivoDeFactura } from "../servicioReclamo";
 
 // Busca la factura y, si existe, trae también sus productos. Si falta cualquiera de las dos cosas,
 // se muestra la alerta de "factura no encontrada" para que se revise la carga de datos.
@@ -61,14 +62,22 @@ export default function BusquedaFactura({ empresaTransporte, onEncontrada }) {
       .eq("factura", numeroCompleto)
       .order("posicion");
 
-    setBuscando(false);
-
     if (errorProductos) {
+      setBuscando(false);
       setError("Ocurrió un error al cargar los productos de la factura. Intenta de nuevo.");
       return;
     }
     if (!productos || productos.length === 0) {
+      setBuscando(false);
       setError(MENSAJE_FACTURA_NO_ENCONTRADA);
+      return;
+    }
+
+    // Un solo ticket activo por factura: si ya existe uno (que no esté anulado), se avisa aquí.
+    const ticketActivo = await ticketActivoDeFactura(numeroCompleto);
+    setBuscando(false);
+    if (ticketActivo) {
+      setError(mensajeTicketExistente(ticketActivo.codigo_ticket, numeroCompleto));
       return;
     }
 

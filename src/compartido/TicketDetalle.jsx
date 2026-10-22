@@ -3,9 +3,15 @@ import { cargarDetalle, leerDetalleEnCache } from "./cargaDetalle";
 import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance, textoCodigoTicket } from "../utils/estadosTicket";
+import { descargarFoto, descargarZip } from "../utils/descargarFotos";
+import VisorFotos from "./VisorFotos";
+import { IconoDescargar } from "./iconos";
 
+// `onAmpliar(fotos, indice)`: abre el visor en la foto tocada, con las demás de esta misma galería
+// para pasar de una a otra.
 function Galeria({ fotos, subcategoria, onAmpliar }) {
   if (fotos.length === 0) return null;
+  const visibles = fotos.filter((a) => a.urlVisible);
   return (
     <div className="galeria-adjuntos">
       {fotos.map((a) => (
@@ -13,7 +19,7 @@ function Galeria({ fotos, subcategoria, onAmpliar }) {
           type="button"
           key={a.id}
           className="miniatura-adjunto"
-          onClick={() => a.urlVisible && onAmpliar(a.urlVisible)}
+          onClick={() => a.urlVisible && onAmpliar(visibles, visibles.indexOf(a))}
         >
           {a.urlVisible ? (
             <img src={a.urlVisible} decoding="async" alt={etiquetaEvidencia(a.tipo_evidencia, subcategoria)} />
@@ -41,7 +47,9 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
   const [adjuntos, setAdjuntos] = useState(enCache?.adjuntos ?? []);
   const [cargando, setCargando] = useState(!enCache);
   const [version, setVersion] = useState(0);
-  const [fotoAmpliada, setFotoAmpliada] = useState(null);
+  const [visor, setVisor] = useState(null); // { fotos: [adjunto...], indice }
+  const [descargando, setDescargando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState("");
 
   const modoEnfocado = Boolean(soloObservacionId);
 
@@ -78,6 +86,30 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
     : observaciones;
   const observacionEnfocada = modoEnfocado ? observacionesMostradas[0] : null;
   const contenidoAcciones = typeof acciones === "function" ? acciones(recargar) : acciones;
+
+  // Abre el visor con la galería de una observación (sus fotos + la factura).
+  function ampliar(fotos, indice, observacion) {
+    setVisor({ fotos, indice, observacion });
+  }
+
+  // "Descargar imágenes": un .zip con la foto de la factura y una carpeta por observación
+  // (en "Por producto", solo la carpeta del producto observado).
+  async function descargarTodo() {
+    setDescargando(true);
+    setErrorDescarga("");
+    try {
+      const { fallidas } = await descargarZip({
+        ticket,
+        observaciones,
+        adjuntos,
+        soloObservacion: observacionEnfocada,
+      });
+      if (fallidas > 0) setErrorDescarga(`No se pudieron descargar ${fallidas} foto(s). Intenta de nuevo.`);
+    } catch (e) {
+      setErrorDescarga(e.message || "No se pudieron descargar las fotos.");
+    }
+    setDescargando(false);
+  }
 
   return (
     <div className="fondo-modal" onClick={onCerrar}>
@@ -138,7 +170,22 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
         ) : (
           <>
             <div className="panel-detalle-seccion">
-              {!modoEnfocado && <p className="panel-detalle-titulo-seccion">Observaciones</p>}
+              <div className="panel-detalle-titulo-fila">
+                {!modoEnfocado ? <p className="panel-detalle-titulo-seccion">Observaciones</p> : <span />}
+                {adjuntos.some((a) => a.urlVisible) && (
+                  <button
+                    type="button"
+                    className="boton-descargar"
+                    onClick={descargarTodo}
+                    disabled={descargando}
+                    title="Descargar todas las imágenes en un .zip"
+                  >
+                    <IconoDescargar size={16} />
+                    {descargando ? "Preparando..." : "Descargar imágenes"}
+                  </button>
+                )}
+              </div>
+              {errorDescarga && <p className="mensaje-error">{errorDescarga}</p>}
               {observacionesMostradas.map((o) => {
                 return (
                   <div className="obs-card" key={o.id}>
@@ -185,7 +232,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                     <Galeria
                       fotos={[...adjuntos.filter((a) => a.observacion_id === o.id), ...fotosFactura]}
                       subcategoria={o.subcategoria}
-                      onAmpliar={setFotoAmpliada}
+                      onAmpliar={(fotos, indice) => ampliar(fotos, indice, o)}
                     />
 
                     {renderAccionObservacion?.(o, recargar)}
@@ -203,16 +250,20 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
         </button>
       </div>
 
-      {fotoAmpliada && (
-        <div
-          className="fondo-modal fondo-modal-foto"
-          onClick={(e) => {
-            e.stopPropagation();
-            setFotoAmpliada(null);
-          }}
-        >
-          <img src={fotoAmpliada} alt="Evidencia ampliada" className="foto-ampliada" />
-        </div>
+      {visor && (
+        <VisorFotos
+          fotos={visor.fotos.map((a) => ({ url: a.urlVisible, etiqueta: etiquetaEvidencia(a.tipo_evidencia) }))}
+          indice={visor.indice}
+          onCambiar={(indice) => setVisor({ ...visor, indice })}
+          onCerrar={() => setVisor(null)}
+          onDescargar={(i) =>
+            descargarFoto({
+              ticket,
+              adjunto: visor.fotos[i],
+              observacion: visor.fotos[i].observacion_id === null ? null : visor.observacion,
+            })
+          }
+        />
       )}
     </div>
   );

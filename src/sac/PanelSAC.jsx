@@ -317,7 +317,9 @@ export default function PanelSAC({ sidebarAbierta }) {
           acciones={(recargarDetalle) => {
             const puedeAgregar = puedeAgregarProducto(seleccionado);
             const porAprobar = seleccionado.estado === "POR_APROBAR";
-            const puedeAnular = seleccionado.estado === "EN_RUTA" || porAprobar;
+            // Se puede anular mientras el ticket está POR APROBAR (rechazo), EN RUTA o en GESTION LI (aunque LI ya
+            // haya registrado alguna Nota de Crédito). Un ticket SOLUCIONADO ya está cerrado.
+            const puedeAnular = seleccionado.estado === "EN_RUTA" || seleccionado.estado === "EN_LI" || porAprobar;
             if (!puedeAgregar && !puedeAnular) return null;
             return (
               <>
@@ -392,7 +394,9 @@ export default function PanelSAC({ sidebarAbierta }) {
           mensaje={
             seleccionado.estado === "POR_APROBAR"
               ? "¿Rechazar este reclamo? No se generará número de ticket y la acción no se puede deshacer."
-              : `¿Anular el ticket ${textoCodigoTicket(seleccionado)}? Esta acción no se puede deshacer.`
+              : seleccionado.estado === "EN_LI"
+                ? `¿Anular el ticket ${textoCodigoTicket(seleccionado)}? Ya llegó a Logística Inversa y puede tener Notas de Crédito registradas. Esta acción no se puede deshacer.`
+                : `¿Anular el ticket ${textoCodigoTicket(seleccionado)}? Esta acción no se puede deshacer.`
           }
           onConfirmar={anularTicket}
           onCancelar={() => setConfirmarAnulacion(false)}

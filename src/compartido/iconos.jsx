@@ -155,3 +155,22 @@ export function IconoBuscar(props) {
     props
   );
 }
+
+export function IconoDescargar(props) {
+  return base(
+    <>
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M4 19h16" />
+    </>,
+    props
+  );
+}
+
+export function IconoFlechaIzquierda(props) {
+  return base(<path d="M15 5l-7 7 7 7" />, props);
+}
+
+export function IconoFlechaDerecha(props) {
+  return base(<path d="M9 5l7 7-7 7" />, props);
+}

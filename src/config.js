@@ -5,9 +5,19 @@ export const CONTACTO_DATOS = {
   telefono: "920799198",
 };
 
-// Teléfono de SAC: el transportista debe llamar aquí en los casos No logísticos y Faltante
-// para que SAC atienda el caso, lo apruebe y le brinde el número de ticket.
-export const TELEFONO_SAC = "016199010";
+// Canal de soporte al transportista (Supply Te Ayuda): atiende los casos No logísticos y Faltante,
+// brinda el número de ticket y anula tickets cuando hace falta.
+export const NOMBRE_SOPORTE = "Supply Te Ayuda";
+export const TELEFONO_SOPORTE = "016199010";
+
+// Aviso cuando la factura ya tiene un ticket que no está anulado (un solo ticket activo por factura).
+// `codigo` viene vacío si el ticket todavía no fue aprobado (aún no tiene número).
+export function mensajeTicketExistente(codigo, factura) {
+  const contacto = `llama a ${NOMBRE_SOPORTE} al ${TELEFONO_SOPORTE}`;
+  return codigo
+    ? `Esta factura ya tiene el ticket ${codigo}. Si necesitas anularlo para crear uno nuevo, ${contacto} e indica el número del ticket.`
+    : `Esta factura ya tiene un reclamo registrado, pendiente de aprobación. Si necesitas anularlo para crear uno nuevo, ${contacto} e indica la factura${factura ? ` ${factura}` : ""}.`;
+}
 
 export const MENSAJE_FACTURA_NO_ENCONTRADA =
   `Factura no encontrada, colocar bien el número de factura, si el problema persiste comunicarse con ${CONTACTO_DATOS.nombre} - ${CONTACTO_DATOS.telefono}`;
