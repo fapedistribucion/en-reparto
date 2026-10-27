@@ -14,6 +14,7 @@ import {
   textoNotaCredito,
 } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
+import { IconoLapiz } from "./iconos";
 
 // Definición ÚNICA de las columnas de las tablas "Por factura" y "Por producto". De aquí salen las tres
 // cosas que antes se escribían por separado y se desalineaban: lo que dibuja la tabla, el orden al hacer
@@ -99,14 +100,9 @@ function columnasDelTicket(ticketDe) {
       tipo: "texto",
       valor: (fila) => textoMotivoRetencion(ticketDe(fila)),
     },
-    // Solo Faltante y No logístico pasan por aprobación; en los demás casos quedan en blanco («—»).
+    // Solo Faltante y No logístico pasan por aprobación; en los demás casos queda en blanco («—»).
+    // La fecha de aprobación se guarda en la base pero no se muestra (por ahora es interna).
     aprobado_por: { id: "aprobado_por", titulo: "Aprobado por", tipo: "texto", valor: de((t) => t.aprobado_por) },
-    fecha_aprobacion: {
-      id: "fecha_aprobacion",
-      titulo: "Fecha aprobación",
-      tipo: "fechahora",
-      valor: de((t) => t.fecha_aprobacion),
-    },
   };
 }
 
@@ -122,6 +118,7 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
     ...(mostrarTransporte ? [c.transporte] : []),
     c.estado,
     c.fecha_estado,
+    ...(mostrarUsuarios ? [c.aprobado_por] : []),
     c.factura,
     c.pedido,
     c.region,
@@ -148,7 +145,6 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
     c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
-    ...(mostrarUsuarios ? [c.aprobado_por, c.fecha_aprobacion] : []),
     { id: "nota_credito", titulo: "Nota de crédito", tipo: "texto", valor: (t) => textoNotaCredito(t) },
     ...(mostrarUsuarios
       ? [
@@ -160,7 +156,9 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
 }
 
 // Vista "Por producto": una fila por observación (la fila trae `ticket` ya combinado).
-export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuarios = false } = {}) {
+// `editarNC(observacion)` (opcional): si viene, la celda de la NC muestra un lápiz para corregirla
+// (solo en productos que ya tienen NC y cuyo ticket sigue en GESTION LI o Solucionado).
+export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuarios = false, editarNC = null } = {}) {
   const c = columnasDelTicket((o) => o.ticket);
 
   return [
@@ -170,6 +168,7 @@ export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuario
     ...(mostrarTransporte ? [c.transporte] : []),
     c.estado,
     c.fecha_estado,
+    ...(mostrarUsuarios ? [c.aprobado_por] : []),
     c.factura,
     c.pedido,
     c.region,
@@ -242,8 +241,32 @@ export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuario
     c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
-    ...(mostrarUsuarios ? [c.aprobado_por, c.fecha_aprobacion] : []),
-    { id: "nota_credito", titulo: "Nota de Crédito", tipo: "texto", valor: (o) => o.nota_credito ?? "Pendiente" },
+    {
+      id: "nota_credito",
+      titulo: "Nota de Crédito",
+      tipo: "texto",
+      valor: (o) => o.nota_credito ?? "Pendiente",
+      render: (o) => {
+        const editable = editarNC && o.nota_credito && ["EN_LI", "SOLUCIONADO"].includes(o.ticket?.estado);
+        return (
+          <>
+            {o.nota_credito ?? "Pendiente"}
+            {editable && (
+              <button
+                type="button"
+                className="boton-icono boton-editar-nc"
+                style={{ marginLeft: 6, padding: "2px 6px" }}
+                onClick={() => editarNC(o)}
+                title="Editar la Nota de Crédito de este producto"
+                aria-label="Editar la Nota de Crédito de este producto"
+              >
+                <IconoLapiz size={14} />
+              </button>
+            )}
+          </>
+        );
+      },
+    },
     // En "Por producto" la NC es de cada línea: quién y cuándo la puso en ese producto.
     ...(mostrarUsuarios
       ? [

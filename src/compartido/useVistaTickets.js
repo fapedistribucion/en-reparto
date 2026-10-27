@@ -26,6 +26,7 @@ export function useVistaTickets({
   mostrarTransporte = true,
   mostrarSkuObservados = true,
   mostrarUsuarios = false,
+  editarNC = null, // (observación) => abre la edición de su NC; null = sin lápiz (solo LI con permiso)
   nombreExportacion = "en-reparto-por-ticket",
 }) {
   const facturas = useMemo(() => tickets.map((t) => t.factura), [tickets]);
@@ -119,7 +120,8 @@ export function useVistaTickets({
     () => columnasTickets({ mostrarTransporte, mostrarSkuObservados, mostrarUsuarios }),
     [mostrarTransporte, mostrarSkuObservados, mostrarUsuarios]
   );
-  const columnasProducto = useMemo(() => columnasObservaciones({ mostrarTransporte, mostrarUsuarios }), [mostrarTransporte, mostrarUsuarios]);
+  const columnasProducto = useMemo(() => columnasObservaciones({ mostrarTransporte, mostrarUsuarios, editarNC }),
+    [mostrarTransporte, mostrarUsuarios, editarNC]);
 
   const ordenFactura = useOrdenTabla();
   const ordenProducto = useOrdenTabla();

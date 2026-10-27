@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useTickets } from "../compartido/useTickets";
 import { useObservaciones } from "../compartido/useObservaciones";
 import { useVistaTickets } from "../compartido/useVistaTickets";
+import { usePuedeEditarNC } from "./usePuedeEditarNC";
 import LayoutLateral from "../compartido/LayoutLateral";
 import TablaTickets from "../compartido/TablaTickets";
 import TablaObservaciones from "../compartido/TablaObservaciones";
@@ -15,6 +16,11 @@ import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
 import { IconoCheck, IconoCamion, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
 import { textoCodigoTicket, formatearFecha } from "../utils/estadosTicket";
+
+// Formato obligatorio de la Nota de Crédito: 07-0FC0 + 1 dígito de serie + "-" + 7 dígitos (ej. 07-0FC01-0025069).
+// La base lo vuelve a validar al guardar.
+const FORMATO_NC = /^07-0FC0\d-\d{7}$/;
+const EJEMPLO_NC = "07-0FC01-0025069";
 
 const PESTANAS = [
   { clave: "factura", etiqueta: "Por factura", icono: IconoSeguimiento },
@@ -44,8 +50,20 @@ export default function PanelLI({ sidebarAbierta }) {
   const [ticketEntregaTransporte, setTicketEntregaTransporte] = useState(null);
   const [guardandoEntrega, setGuardandoEntrega] = useState(false);
 
+  // Solo algunos usuarios de LI pueden corregir una NC ya registrada (lo decide la base: config_editores_nc).
+  // Para ellos aparece un lápiz en la columna "Nota de Crédito" de "Por producto".
+  const puedeEditarNC = usePuedeEditarNC();
+  const editarNCRef = useRef(null);
+  const editarNCDesdeTabla = useCallback((observacion) => editarNCRef.current?.(observacion), []);
+
   // Datos de la factura, filtros, orden por encabezado, conteo y exportación a Excel (compartido por todos los roles).
-  const vista = useVistaTickets({ tickets, observaciones, pestana, mostrarUsuarios: true });
+  const vista = useVistaTickets({
+    tickets,
+    observaciones,
+    pestana,
+    mostrarUsuarios: true,
+    editarNC: puedeEditarNC ? editarNCDesdeTabla : null,
+  });
   const { ticketsFiltrados, observacionesFiltradas } = vista;
 
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
@@ -68,6 +86,12 @@ export default function PanelLI({ sidebarAbierta }) {
     setError("");
     setMensajeNC("");
   }
+
+  // Lápiz de la tabla "Por producto": abre el popup de ese producto, con su NC lista para corregir.
+  editarNCRef.current = (observacion) => {
+    const ticket = tickets.find((t) => t.id === observacion.ticket_id);
+    if (ticket) abrirDetalle(ticket, observacion.id);
+  };
 
   function refrescarTodo() {
     recargar();
@@ -121,6 +145,10 @@ export default function PanelLI({ sidebarAbierta }) {
     setMensajeNC("");
     if (!nc) {
       setError("Ingresa el número de Nota de Crédito.");
+      return;
+    }
+    if (!FORMATO_NC.test(nc)) {
+      setError(`La NC debe tener el formato ${EJEMPLO_NC} (07-0FC0, un dígito de serie, guion y 7 dígitos).`);
       return;
     }
     if (observacionFoco && observacionFoco.nota_credito === nc) {
@@ -349,9 +377,23 @@ export default function PanelLI({ sidebarAbierta }) {
                 <>
                   <p className="panel-detalle-titulo-seccion">Acciones</p>
                   <p className="dato-menor">
-                    Todos los productos de este ticket ya tienen NC. Para corregir una, ábrela desde «Por producto».
+                    Todos los productos de este ticket ya tienen NC.
+                    {puedeEditarNC ? " Para corregir una, usa el lápiz de la columna «Nota de Crédito» en «Por producto»." : ""}
                   </p>
                   {mensajeNC && <p className="mensaje-exito">{mensajeNC}</p>}
+                </>
+              );
+            }
+
+            // Una NC ya registrada solo la corrigen los usuarios autorizados: los demás la ven pero no la editan.
+            if (observacionFoco?.nota_credito && !puedeEditarNC) {
+              return (
+                <>
+                  <p className="panel-detalle-titulo-seccion">Acciones</p>
+                  <p className="dato-menor">
+                    NC registrada: <strong>{observacionFoco.nota_credito}</strong> ({formatearFecha(observacionFoco.fecha_nc, true)}).
+                    Solo los usuarios autorizados pueden editar una NC ya registrada.
+                  </p>
                 </>
               );
             }
@@ -369,8 +411,9 @@ export default function PanelLI({ sidebarAbierta }) {
                     id="notaCredito"
                     type="text"
                     value={notaCredito}
-                    onChange={(e) => setNotaCredito(e.target.value)}
-                    placeholder="N° de NC"
+                    onChange={(e) => setNotaCredito(e.target.value.toUpperCase())}
+                    placeholder={`Ej. ${EJEMPLO_NC}`}
+                    maxLength={16}
                   />
                   {!observacionFoco && conNC > 0 && (
                     <p className="dato-menor">
