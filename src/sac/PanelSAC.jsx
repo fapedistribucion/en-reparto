@@ -39,7 +39,7 @@ export default function PanelSAC({ sidebarAbierta }) {
   const [anulando, setAnulando] = useState(false); // muestra el campo de motivo recién al elegir "Anular ticket"
 
   // Datos de la factura, filtros, orden por encabezado, conteo y exportación a Excel (compartido por todos los roles).
-  const vista = useVistaTickets({ tickets, observaciones, pestana });
+  const vista = useVistaTickets({ tickets, observaciones, pestana, mostrarUsuarios: true });
   const { ticketsFiltrados, observacionesFiltradas } = vista;
 
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;

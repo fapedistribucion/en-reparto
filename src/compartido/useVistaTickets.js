@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useDatosFactura, conDatosFactura } from "./useDatosFactura";
 import { useDatosTicket, conDatosTicket } from "./useDatosTicket";
+import { useNombresUsuarios } from "./useNombresUsuarios";
 import { useOrdenTabla, ordenarFilas } from "./useOrdenTabla";
 import { FILTROS_VACIOS, filtrarTickets, filtrarObservaciones, hayFiltros } from "./filtrosTickets";
 import { columnasTickets, columnasObservaciones } from "./columnas";
@@ -24,6 +25,7 @@ export function useVistaTickets({
   pestana = "factura",
   mostrarTransporte = true,
   mostrarSkuObservados = true,
+  mostrarUsuarios = false,
   nombreExportacion = "en-reparto-por-ticket",
 }) {
   const facturas = useMemo(() => tickets.map((t) => t.factura), [tickets]);
@@ -32,16 +34,43 @@ export function useVistaTickets({
   const ids = useMemo(() => tickets.map((t) => t.id), [tickets]);
   const datosTicket = useDatosTicket(ids);
 
-  // Se combina una sola vez aquí para que "Por factura" y "Por producto" tengan fecha, región, lead time, etc.
-  const ticketsEnriquecidos = useMemo(
+  const ticketsConDatos = useMemo(
     () => tickets.map((t) => conDatosTicket(conDatosFactura(t, datosFactura), datosTicket)),
     [tickets, datosFactura, datosTicket]
   );
 
+  // Quién aprobó y quién puso la NC: se piden los nombres solo si la vista los muestra (SAC, LI, Liquidaciones).
+  const idsUsuarios = useMemo(() => {
+    if (!mostrarUsuarios) return [];
+    const ids = new Set();
+    ticketsConDatos.forEach((t) => {
+      if (t.usuario_aprobacion) ids.add(t.usuario_aprobacion);
+      if (t.usuario_nc) ids.add(t.usuario_nc);
+    });
+    observaciones.forEach((o) => {
+      if (o.usuario_nc) ids.add(o.usuario_nc);
+    });
+    return [...ids];
+  }, [mostrarUsuarios, ticketsConDatos, observaciones]);
+  const nombres = useNombresUsuarios(idsUsuarios);
+
+  // Se combina una sola vez aquí para que "Por factura" y "Por producto" tengan fecha, región, lead time, etc.
+  const ticketsEnriquecidos = useMemo(
+    () =>
+      ticketsConDatos.map((t) => ({
+        ...t,
+        aprobado_por: nombres.nombre(t.usuario_aprobacion),
+        nc_por: nombres.nombre(t.usuario_nc),
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ticketsConDatos, nombres.version]
+  );
+
   const observacionesConTicket = useMemo(() => {
     const porId = new Map(ticketsEnriquecidos.map((t) => [t.id, t]));
-    return observaciones.map((o) => ({ ...o, ticket: porId.get(o.ticket_id) }));
-  }, [observaciones, ticketsEnriquecidos]);
+    return observaciones.map((o) => ({ ...o, nc_por: nombres.nombre(o.usuario_nc), ticket: porId.get(o.ticket_id) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [observaciones, ticketsEnriquecidos, nombres.version]);
 
   // ----- filtros -----
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
@@ -87,10 +116,10 @@ export function useVistaTickets({
 
   // ----- columnas, orden y filas -----
   const columnasFactura = useMemo(
-    () => columnasTickets({ mostrarTransporte, mostrarSkuObservados }),
-    [mostrarTransporte, mostrarSkuObservados]
+    () => columnasTickets({ mostrarTransporte, mostrarSkuObservados, mostrarUsuarios }),
+    [mostrarTransporte, mostrarSkuObservados, mostrarUsuarios]
   );
-  const columnasProducto = useMemo(() => columnasObservaciones({ mostrarTransporte }), [mostrarTransporte]);
+  const columnasProducto = useMemo(() => columnasObservaciones({ mostrarTransporte, mostrarUsuarios }), [mostrarTransporte, mostrarUsuarios]);
 
   const ordenFactura = useOrdenTabla();
   const ordenProducto = useOrdenTabla();

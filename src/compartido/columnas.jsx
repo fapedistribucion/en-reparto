@@ -99,12 +99,20 @@ function columnasDelTicket(ticketDe) {
       tipo: "texto",
       valor: (fila) => textoMotivoRetencion(ticketDe(fila)),
     },
+    // Solo Faltante y No logístico pasan por aprobación; en los demás casos quedan en blanco («—»).
+    aprobado_por: { id: "aprobado_por", titulo: "Aprobado por", tipo: "texto", valor: de((t) => t.aprobado_por) },
+    fecha_aprobacion: {
+      id: "fecha_aprobacion",
+      titulo: "Fecha aprobación",
+      tipo: "fechahora",
+      valor: de((t) => t.fecha_aprobacion),
+    },
   };
 }
 
 // Vista "Por factura": una fila por ticket.
 // Orden de columnas: ... Pedido, Región, Departamento, Centro de distribución, y el resto.
-export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservados = false } = {}) {
+export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservados = false, mostrarUsuarios = false } = {}) {
   const c = columnasDelTicket((t) => t);
 
   return [
@@ -140,12 +148,19 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
     c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
+    ...(mostrarUsuarios ? [c.aprobado_por, c.fecha_aprobacion] : []),
     { id: "nota_credito", titulo: "Nota de crédito", tipo: "texto", valor: (t) => textoNotaCredito(t) },
+    ...(mostrarUsuarios
+      ? [
+          { id: "nc_por", titulo: "NC por", tipo: "texto", valor: (t) => t.nc_por },
+          { id: "fecha_nc", titulo: "Fecha NC", tipo: "fechahora", valor: (t) => t.fecha_nc },
+        ]
+      : []),
   ];
 }
 
 // Vista "Por producto": una fila por observación (la fila trae `ticket` ya combinado).
-export function columnasObservaciones({ mostrarTransporte = true } = {}) {
+export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuarios = false } = {}) {
   const c = columnasDelTicket((o) => o.ticket);
 
   return [
@@ -227,7 +242,15 @@ export function columnasObservaciones({ mostrarTransporte = true } = {}) {
     c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
+    ...(mostrarUsuarios ? [c.aprobado_por, c.fecha_aprobacion] : []),
     { id: "nota_credito", titulo: "Nota de Crédito", tipo: "texto", valor: (o) => o.nota_credito ?? "Pendiente" },
+    // En "Por producto" la NC es de cada línea: quién y cuándo la puso en ese producto.
+    ...(mostrarUsuarios
+      ? [
+          { id: "nc_por", titulo: "NC por", tipo: "texto", valor: (o) => o.nc_por },
+          { id: "fecha_nc", titulo: "Fecha NC", tipo: "fechahora", valor: (o) => o.fecha_nc },
+        ]
+      : []),
   ];
 }
 

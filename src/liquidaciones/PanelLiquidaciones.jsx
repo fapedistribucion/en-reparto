@@ -24,7 +24,7 @@ export default function PanelLiquidaciones({ sidebarAbierta }) {
 
   const [pestana, setPestana] = useState("factura");
   // Datos de la factura, filtros, orden por encabezado, conteo y exportación a Excel (compartido por todos los roles).
-  const vista = useVistaTickets({ tickets, observaciones, pestana });
+  const vista = useVistaTickets({ tickets, observaciones, pestana, mostrarUsuarios: true });
   const { ticketsFiltrados, observacionesFiltradas } = vista;
 
   function refrescarTodo() {

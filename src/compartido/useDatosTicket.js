@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 // Datos que la base calcula por ticket (vista tickets_complemento): fecha del último cambio de estado,
-// fecha límite de llegada a LI y lead time. Se piden solo para los tickets que están en pantalla.
-// Devuelve un Map ticket.id -> { fecha_estado, fecha_limite_li, lead_time_li }.
+// fecha límite de llegada a LI, lead time y quién/cuándo aprobó y puso la NC (solo ids: los nombres los resuelve useNombresUsuarios). Se piden solo para los tickets que están en pantalla.
+// Devuelve un Map ticket.id -> { fecha_estado, fecha_limite_li, lead_time_li, usuario_aprobacion, fecha_aprobacion, usuario_nc, fecha_nc }.
 const LOTE = 100; // el filtro .in() viaja en la URL (los id son largos): se pide por tandas
 
 export function useDatosTicket(ids) {
@@ -23,7 +23,7 @@ export function useDatosTicket(ids) {
 
     Promise.all(
       tandas.map((tanda) =>
-        supabase.from("tickets_complemento").select("id, fecha_estado, fecha_limite_li, lead_time_li").in("id", tanda)
+        supabase.from("tickets_complemento").select("id, fecha_estado, fecha_limite_li, lead_time_li, usuario_aprobacion, fecha_aprobacion, usuario_nc, fecha_nc").in("id", tanda)
       )
     ).then((respuestas) => {
       if (cancelado) return;
@@ -51,5 +51,9 @@ export function conDatosTicket(ticket, mapa) {
     fecha_estado: d?.fecha_estado ?? null,
     fecha_limite_li: d?.fecha_limite_li ?? null,
     lead_time_li: d?.lead_time_li ?? null,
+    usuario_aprobacion: d?.usuario_aprobacion ?? ticket.usuario_aprobacion ?? null,
+    fecha_aprobacion: d?.fecha_aprobacion ?? ticket.fecha_aprobacion ?? null,
+    usuario_nc: d?.usuario_nc ?? ticket.usuario_nc ?? null,
+    fecha_nc: d?.fecha_nc ?? ticket.fecha_nc ?? null,
   };
 }
