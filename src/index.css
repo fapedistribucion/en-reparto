@@ -1888,3 +1888,33 @@ textarea:focus {
   min-width: 130px;
   max-width: 160px;
 }
+
+/* ---------- Visor de fotos: zoom con la rueda del mouse ---------- */
+.foto-zoom {
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+.foto-zoom-ampliada {
+  cursor: grab;
+}
+
+.foto-zoom-arrastrando {
+  cursor: grabbing;
+}
+
+/* Selector «¿El producto está en la factura?» dentro de la tarjeta de Sobrante */
+.tarjeta-producto .selector-vista {
+  display: flex;
+  width: 100%;
+  max-width: 420px;
+}
+
+.tarjeta-producto .selector-vista button {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 14px;
+}

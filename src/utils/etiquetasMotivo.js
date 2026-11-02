@@ -24,7 +24,17 @@ export function etiquetaMotivo(subcategoria) {
   return ETIQUETAS[subcategoria] ?? titulo(subcategoria);
 }
 
+// Orden de las listas de motivos: «Faltante» primero y el resto alfabético.
+export function ordenarEtiquetasMotivo(etiquetas) {
+  const primero = ETIQUETAS.FALTANTE;
+  return [...etiquetas].sort((a, b) => {
+    if (a === primero && b !== primero) return -1;
+    if (b === primero && a !== primero) return 1;
+    return a.localeCompare(b, "es");
+  });
+}
+
 // Todos los motivos conocidos, para armar listas de selección (ya con su etiqueta, ordenadas).
 export function etiquetasMotivosConocidos() {
-  return Object.values(ETIQUETAS).sort((a, b) => a.localeCompare(b, "es"));
+  return ordenarEtiquetasMotivo(Object.values(ETIQUETAS));
 }

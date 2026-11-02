@@ -6,7 +6,7 @@ import { useOrdenTabla, ordenarFilas } from "./useOrdenTabla";
 import { FILTROS_VACIOS, filtrarTickets, filtrarObservaciones, hayFiltros } from "./filtrosTickets";
 import { columnasTickets, columnasObservaciones } from "./columnas";
 import { exportarExcel } from "../utils/exportarExcel";
-import { etiquetaMotivo, etiquetasMotivosConocidos } from "../utils/etiquetasMotivo";
+import { etiquetaMotivo, etiquetasMotivosConocidos, ordenarEtiquetasMotivo } from "../utils/etiquetasMotivo";
 import { REGIONES, SIN_REGION } from "../config";
 
 function pie(cantidad, singular, plural) {
@@ -27,6 +27,7 @@ export function useVistaTickets({
   mostrarSkuObservados = true,
   mostrarUsuarios = false,
   editarNC = null, // (observación) => abre la edición de su NC; null = sin lápiz (solo LI con permiso)
+  editarNCTicket = null, // (ticket) => abre el ticket para elegir qué NC corregir ("Por factura")
   nombreExportacion = "en-reparto-por-ticket",
 }) {
   const facturas = useMemo(() => tickets.map((t) => t.factura), [tickets]);
@@ -91,9 +92,9 @@ export function useVistaTickets({
 
   const opcionesMotivo = useMemo(
     () =>
-      [...new Set([...etiquetasMotivosConocidos(), ...observaciones.map((o) => etiquetaMotivo(o.subcategoria))])].sort((a, b) =>
-        a.localeCompare(b, "es")
-      ),
+      ordenarEtiquetasMotivo([
+        ...new Set([...etiquetasMotivosConocidos(), ...observaciones.map((o) => etiquetaMotivo(o.subcategoria))]),
+      ]),
     [observaciones]
   );
 
@@ -117,8 +118,8 @@ export function useVistaTickets({
 
   // ----- columnas, orden y filas -----
   const columnasFactura = useMemo(
-    () => columnasTickets({ mostrarTransporte, mostrarSkuObservados, mostrarUsuarios }),
-    [mostrarTransporte, mostrarSkuObservados, mostrarUsuarios]
+    () => columnasTickets({ mostrarTransporte, mostrarSkuObservados, mostrarUsuarios, editarNC: editarNCTicket }),
+    [mostrarTransporte, mostrarSkuObservados, mostrarUsuarios, editarNCTicket]
   );
   const columnasProducto = useMemo(() => columnasObservaciones({ mostrarTransporte, mostrarUsuarios, editarNC }),
     [mostrarTransporte, mostrarUsuarios, editarNC]);

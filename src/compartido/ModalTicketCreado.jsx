@@ -2,7 +2,7 @@ import { NOMBRE_SOPORTE, TELEFONO_SOPORTE } from "../config";
 
 // Dos casos:
 //  - Con código: el reclamo es logístico y el ticket ya existe → se muestra el número.
-//  - Sin código (`codigo` null): reclamo No logístico o con Faltante → todavía NO tiene ticket;
+//  - Sin código (`codigo` null): reclamo No logístico (el Faltante ya no requiere aprobación) → todavía NO tiene ticket;
 //    el transportista debe llamar a Supply Te Ayuda, que atiende el caso, lo aprueba y le da el número.
 export default function ModalTicketCreado({ codigo, factura, onCerrar }) {
   if (!codigo) {

@@ -14,6 +14,7 @@ import {
   textoNotaCredito,
 } from "../utils/estadosTicket";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
+import { codigoProducto, nombreProducto, tieneProducto } from "../utils/productoObservacion";
 import { IconoLapiz } from "./iconos";
 
 // Definición ÚNICA de las columnas de las tablas "Por factura" y "Por producto". De aquí salen las tres
@@ -108,7 +109,14 @@ function columnasDelTicket(ticketDe) {
 
 // Vista "Por factura": una fila por ticket.
 // Orden de columnas: ... Pedido, Región, Departamento, Centro de distribución, y el resto.
-export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservados = false, mostrarUsuarios = false } = {}) {
+// `editarNC(ticket)` (opcional): si viene, la celda "Nota de crédito" muestra un lápiz que abre el ticket para corregir
+// la NC de alguno de sus productos (solo si ya tiene NC y sigue en GESTION LI o Solucionado).
+export function columnasTickets({
+  mostrarTransporte = false,
+  mostrarSkuObservados = false,
+  mostrarUsuarios = false,
+  editarNC = null,
+} = {}) {
   const c = columnasDelTicket((t) => t);
 
   return [
@@ -145,7 +153,32 @@ export function columnasTickets({ mostrarTransporte = false, mostrarSkuObservado
     c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
-    { id: "nota_credito", titulo: "Nota de crédito", tipo: "texto", valor: (t) => textoNotaCredito(t) },
+    {
+      id: "nota_credito",
+      titulo: "Nota de crédito",
+      tipo: "texto",
+      valor: (t) => textoNotaCredito(t),
+      render: (t) => {
+        const editable = editarNC && t.nota_credito && ["EN_LI", "SOLUCIONADO"].includes(t.estado);
+        return (
+          <>
+            {textoNotaCredito(t)}
+            {editable && (
+              <button
+                type="button"
+                className="boton-icono boton-editar-nc"
+                style={{ marginLeft: 6, padding: "2px 6px" }}
+                onClick={() => editarNC(t)}
+                title="Corregir la Nota de Crédito de un producto de este ticket"
+                aria-label="Corregir la Nota de Crédito de un producto de este ticket"
+              >
+                <IconoLapiz size={14} />
+              </button>
+            )}
+          </>
+        );
+      },
+    },
     ...(mostrarUsuarios
       ? [
           { id: "nc_por", titulo: "NC por", tipo: "texto", valor: (t) => t.nc_por },
@@ -175,13 +208,13 @@ export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuario
     c.departamento,
     c.centro,
     c.cliente,
-    { id: "codigo_producto", titulo: "Cód. Producto", tipo: "texto", valor: (o) => o.codigo_producto },
+    { id: "codigo_producto", titulo: "Cód. Producto", tipo: "texto", valor: (o) => codigoProducto(o) },
     { id: "posicion", titulo: "Posición", tipo: "numero", valor: (o) => o.posicion },
     {
       id: "producto",
       titulo: "Producto",
       tipo: "texto",
-      valor: (o) => (o.codigo_producto ? o.nombre_producto : "Toda la factura"),
+      valor: (o) => nombreProducto(o),
     },
     {
       id: "precio",
@@ -228,7 +261,7 @@ export function columnasObservaciones({ mostrarTransporte = true, mostrarUsuario
       id: "cant_reclamada",
       titulo: "Cant. Reclamada",
       tipo: "numero",
-      valor: (o) => (o.posicion != null ? o.cantidad_observada : null),
+      valor: (o) => (tieneProducto(o) ? o.cantidad_observada : null),
     },
     {
       id: "cant_total",

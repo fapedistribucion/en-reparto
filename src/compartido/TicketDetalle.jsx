@@ -4,6 +4,7 @@ import { etiquetaEvidencia } from "../utils/etiquetasEvidencia";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 import { ETIQUETAS_ESTADO, formatearFecha, textoAlcance, textoCodigoTicket } from "../utils/estadosTicket";
 import { descargarFoto, descargarZip } from "../utils/descargarFotos";
+import { TEXTO_NO_FACTURADO, codigoProducto, esNoFacturado, nombreProducto } from "../utils/productoObservacion";
 import VisorFotos from "./VisorFotos";
 import { IconoDescargar } from "./iconos";
 
@@ -141,8 +142,20 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
               <strong>{ticket.factura}</strong>
             </div>
             <div>
+              <span>Pedido</span>
+              <strong>{ticket.pedido_entrega ?? "—"}</strong>
+            </div>
+            <div>
               <span>Cliente</span>
               <strong>{ticket.cliente}</strong>
+            </div>
+            <div>
+              <span>Código de producto</span>
+              <strong>{codigoProducto(observacionEnfocada) ?? "—"}</strong>
+            </div>
+            <div>
+              <span>Producto</span>
+              <strong>{nombreProducto(observacionEnfocada)}</strong>
             </div>
             <div>
               <span>Motivo</span>
@@ -153,7 +166,9 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
               <strong>
                 {observacionEnfocada.posicion != null
                   ? `${observacionEnfocada.cantidad_observada} de ${observacionEnfocada.cantidad_facturada}`
-                  : "—"}
+                  : esNoFacturado(observacionEnfocada)
+                    ? `${observacionEnfocada.cantidad_observada} (${TEXTO_NO_FACTURADO.toLowerCase()})`
+                    : "—"}
               </strong>
             </div>
             {(observacionEnfocada.nota_credito || ticket.fecha_entrega_li) && (
@@ -204,6 +219,15 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                           <p className="obs-card-linea">
                             Bulto: {o.numero_bulto} · Cantidad observada: {o.cantidad_observada} de{" "}
                             {o.cantidad_facturada}
+                          </p>
+                        </>
+                      ) : esNoFacturado(o) ? (
+                        <>
+                          <p className="obs-card-linea">
+                            {TEXTO_NO_FACTURADO} · {nombreProducto(o)}
+                          </p>
+                          <p className="obs-card-linea">
+                            Bulto: {o.numero_bulto} · Cantidad sobrante: {o.cantidad_observada}
                           </p>
                         </>
                       ) : (

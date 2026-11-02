@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
 import { etiquetaMotivo } from "./etiquetasMotivo";
+import { TEXTO_NO_FACTURADO, esNoFacturado, nombreProducto } from "./productoObservacion";
 
 // Descarga de fotos: una sola foto (desde el visor) o todas en un .zip (botón "Descargar imágenes").
 // El .zip se arma en el navegador, sin librerías: las fotos ya son JPG comprimidos, así que el zip
@@ -44,9 +45,9 @@ function numeroDeFoto(adjunto, respaldo) {
 // Nombre de la carpeta de una observación: posición-motivo-nombre del producto.
 export function nombreCarpetaObservacion(o) {
   const motivo = etiquetaMotivo(o.subcategoria);
-  return o.posicion != null
-    ? nombreSeguro(`${o.posicion}-${motivo}-${o.nombre_producto ?? ""}`)
-    : nombreSeguro(`Toda la factura-${motivo}`);
+  if (o.posicion != null) return nombreSeguro(`${o.posicion}-${motivo}-${o.nombre_producto ?? ""}`);
+  if (esNoFacturado(o)) return nombreSeguro(`${TEXTO_NO_FACTURADO}-${motivo}-${nombreProducto(o)}`);
+  return nombreSeguro(`Toda la factura-${motivo}`);
 }
 
 // Evita que dos archivos/carpetas con el mismo nombre se pisen: agrega " (2)", " (3)"...

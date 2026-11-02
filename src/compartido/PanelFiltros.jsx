@@ -6,7 +6,7 @@ import CalendarioRango from "./CalendarioRango";
 // `valores` = { ticket, factura, pedido, transporte, estado, region, motivo, desde, hasta }
 // `opcionesRegion`: regiones a elegir ("Sin región" solo viene si hay registros sin región).
 // `mostrarMotivo` / `opcionesMotivo`: el filtro de Motivo existe solo en "Por producto"; es una lista
-// desplegable en la que también se puede escribir.
+// desplegable como las demás (Faltante primero y el resto en orden alfabético).
 export default function PanelFiltros({
   abierto,
   onCerrar,
@@ -90,18 +90,14 @@ export default function PanelFiltros({
           {mostrarMotivo && (
             <label className="campo-filtro">
               Motivo
-              <input
-                type="text"
-                list="opciones-motivo-filtro"
-                value={valores.motivo}
-                onChange={(e) => cambiar("motivo", e.target.value)}
-                autoComplete="off"
-              />
-              <datalist id="opciones-motivo-filtro">
+              <select value={valores.motivo} onChange={(e) => cambiar("motivo", e.target.value)}>
+                <option value="">Todos</option>
                 {opcionesMotivo.map((m) => (
-                  <option key={m} value={m} />
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
-              </datalist>
+              </select>
             </label>
           )}
 

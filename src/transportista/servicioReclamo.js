@@ -34,6 +34,7 @@ export async function subirEvidencias({ empresa, archivosFactura, observaciones 
     return {
       subcategoria: obs.subcategoria,
       posicion: obs.posicion,
+      producto_no_facturado: obs.producto_no_facturado ?? null,
       cantidad_observada: obs.cantidad_observada,
       numero_bulto: obs.numero_bulto,
       observacion: obs.observacion ?? null,

@@ -8,8 +8,9 @@ export const ETIQUETAS_ESTADO = {
   ANULADO: "ANULADO",
 };
 
-// Número de ticket para mostrar: los casos No logísticos y Faltante no tienen código hasta que
-// SAC los aprueba (estado POR_APROBAR); mientras tanto se ve "Sin ticket" en todas las vistas.
+// Número de ticket para mostrar: los casos No logísticos no tienen código hasta que SAC los aprueba
+// (estado POR_APROBAR); mientras tanto se ve "Sin ticket" en todas las vistas. Los Faltante creados antes
+// del cambio que quitó su aprobación también pueden estar así hasta que SAC los apruebe.
 export function textoCodigoTicket(ticket) {
   return ticket?.codigo_ticket ?? "Sin ticket";
 }

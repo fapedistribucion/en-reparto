@@ -2,7 +2,7 @@ import { SIN_REGION } from "../config";
 import { etiquetaMotivo } from "../utils/etiquetasMotivo";
 
 // Filtros comunes de las vistas de tickets (SAC, LI, Liquidaciones y Seguimiento del transportista).
-// `region`: una región, o SIN_REGION para los que no tienen. `motivo`: texto libre o elegido de la lista;
+// `region`: una región, o SIN_REGION para los que no tienen. `motivo`: etiqueta elegida de la lista;
 // solo se aplica en "Por producto" (el motivo es de cada observación, no del ticket).
 export const FILTROS_VACIOS = {
   ticket: "",
@@ -65,8 +65,9 @@ export function filtrarTickets(tickets, filtros) {
 
 export function filtrarObservaciones(observaciones, filtros) {
   const motivo = sinTildes(filtros.motivo);
+  // El motivo se elige de una lista: coincidencia exacta (así «Faltante» no trae «Faltante de documentación»).
   return observaciones.filter(
-    (o) => coincideTicket(o.ticket, filtros) && (!motivo || sinTildes(etiquetaMotivo(o.subcategoria)).includes(motivo))
+    (o) => coincideTicket(o.ticket, filtros) && (!motivo || sinTildes(etiquetaMotivo(o.subcategoria)) === motivo)
   );
 }
 

@@ -21,6 +21,23 @@ export function bultoValido(texto) {
   return new RegExp(`^[A-Za-z0-9]{${LARGO_BULTO}}$`).test(String(texto ?? "").trim());
 }
 
+// Nombre del producto sobrante que NO está en la factura (solo Sobrante): entre 3 y 120 caracteres.
+export const MIN_NOMBRE_PRODUCTO = 3;
+export const MAX_NOMBRE_PRODUCTO = 120;
+
+// Lo que se escribe o pega en el campo de nombre: sin espacios dobles ni al inicio, máx. 120 caracteres.
+export function limpiarNombreProducto(texto) {
+  return String(texto ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/^ /, "")
+    .slice(0, MAX_NOMBRE_PRODUCTO);
+}
+
+export function nombreProductoValido(texto) {
+  const largo = String(texto ?? "").trim().length;
+  return largo >= MIN_NOMBRE_PRODUCTO && largo <= MAX_NOMBRE_PRODUCTO;
+}
+
 // El tope de cantidad es POR MOTIVO: un mismo producto puede tener varios motivos y la suma entre
 // motivos no se limita (una misma unidad puede tener 2 motivos). Solo cuenta lo ya registrado con el
 // MISMO motivo para el mismo producto.
@@ -90,12 +107,15 @@ export function derivarObservaciones({ opcion, motivos, motivoTotal, archivosMot
   const { motivoFijo } = interpretarOpcion(opcion);
 
   if (usaTarjetas(opcion)) {
-    // En Sobrante el motivo es el de la opción (no se elige por tarjeta)
+    // En Sobrante el motivo es el de la opción (no se elige por tarjeta). Una tarjeta de Sobrante puede ser
+    // de un producto que no está en la factura: viaja con su nombre y sin posición.
     return tarjetas.map((t) => {
       const subcategoria = motivoFijo ?? t.subcategoria;
+      const noFacturado = Boolean(motivoFijo) && Boolean(t.noFacturado);
       return {
         subcategoria,
-        posicion: t.posicion,
+        posicion: noFacturado ? null : t.posicion,
+        producto_no_facturado: noFacturado ? String(t.nombreProducto ?? "").trim() : null,
         cantidad_observada: Number(t.cantidad),
         numero_bulto: t.bulto.trim(),
         observacion: null,
@@ -142,6 +162,25 @@ export function validarReclamo({
     for (let i = 0; i < tarjetas.length; i++) {
       const t = tarjetas[i];
       const n = i + 1;
+
+      // Sobrante de un producto que no está en la factura: nombre + cantidad + bulto + fotos, sin tope.
+      if (motivoFijo && t.noFacturado) {
+        if (!nombreProductoValido(t.nombreProducto)) {
+          return `Producto ${n}: escribe el nombre del producto (entre ${MIN_NOMBRE_PRODUCTO} y ${MAX_NOMBRE_PRODUCTO} caracteres).`;
+        }
+        const textoSobrante = String(t.cantidad ?? "").trim();
+        if (!/^\d+$/.test(textoSobrante) || Number(textoSobrante) <= 0) {
+          return `Producto ${n}: la cantidad sobrante debe ser un número entero mayor que 0.`;
+        }
+        if (!bultoValido(t.bulto)) {
+          return `Producto ${n}: el N° de bulto debe tener exactamente ${LARGO_BULTO} caracteres (letras o números).`;
+        }
+        const faltaNoFacturado = faltantes(motivos, motivoFijo, t.archivos);
+        if (faltaNoFacturado.length) {
+          return `Producto ${n}: falta subir ${faltaNoFacturado.map((tipo) => descripcionFaltante(tipo, motivoFijo, t.archivos)).join(", ")}.`;
+        }
+        continue;
+      }
 
       if (t.posicion == null) return `Producto ${n}: selecciona el producto.`;
       const producto = productos.find((p) => p.posicion === t.posicion);

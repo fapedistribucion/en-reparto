@@ -5,7 +5,7 @@ export const CONTACTO_DATOS = {
   telefono: "920799198",
 };
 
-// Canal de soporte al transportista (Supply Te Ayuda): atiende los casos No logísticos y Faltante,
+// Canal de soporte al transportista (Supply Te Ayuda): atiende los casos No logísticos (el Faltante ya sale con ticket directo),
 // brinda el número de ticket y anula tickets cuando hace falta.
 export const NOMBRE_SOPORTE = "Supply Te Ayuda";
 export const TELEFONO_SOPORTE = "016199010";

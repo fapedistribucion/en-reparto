@@ -21,7 +21,16 @@ import SubidaEvidencia from "./componentes/SubidaEvidencia";
 import ModalTicketCreado from "../compartido/ModalTicketCreado";
 
 function nuevaTarjeta() {
-  return { uid: crypto.randomUUID(), posicion: null, subcategoria: "", cantidad: "", bulto: "", archivos: {} };
+  return {
+    uid: crypto.randomUUID(),
+    posicion: null,
+    noFacturado: false, // solo Sobrante: el producto no está en la factura
+    nombreProducto: "", // nombre escrito cuando noFacturado es true
+    subcategoria: "",
+    cantidad: "",
+    bulto: "",
+    archivos: {},
+  };
 }
 
 export default function NuevoReclamo() {

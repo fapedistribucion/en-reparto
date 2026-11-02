@@ -14,8 +14,9 @@ import ModalEntregaTransporte from "../compartido/ModalEntregaTransporte";
 import BarraHerramientas from "../compartido/BarraHerramientas";
 import PanelFiltros from "../compartido/PanelFiltros";
 import DashboardTickets from "../compartido/DashboardTickets";
-import { IconoCheck, IconoCamion, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
+import { IconoCheck, IconoCamion, IconoLapiz, IconoSeguimiento, IconoDashboard } from "../compartido/iconos";
 import { textoCodigoTicket, formatearFecha } from "../utils/estadosTicket";
+import { nombreProducto } from "../utils/productoObservacion";
 
 // Formato obligatorio de la Nota de Crédito: 07-0FC0 + 1 dígito de serie + "-" + 7 dígitos (ej. 07-0FC01-0025069).
 // La base lo vuelve a validar al guardar.
@@ -55,6 +56,8 @@ export default function PanelLI({ sidebarAbierta }) {
   const puedeEditarNC = usePuedeEditarNC();
   const editarNCRef = useRef(null);
   const editarNCDesdeTabla = useCallback((observacion) => editarNCRef.current?.(observacion), []);
+  const editarNCTicketRef = useRef(null);
+  const editarNCDesdeFactura = useCallback((ticket) => editarNCTicketRef.current?.(ticket), []);
 
   // Datos de la factura, filtros, orden por encabezado, conteo y exportación a Excel (compartido por todos los roles).
   const vista = useVistaTickets({
@@ -63,6 +66,7 @@ export default function PanelLI({ sidebarAbierta }) {
     pestana,
     mostrarUsuarios: true,
     editarNC: puedeEditarNC ? editarNCDesdeTabla : null,
+    editarNCTicket: puedeEditarNC ? editarNCDesdeFactura : null,
   });
   const { ticketsFiltrados, observacionesFiltradas } = vista;
 
@@ -78,6 +82,35 @@ export default function PanelLI({ sidebarAbierta }) {
   const pendientesNC = observacionesDelTicket.filter((o) => !o.nota_credito);
   const conNC = observacionesDelTicket.length - pendientesNC.length;
 
+  // Para quien puede corregir NC, en el popup de "Por factura": los productos que ya tienen NC, cada uno con su lápiz.
+  function listaCorregirNC() {
+    const conNota = observacionesDelTicket.filter((o) => o.nota_credito);
+    if (!puedeEditarNC || observacionFoco || conNota.length === 0) return null;
+    return (
+      <div className="accion-rol">
+        <label>Corregir una NC ya registrada</label>
+        {conNota.map((o) => (
+          <p key={o.id} className="dato-menor" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span>
+              Pos. {o.posicion ?? "—"} · {nombreProducto(o)} ·{" "}
+              <strong>{o.nota_credito}</strong>
+            </span>
+            <button
+              type="button"
+              className="boton-icono"
+              style={{ padding: "2px 6px" }}
+              onClick={() => abrirDetalle(seleccionado, o.id)}
+              title="Editar esta NC"
+              aria-label="Editar esta NC"
+            >
+              <IconoLapiz size={14} />
+            </button>
+          </p>
+        ))}
+      </div>
+    );
+  }
+
   function abrirDetalle(ticket, observacionId = null) {
     setSeleccionadoId(ticket.id);
     setObservacionFocoId(observacionId);
@@ -92,6 +125,9 @@ export default function PanelLI({ sidebarAbierta }) {
     const ticket = tickets.find((t) => t.id === observacion.ticket_id);
     if (ticket) abrirDetalle(ticket, observacion.id);
   };
+
+  // Lápiz de "Por factura": abre el ticket; ahí el popup lista sus productos con NC, cada uno con su lápiz.
+  editarNCTicketRef.current = (ticket) => abrirDetalle(ticket);
 
   function refrescarTodo() {
     recargar();
@@ -378,8 +414,8 @@ export default function PanelLI({ sidebarAbierta }) {
                   <p className="panel-detalle-titulo-seccion">Acciones</p>
                   <p className="dato-menor">
                     Todos los productos de este ticket ya tienen NC.
-                    {puedeEditarNC ? " Para corregir una, usa el lápiz de la columna «Nota de Crédito» en «Por producto»." : ""}
                   </p>
+                  {listaCorregirNC()}
                   {mensajeNC && <p className="mensaje-exito">{mensajeNC}</p>}
                 </>
               );
@@ -435,6 +471,7 @@ export default function PanelLI({ sidebarAbierta }) {
                     {observacionFoco?.nota_credito ? "Actualizar NC" : "Guardar NC"}
                   </button>
                 </div>
+                {listaCorregirNC()}
               </>
             );
           }}
