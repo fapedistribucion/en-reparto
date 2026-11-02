@@ -11,6 +11,7 @@ export const FILTROS_VACIOS = {
   transporte: "",
   estado: "",
   region: "",
+  aprobado_por: "",
   motivo: "",
   desde: "",
   hasta: "",
@@ -55,6 +56,7 @@ function coincideTicket(t, filtros) {
     (!filtros.transporte || t?.empresa_transporte === filtros.transporte) &&
     (!filtros.estado || t?.estado === filtros.estado) &&
     coincideRegion(t, filtros.region) &&
+    (!filtros.aprobado_por || t?.aprobado_por === filtros.aprobado_por) &&
     coincideFecha(t?.fecha_creacion, filtros.desde, filtros.hasta)
   );
 }

@@ -3,7 +3,9 @@ import { ETIQUETAS_ESTADO } from "../utils/estadosTicket";
 import CalendarioRango from "./CalendarioRango";
 
 // Panel deslizable (derecha) con los filtros. Controlado desde el panel que lo usa:
-// `valores` = { ticket, factura, pedido, transporte, estado, region, motivo, desde, hasta }
+// `valores` = { ticket, factura, pedido, transporte, estado, region, aprobado_por, motivo, desde, hasta }
+// `mostrarAprobadoPor` / `opcionesAprobadoPor`: filtro «Aprobado por», solo en las vistas que muestran usuarios
+// (Experiencia al Cliente, LI y Liquidaciones); la lista trae los nombres de quienes ya aprobaron algún ticket.
 // `opcionesRegion`: regiones a elegir ("Sin región" solo viene si hay registros sin región).
 // `mostrarMotivo` / `opcionesMotivo`: el filtro de Motivo existe solo en "Por producto"; es una lista
 // desplegable como las demás (Faltante primero y el resto en orden alfabético).
@@ -14,6 +16,8 @@ export default function PanelFiltros({
   onCambiar,
   opcionesTransporte,
   opcionesRegion = [],
+  opcionesAprobadoPor = [],
+  mostrarAprobadoPor = false,
   mostrarMotivo = false,
   opcionesMotivo = [],
   onBuscar,
@@ -86,6 +90,20 @@ export default function PanelFiltros({
               ))}
             </select>
           </label>
+
+          {mostrarAprobadoPor && (
+            <label className="campo-filtro">
+              Aprobado por
+              <select value={valores.aprobado_por} onChange={(e) => cambiar("aprobado_por", e.target.value)}>
+                <option value="">Todos</option>
+                {opcionesAprobadoPor.map((nombre) => (
+                  <option key={nombre} value={nombre}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {mostrarMotivo && (
             <label className="campo-filtro">

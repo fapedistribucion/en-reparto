@@ -90,6 +90,17 @@ export function useVistaTickets({
     return haySin ? [...REGIONES, SIN_REGION] : REGIONES;
   }, [datosListos, ticketsEnriquecidos]);
 
+  // Quienes aprobaron al menos un ticket (nombres ya resueltos; solo en las vistas que muestran usuarios).
+  const opcionesAprobadoPor = useMemo(
+    () =>
+      mostrarUsuarios
+        ? [...new Set(ticketsEnriquecidos.map((t) => t.aprobado_por).filter(Boolean))].sort((a, b) =>
+            a.localeCompare(b, "es")
+          )
+        : [],
+    [mostrarUsuarios, ticketsEnriquecidos]
+  );
+
   const opcionesMotivo = useMemo(
     () =>
       ordenarEtiquetasMotivo([
@@ -175,6 +186,8 @@ export function useVistaTickets({
       onCambiar: setBorrador,
       opcionesTransporte,
       opcionesRegion,
+      opcionesAprobadoPor,
+      mostrarAprobadoPor: mostrarUsuarios,
       opcionesMotivo,
       mostrarMotivo: pestana === "sku",
       onBuscar: aplicarFiltros,
