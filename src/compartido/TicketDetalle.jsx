@@ -41,7 +41,8 @@ function Galeria({ fotos, subcategoria, onAmpliar }) {
 // solo esa observación, solo sus evidencias (+ la foto de factura completa), y sin repetir datos
 // que ya se ven en la tabla. En este modo la consulta también pide solo esos datos puntuales
 // (no toda la factura), para que cargue más rápido.
-export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion, soloObservacionId }) {
+// `ocultarNC`: no muestra la Nota de crédito (la usa el Seguimiento del transportista).
+export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccionObservacion, soloObservacionId, ocultarNC = false }) {
   // Si ese ticket ya se cargó/precargó (ver cargaDetalle.js) el popup se pinta al instante.
   const enCache = leerDetalleEnCache(ticket.id, soloObservacionId);
   const [observaciones, setObservaciones] = useState(enCache?.observaciones ?? []);
@@ -171,7 +172,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                     : "—"}
               </strong>
             </div>
-            {(observacionEnfocada.nota_credito || ticket.fecha_entrega_li) && (
+            {!ocultarNC && (observacionEnfocada.nota_credito || ticket.fecha_entrega_li) && (
               <div>
                 <span>Nota de crédito</span>
                 <strong>{observacionEnfocada.nota_credito ?? "Pendiente"}</strong>
@@ -240,7 +241,7 @@ export default function TicketDetalle({ ticket, onCerrar, acciones, renderAccion
                       </p>
                     )}
 
-                    {(o.nota_credito || ticket.fecha_entrega_li) && (
+                    {!ocultarNC && (o.nota_credito || ticket.fecha_entrega_li) && (
                       <p className="obs-card-linea">Nota de crédito: {o.nota_credito ?? "Pendiente"}</p>
                     )}
 

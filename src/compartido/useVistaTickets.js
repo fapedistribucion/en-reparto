@@ -26,6 +26,7 @@ export function useVistaTickets({
   mostrarTransporte = true,
   mostrarSkuObservados = true,
   mostrarUsuarios = false,
+  mostrarNotaCredito = true, // false en el Seguimiento del transportista
   editarNC = null, // (observación) => abre la edición de su NC; null = sin lápiz (solo LI con permiso)
   editarNCTicket = null, // (ticket) => abre el ticket para elegir qué NC corregir ("Por factura")
   nombreExportacion = "en-reparto-por-ticket",
@@ -129,8 +130,8 @@ export function useVistaTickets({
 
   // ----- columnas, orden y filas -----
   const columnasFactura = useMemo(
-    () => columnasTickets({ mostrarTransporte, mostrarSkuObservados, mostrarUsuarios, editarNC: editarNCTicket }),
-    [mostrarTransporte, mostrarSkuObservados, mostrarUsuarios, editarNCTicket]
+    () => columnasTickets({ mostrarTransporte, mostrarSkuObservados, mostrarUsuarios, mostrarNotaCredito, editarNC: editarNCTicket }),
+    [mostrarTransporte, mostrarSkuObservados, mostrarUsuarios, mostrarNotaCredito, editarNCTicket]
   );
   const columnasProducto = useMemo(() => columnasObservaciones({ mostrarTransporte, mostrarUsuarios, editarNC }),
     [mostrarTransporte, mostrarUsuarios, editarNC]);

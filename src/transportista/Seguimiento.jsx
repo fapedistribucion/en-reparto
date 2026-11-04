@@ -21,6 +21,7 @@ export default function Seguimiento() {
     pestana: "factura",
     mostrarTransporte: false,
     mostrarSkuObservados: true,
+    mostrarNotaCredito: false, // el transportista no ve la Nota de crédito
     nombreExportacion: "en-reparto-seguimiento",
   });
   const seleccionado = tickets.find((t) => t.id === seleccionadoId) ?? null;
@@ -45,7 +46,7 @@ export default function Seguimiento() {
 
       <PanelFiltros {...vista.propsPanelFiltros} />
 
-      {seleccionado && <TicketDetalle ticket={seleccionado} onCerrar={() => setSeleccionadoId(null)} />}
+      {seleccionado && <TicketDetalle ticket={seleccionado} ocultarNC onCerrar={() => setSeleccionadoId(null)} />}
     </div>
   );
 }

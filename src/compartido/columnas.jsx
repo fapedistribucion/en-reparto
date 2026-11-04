@@ -115,6 +115,7 @@ export function columnasTickets({
   mostrarTransporte = false,
   mostrarSkuObservados = false,
   mostrarUsuarios = false,
+  mostrarNotaCredito = true, // el transportista no ve la Nota de crédito (ni en pantalla ni en su Excel)
   editarNC = null,
 } = {}) {
   const c = columnasDelTicket((t) => t);
@@ -153,7 +154,7 @@ export function columnasTickets({
     c.lead_time_li,
     c.entrega_transporte,
     c.motivo_retencion,
-    {
+    ...(mostrarNotaCredito ? [{
       id: "nota_credito",
       titulo: "Nota de crédito",
       tipo: "texto",
@@ -178,7 +179,7 @@ export function columnasTickets({
           </>
         );
       },
-    },
+    }] : []),
     ...(mostrarUsuarios
       ? [
           { id: "nc_por", titulo: "NC por", tipo: "texto", valor: (t) => t.nc_por },
